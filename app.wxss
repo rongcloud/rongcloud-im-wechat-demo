@@ -1,0 +1,14 @@
+page{
+  background-color: #F4F8FC;
+}
+.rong-avatar{
+  height:100rpx;
+  width:100rpx;
+  border-radius:10rpx;
+}
+.rong-icon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background-size: cover;
+}

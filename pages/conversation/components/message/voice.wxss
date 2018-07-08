@@ -1,0 +1,41 @@
+.rong-message-voice{
+  font-size: 13px;
+}
+.rong-icon{
+  margin-top: 6rpx;
+  height: 45rpx;
+  width: 45rpx;
+  background-size: contain;
+  background-repeat: no-repeat;
+  max-width: 300rpx;
+  min-width: 40rpx;
+}
+
+.rong-icon-sender{
+  background-image: url('https://rongcloud-image.cn.ronghub.com/FsqrJPkmthsvyNtYlFMG09rYm2fE?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:EF4bKsuCC6Uknv2m-8lxfzTVRiI=');
+  float:right;
+  background-position: 100% 0;
+}
+
+.rong-audio{
+  height:58rpx;
+  width:89%;
+  position:absolute;
+}
+
+.rong-time-sender{
+  float: left;
+  color: #4583B8;
+  margin-top: 6rpx;
+}
+
+.rong-icon-receiver{
+  background-image: url('https://rongcloud-image.cn.ronghub.com/FuTs3OgkJT_UbDC6Bm6-RA3DTEIx?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:WRRjZK23aS4IJ8mK0VBXnTeIQEM=');
+  float:left;
+  background-position: 0 100%;
+}
+
+.rong-time-receiver{
+  float: right;
+  margin-top: 6rpx;
+}

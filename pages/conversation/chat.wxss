@@ -1,0 +1,211 @@
+.rong-chat{
+  position: absolute;
+  width: 100%;
+  top: 0;
+  bottom: 0;
+}
+.rong-messages{
+  position: absolute;
+  top: 0;
+  bottom: 100rpx;
+}
+.rong-message{
+  padding: 15rpx;
+  box-sizing: border-box;
+}
+
+.rong-message-avatar{
+  height: 80rpx;
+  width: 80rpx;
+}
+
+.rong-message-avatar-receiver{
+  float: left;
+}
+
+.rong-message-avatar-sender{
+  float: right;
+}
+
+.rong-message-content{
+  max-width: 75%;
+  min-height: 80rpx;
+  padding: 18rpx 10rpx 18rpx 10rpx;
+  box-sizing: border-box;
+  display: inline-block;
+  border-radius: 10rpx;
+  word-wrap: break-word;
+  position: relative;
+  margin: 0 30rpx;
+}
+
+.rong-message-content-receiver::after,
+.rong-message-content-receiver::before,
+.rong-message-content-sender::after,
+.rong-message-content-sender::before{
+  content: "";
+  border: 15rpx solid;
+  position: absolute;
+  top: 20rpx;
+  border-color: transparent;
+}
+
+.rong-message-content-receiver::after{
+  border-color: transparent #FFF transparent transparent;
+  left: -23rpx;
+}
+.rong-message-content-receiver::before{
+  border-color: transparent #CCC transparent transparent;
+  left: -26.5rpx;
+}
+.rong-message-content-receiver{
+  float: left;
+  background-color: #FFF;
+  border: 1px solid #ccc;
+}
+
+.rong-message-content-sender::after{
+  border-color: transparent transparent transparent #CBE7FC;
+  right: -24rpx;
+}
+
+.rong-message-content-sender{
+  float: right;
+  background-color: #CBE7FC;
+}
+
+.rong-clearfix{
+  clear: both;
+}
+
+.rong-editor{
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 15rpx;
+  border-top: 1px solid #CCC;
+  background-color: #FFF;
+  box-sizing: border-box;
+}
+
+.rong-editor-input{
+  height: 58rpx;
+  border-bottom:1px solid #CCC;
+  display: inline-block;
+  margin-top: 6rpx;
+  position: absolute;
+  left: 90rpx;
+  right: 194rpx;
+}
+
+.rong-editor-input:focus{
+  border-bottom: 1px solid red;
+}
+
+.rong-editor-btn{
+  margin-right: 20rpx;
+  margin-top: 4rpx;
+}
+.rong-editor-btn-voice{
+  background-image: url("https://rongcloud-image.cn.ronghub.com/o_1chk2kfkpr8pdm31j56t49fg1a.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:7JEmLgDyTGVPaqFkfv1XlIIvKTY=");
+  float: left;
+}
+
+.rong-editor-btn-emoji{
+   background-image: url("https://rongcloud-image.cn.ronghub.com/o_1chk2kfkp4mt946187t1tu6fo517.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:M3ESBWxl56cSKODXRIEfZ2lEyJk=");
+   float: right;
+}
+
+.rong-editor-btn-more{
+   background-image: url("https://rongcloud-image.cn.ronghub.com/o_1chk2kfkpfcj1glterl29mi6618.png?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:Y0nRdX5kK_T2YWxIWsoA236DCL4="); 
+  float: right;
+}
+
+.rong-editor-btn-emojisent{
+  float: right; 
+  font-size:15px;
+  background: #1BA3FC;
+  border-radius: 6rpx;
+  color: #FFF;
+  margin-top: 8rpx;
+  margin-right: 20rpx;
+  padding: 6rpx 2rpx;
+}
+
+.rong-editor-btn-keyboard{
+  background-image: url("https://rongcloud-image.cn.ronghub.com/o_1chk2kfkpso212071oevn0e3fe19.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:QIOf02NbmqvFMlOwcMXZAXbGDVU=");
+  float: left;
+}
+
+.rong-editor-record{
+  border: 1px solid #CCC;
+  border-radius: 5rpx;
+  text-align: center;
+  color: #8E969F;
+  box-sizing: border-box;
+  line-height: 55rpx;
+}
+
+/* 模块  */
+.rong-voice-recording{
+  position: absolute;
+  top: 35%;
+  left: 38%;
+  background-color: #333;
+  background-size: contain;
+  height: 200rpx;
+  width: 200rpx;
+  opacity: 0.8;
+  border-radius: 10rpx;
+  padding: 10rpx;
+  background-image: url("https://rongcloud-image.cn.ronghub.com/o_1chlab8nk1gp014f11vdu5u11v74l.gif?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:a9LUbvDq5PbI5H5-MtJP49SFGdE=");
+}
+
+.rong-editor-emojis,.rong-editor-more{
+  background-color: #FFF;
+  height: 210px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+}
+
+.rong-editor-emoji{
+  width:30px;
+  height:30px;
+  display:inline-block;
+  text-align:center;
+  margin:7px;
+  font-size:30px;
+}
+
+.rong-emojis-swiper, .rong-modules-swiper{
+  height: 185px;
+}
+
+.rong-adapter-box{
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background:#FFF;
+}
+
+.rong-editor-module{
+  height: 60px;
+  width: 60px;
+  border: 1px solid #d2d2d4;
+  border-radius: 15px;
+  background-color: #fff;
+  padding: 10px 14px 10px 9px;
+  box-sizing: border-box;
+  margin: 20px;
+}
+
+.rong-editor-module-image{
+  height: 40px;
+  width: 40px;
+  background-image: url('https://rongcloud-image.cn.ronghub.com/FsB5XchwrDjI3yt2MiJODkqbxg7a?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:2L0FW-2g8vuK6-8tL6DYB9x7_mw=');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}

@@ -1,0 +1,64 @@
+.rong-conversations{
+  color: #8E969F;
+  font-size: 13px;
+}
+
+.rong-conversation{
+  height: 120rpx;
+  position: relative;
+  padding: 20rpx 5rpx 3rpx 10rpx;
+  border-bottom: 1px solid #ccc;
+}
+
+.rong-conversation-messagecontent{
+  margin-top: 18rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow:hidden;
+  width: 80%;
+}
+.rong-conversation-title{
+  color: #333;
+  font-size: 14px;
+}
+
+.rong-conversation-avatar{
+  float: left;
+  margin-right: 20rpx;
+}
+
+.rong-conversation-unreadcount{
+  position: absolute;
+  top: 10rpx;
+  left: 85rpx;
+  background-color: red;
+  border-radius: 50%;
+  color: #FFF;
+  height:36rpx;
+  min-width: 36rpx;
+  text-align:center;
+  padding: 0 5rpx;
+  box-sizing: border-box;
+}
+
+.rong-conversation-senttime{
+  position: absolute;
+  top: 20rpx;
+  right: 20rpx;
+}
+
+.rong-authorization-tip{
+  position:absolute;
+  top:30%;
+  left:20%;
+  width:80%;
+  color: #108EE9;
+}
+.rong-authorization-btn{
+  background-color:#108EE9;
+  color:#FFF;
+  position:absolute;
+  top:40%;
+  left:12%;
+  width:80%;
+}

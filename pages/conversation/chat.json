@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "TextMessage": "./components/message/text",
+    "ImageMessage": "./components/message/image",
+    "VoiceMessage": "./components/message/voice"
+  }
+}

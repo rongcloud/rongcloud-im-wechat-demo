@@ -1,0 +1,11 @@
+{
+  "pages": [
+    "pages/conversation/list",
+    "pages/conversation/chat"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#1BA3FC",
+    "navigationBarTitleText": "SealTalk",
+    "navigationBarTextStyle": "#fff"
+  }
+}

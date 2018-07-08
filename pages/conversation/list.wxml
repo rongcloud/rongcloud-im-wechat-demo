@@ -1,0 +1,16 @@
+<scroll-view class='rong-conversations'>
+  <view class='rong-conversation' bindtap='gotoChat' wx:for="{{conversationList}}" wx:for-item="conversation" wx:key='{{conversation.targetId}}' data-item='{{conversation}}'>
+      <image class='rong-avatar rong-conversation-avatar' src='{{conversation.target.avatar}}'></image>
+    <view class='rong-conversation-title'>{{conversation.target.name}}</view>
+    <view class='rong-conversation-message'>
+      <view class='rong-conversation-messagecontent'>
+        {{conversation.content}}
+      </view>
+    </view>
+    <view class='rong-conversation-senttime'>{{conversation._sentTime}}</view>
+    <view wx:if='{{conversation.unReadCount > 0}}' class='rong-conversation-unreadcount'>{{conversation.unReadCount}}</view>
+  </view>
+</scroll-view>
+
+<view class='rong-authorization-tip' wx:if="{{!hasUserAuth}}">需要您的授权才可以使用哦～</view>
+ <button  wx:if="{{!hasUserAuth}}" open-type="getUserInfo" bindgetuserinfo="onAuthCompleted" class='rong-authorization-btn'> 立即授权 </button>
