@@ -20,7 +20,7 @@ Component({
   methods: {
     play: function(){
       let { isPlaying, innerAudioContext } = this.data;
-      let { message: { content: { url } } } = this.properties;
+      let { message: { content: { url } }, message } = this.properties;
       if (isPlaying) {
         innerAudioContext.stop();
         this.setData({
@@ -29,6 +29,7 @@ Component({
         return;
       }
       innerAudioContext = wx.createInnerAudioContext()
+
       this.setData({
         isPlaying: true,
         innerAudioContext
@@ -51,7 +52,9 @@ Component({
       })
     },
     stop: function(){
+      let {  message } = this.properties;
       let { innerAudioContext} = this.data;
+      this.triggerEvent('onstopmusic', this)
       if (innerAudioContext){
         innerAudioContext.stop();
         this.setData({

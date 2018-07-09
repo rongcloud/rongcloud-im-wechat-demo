@@ -104,8 +104,8 @@
 }
 
 .rong-editor-emoji{
-  width:30px;
-  height:30px;
+  width:60rpx;
+  height:60rpx;
   display:inline-block;
   text-align:center;
   margin:7px;

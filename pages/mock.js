@@ -91,7 +91,7 @@ module.exports = {
     url: "https://rongcloud-file.cn.ronghub.com/o_1chvbvdq7kn4rmq1horrf3lm1e.mp3?attname=MyHeartWillGoOn.mp3&e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:94Vxq8iU9AKya7Wj1hkBW5uy4f8=",
     poster: "https://rongcloud-image.cn.ronghub.com/FpNGSIJHoyxPGusEzgWbt7Agl51M?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:-H3FiDuwQ-gylVTi-nsQY9UdQf4="
     }, {
-    name: "My Heart Will Go On",
+      name: "Yesterday Once More",
     author: "Done Again",
     url:"https://rongcloud-file.cn.ronghub.com/o_1chvc7smd1g63ut11lo21u0o8r91o.mp3?attname=YesterdayOnceMore.mp3&e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:L6aWRzRXh6x6QP6Ikuk0-8U9DDQ=",
       poster: "https://rongcloud-image.cn.ronghub.com/FqQJTNDGVyZuXSqTExxxiQovo1iw?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:HGCMGN8d_bg4kHBInOQqa01v0dA="

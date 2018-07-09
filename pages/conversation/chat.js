@@ -72,7 +72,7 @@ const getMessageList = (context, params) => {
     let messages = result.messageList;
     let hasMore = result.hasMore;
 
-    let { messageList} = context.data;
+    let { messageList, playingVoice, playingMusicComponent} = context.data;
     messageList = messages.concat(messageList);
     let toView = '';
     if(params.position == 0){
@@ -115,7 +115,7 @@ Page({
     hasMore: true,
     toView: '',
     playingVoice: null,
-    playingMusic: null
+    playingMusicComponent: null
   },
 
   /**
@@ -237,8 +237,14 @@ Page({
     setKeyboardPos(this, height, adapterHeight);
     hideSoftKeyboard(this);
   },
-  onScroll: function(event){
-    //console.log(event);
+  onUnload: function(){
+    let { playingVoice, playingMusicComponent} = this.data;
+    if (playingVoice){
+      playingMusicComponent.stop();
+    }
+    if (playingMusicComponent){
+      playingMusicComponent.stop();
+    }
   },
   hideKeyboard: function () {
     hideKeyboard(this);
@@ -258,6 +264,9 @@ Page({
       content: '',
       isShowEmojiSent: false
     });
+    if(content.length == 0){
+      return;
+    }
     Message.sendText({
       type, 
       targetId,
@@ -361,22 +370,63 @@ Page({
     });
   },
   onPlayMusic: function (event){
-    let musicComponent = event.detail;
-    let { playingMusic } = this.data;
-    if (playingMusic) {
-      let playingId = playingMusic.__wxExparserNodeId__;
-      let musicId = musicComponent.__wxExparserNodeId__;
-      if (playingId == musicId) {
-        return;
-      }
-      let { innerAudioContext } = playingMusic.data;
-      playingMusic.setData({
-        isPlaying: false
+    let newPlayComponent = event.detail;
+    let { playingMusicComponent, messageList } = this.data;
+    let { properties: { message: { messageUId: newPlayId}}} = newPlayComponent
+    let playingId = '';
+
+    let updatePlayStatus = () => {
+      messageList.map((message) => {
+        let { messageUId } = message;
+        if (messageUId == playingId) {
+          message.isPlaying = false;
+        }
+        if (messageUId == newPlayId) {
+          message.isPlaying = true;
+        }
+        return message;
       });
+      this.setData({
+        playingMusicComponent: newPlayComponent,
+        messageList
+      });
+    };
+    
+    if (playingMusicComponent) {
+      let { properties: { message } } = playingMusicComponent;
+      playingId = message.messageUId;
+      //点击不同音频，先停止上一个播放
+      let isDiffMusic = (playingId != newPlayId);
+      if (isDiffMusic) {
+        let { innerAudioContext } = playingMusicComponent.data;
+        playingMusicComponent.setData({
+          isPlaying: false
+        });
+        innerAudioContext.stop();
+      }
+    }
+    updatePlayStatus();
+  },
+  onMusicStop: function(event){
+    let musicComponent = event.detail;
+    let { properties: { message: { messageUId } }} = musicComponent;
+
+    let { messageList, playingMusicComponent } = this.data;
+    if (playingMusicComponent){
+      let { data: { innerAudioContext } } = playingMusicComponent;
       innerAudioContext.stop();
     }
-    this.setData({
-      playingMusic: musicComponent
+    messageList.map((message) => {
+      if (messageUId == message.messageUId) {
+        message.isPlaying = false;
+      }
+      return message;
     });
+    this.setData({
+      messageList
+    });
+  },
+  onHide: function(){
+    hideKeyboard(this);
   }
 })

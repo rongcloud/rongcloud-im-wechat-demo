@@ -35,6 +35,9 @@ Component({
     },
     onPlayMusic: function(event){
       this.triggerEvent('onplaymusic', event.detail)
+    },
+    onMusicStop: function (event){
+      this.triggerEvent('onmusicstop', event.detail)
     }
   }
 })

@@ -6,8 +6,8 @@
   width: 120rpx;
   height: 120rpx;
   float:left;
-  margin-right: 30rpx;
   background-size: 100%;
+  margin-right: 20rpx;
 }
 
 .rong-music-btn{
@@ -29,5 +29,9 @@
 }
 
 .rong-music-basic-name, .rong-music-basic-author{
-  line-height: 32px;
+  line-height: 28px;
+}
+
+.rong-music-basic{
+  float: left;
 }
