@@ -114,7 +114,8 @@ Page({
     isShowKeyboard: false,
     hasMore: true,
     toView: '',
-    playingVoice: null
+    playingVoice: null,
+    playingMusic: null
   },
 
   /**
@@ -326,6 +327,19 @@ Page({
       }
     })
   },
+  sendMusic: function(){
+    let { content, type, targetId, messageList } = this.data;
+    Message.sendMusic({
+      type,
+      targetId
+    }).then(message => {
+      messageList.push(message);
+      this.setData({
+        messageList,
+        toView: message.uId
+      });
+    });
+  },
   onPlayVoice: function(event){
     let voiceComponent = event.detail;
     let {playingVoice} = this.data;
@@ -344,6 +358,25 @@ Page({
     }
     this.setData({
       playingVoice: voiceComponent
+    });
+  },
+  onPlayMusic: function (event){
+    let musicComponent = event.detail;
+    let { playingMusic } = this.data;
+    if (playingMusic) {
+      let playingId = playingMusic.__wxExparserNodeId__;
+      let musicId = musicComponent.__wxExparserNodeId__;
+      if (playingId == musicId) {
+        return;
+      }
+      let { innerAudioContext } = playingMusic.data;
+      playingMusic.setData({
+        isPlaying: false
+      });
+      innerAudioContext.stop();
+    }
+    this.setData({
+      playingMusic: musicComponent
     });
   }
 })

@@ -32,6 +32,9 @@ Component({
   methods: {
     onPlayVoice: function (event) {
       this.triggerEvent('onplay', event.detail)
+    },
+    onPlayMusic: function(event){
+      this.triggerEvent('onplaymusic', event.detail)
     }
   }
 })

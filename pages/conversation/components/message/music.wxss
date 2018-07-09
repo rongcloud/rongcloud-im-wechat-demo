@@ -1,0 +1,33 @@
+.rong-music{
+  font-size: 13px;
+  min-width: 400rpx;
+}
+.rong-music-player{
+  width: 120rpx;
+  height: 120rpx;
+  float:left;
+  margin-right: 30rpx;
+  background-size: 100%;
+}
+
+.rong-music-btn{
+  height: 50rpx;
+  width: 50rpx;
+  background-size: contain;
+  margin-left:30%;
+  margin-top:30%;
+  background-color:#FFF;
+  border-radius:50%;
+}
+
+.rong-music-btn-play{
+  background-image: url('https://rongcloud-image.cn.ronghub.com/o_1chv6b3j3vtg92l187bq421d9l4s.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:xKvc5hcEEthUNYBqnv7EixfR1Qs=');
+}
+
+.rong-music-btn-stop{
+  background-image: url('https://rongcloud-image.cn.ronghub.com/o_1chv6b3j3dfqt8716r12u1mr74t.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:vMNYtfFKJyW9VK37XXpiULmNv0s=');
+}
+
+.rong-music-basic-name, .rong-music-basic-author{
+  line-height: 32px;
+}

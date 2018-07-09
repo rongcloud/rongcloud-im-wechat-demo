@@ -1,4 +1,3 @@
-let innerAudioContext = null;
 Component({
   /**
    * 组件的属性列表
@@ -19,10 +18,10 @@ Component({
    * 组件的方法列表
    */
   methods: {
-    onTab: function(event){
-      let { isPlaying, innerAudioContext} = this.data;
-      let { message:{content:{content}} } = this.properties;
-      if(isPlaying){
+    play: function(){
+      let { isPlaying, innerAudioContext } = this.data;
+      let { message: { content: { url } } } = this.properties;
+      if (isPlaying) {
         innerAudioContext.stop();
         this.setData({
           isPlaying: false
@@ -34,11 +33,11 @@ Component({
         isPlaying: true,
         innerAudioContext
       });
-      this.triggerEvent('onplay', this)
+      this.triggerEvent('onplaymusic', this)
       innerAudioContext.autoplay = true;
-      innerAudioContext.src = content;
+      innerAudioContext.src = url;
       innerAudioContext.onPlay(() => {
-        console.log('开始播放')
+        console.log('音乐开始播放')
       })
       innerAudioContext.onEnded(() => {
         this.setData({
@@ -50,6 +49,15 @@ Component({
           isPlaying: false
         });
       })
+    },
+    stop: function(){
+      let { innerAudioContext} = this.data;
+      if (innerAudioContext){
+        innerAudioContext.stop();
+        this.setData({
+          isPlaying: false
+        });
+      }
     }
   }
 })

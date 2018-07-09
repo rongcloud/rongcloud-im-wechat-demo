@@ -2,7 +2,7 @@ const RongIMLib = require('./lib/RongIMLib.miniprogram-1.0.4.js');
 const RongIMClient = RongIMLib.RongIMClient;
 
 const utils = require('./utils/utils.js');
-const { UserList, GroupList} = require('./mock.js');
+const { UserList, GroupList, MusicList} = require('./mock.js');
 
 let imInstance = null;
 let currentUser = null;
@@ -14,6 +14,14 @@ let config = {
   protocol: 'https://'
 };
 
+
+let registerMessages = () => {
+  let messageName = "MusicMessage"; 
+  let objectName = "seal:music";
+  let mesasgeTag = new RongIMLib.MessageTag(true, true); 
+  let prototypes = ["url", "name", "author", "poster"]; 
+  RongIMClient.registerMessageType(messageName, objectName, mesasgeTag, prototypes);
+};
 
 let ErrorInfo = {
   4: {
@@ -200,6 +208,10 @@ let sendMessage = (type, targetId, message) => {
       voice: () => {
         let { content, duration } = message;
         return new RongIMLib.VoiceMessage({ content, duration, user });
+      },
+      music: () => {
+        let {name, url, author, poster} = message;
+        return new RongIMClient.RegisterMessage.MusicMessage({ name, url, author, poster, user});
       }
     };
 
@@ -249,6 +261,17 @@ Message.sendVoice = (params) => {
   return sendMessage(type, targetId, data)
 };
 
+let getMusic = () => {
+  let len = MusicList.length;
+  let index = Math.floor(Math.random() * len);
+  return MusicList[index];
+};
+Message.sendMusic = (params) => {
+  let { type, targetId } = params;
+  let content = utils.extend({ type: 'music' }, getMusic());
+  return sendMessage(type, targetId, content);
+};
+
 // params.type 
 // params.targetId
 // params.position 0/1
@@ -259,6 +282,10 @@ Message.getList = (params) => {
     let timestamp = position > 0 ? null : position;
     imInstance.getHistoryMessages(+type, targetId, timestamp, count, {
       onSuccess: (messageList, hasMore) => {
+        // 过滤未处理的消息类型
+        messageList = messageList.filter((message) => {
+          return message.messageType != 'RecallCommandMessage'
+        });
         bindSender(messageList, position);
         hasMore = !!hasMore;
         resolve({ messageList, hasMore});
@@ -340,6 +367,9 @@ let bindUserInfo = (list) => {
     }
     if (messageType == 'FileMessage') {
       content = '[文件]';
+    }
+    if (messageType == 'MusicMessage') {
+      content = '[音乐]';
     }
     return content;
   };
@@ -480,6 +510,7 @@ module.exports = (_config) => {
     wsScheme: config.wsScheme,
     protocol: config.protocol
   });
+  registerMessages();
   imInstance = RongIMClient.getInstance();
   return modules;
 };

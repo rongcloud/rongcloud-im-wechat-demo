@@ -5,6 +5,10 @@
         <TextMessage wx:if =  '{{message.name == "TextMessage"}}'   message='{{message}}'></TextMessage>
         <ImageMessage wx:if = '{{message.name == "ImageMessage"}}'  message='{{message}}'></ImageMessage>
         <VoiceMessage wx:if = '{{message.name == "VoiceMessage"}}'  message='{{message}}' bindonplay='onPlayVoice'></VoiceMessage> 
+
+        <MusicMessage wx:if = '{{message.name == "MusicMessage"}}'  message='{{message}}' bindonplaymusic='onPlayMusic'></MusicMessage> 
       </view>
       <view class='rong-clearfix'></view>
     </view>
+
+    

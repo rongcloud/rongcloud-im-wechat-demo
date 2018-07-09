@@ -3,6 +3,7 @@
   "usingComponents": {
     "TextMessage": "./message/text",
     "ImageMessage": "./message/image",
-    "VoiceMessage": "./message/voice"
+    "VoiceMessage": "./message/voice",
+    "MusicMessage": "./message/music"
   }
 }
