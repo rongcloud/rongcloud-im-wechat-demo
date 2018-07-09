@@ -1,3 +1,4 @@
+
 .rong-message-voice{
   font-size: 13px;
 }
@@ -38,4 +39,18 @@
 .rong-time-receiver{
   float: right;
   margin-top: 6rpx;
+}
+
+.rong-playing{
+  height: 45rpx;
+  width: 45rpx;
+  position:absolute;
+}
+.rong-playing-receiver{
+  bottom:19rpx;
+}
+
+.rong-playing-sender{
+  bottom:19rpx;
+  right:11rpx;
 }

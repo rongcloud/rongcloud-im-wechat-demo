@@ -330,6 +330,12 @@ Page({
     let voiceComponent = event.detail;
     let {playingVoice} = this.data;
     if (playingVoice){
+      let playingId = playingVoice.__wxExparserNodeId__;
+      let voiceId = voiceComponent.__wxExparserNodeId__;
+      // 两次播放为同个音频，状态保持不变
+      if (playingId == voiceId){
+          return;
+      }
       let { innerAudioContext } = playingVoice.data;
       playingVoice.setData({
         isPlaying: false
