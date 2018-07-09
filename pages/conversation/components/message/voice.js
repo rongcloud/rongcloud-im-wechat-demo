@@ -12,7 +12,8 @@ Component({
    * 组件的初始数据
    */
   data: {
-    isPlaying: false
+    isPlaying: false,
+    innerAudioContext: null
   },
 
   /**
@@ -20,7 +21,7 @@ Component({
    */
   methods: {
     onTab: function(event){
-      let { isPlaying} = this.data;
+      let { isPlaying, innerAudioContext} = this.data;
       let { message:{content:{content}} } = this.properties;
       if(isPlaying){
         innerAudioContext.stop();
@@ -29,10 +30,12 @@ Component({
         });
         return;
       }
-      this.setData({
-        isPlaying: true
-      });
       innerAudioContext = wx.createInnerAudioContext()
+      this.setData({
+        isPlaying: true,
+        innerAudioContext
+      });
+      this.triggerEvent('onplay', this)
       innerAudioContext.autoplay = true;
       innerAudioContext.src = content;
       innerAudioContext.onPlay(() => {
@@ -44,8 +47,9 @@ Component({
         });
       });
       innerAudioContext.onError((res) => {
-        console.log(res.errMsg)
-        console.log(res.errCode)
+        this.setData({
+          isPlaying: false
+        });
       })
     }
   }

@@ -67,7 +67,11 @@ const formatEmojis = () => {
 };
 
 const getMessageList = (context, params) => {
-  return Message.getList(params).then((messages, hasMore) => {
+  let {position} = params;
+  return Message.getList(params).then((result) => {
+    let messages = result.messageList;
+    let hasMore = result.hasMore;
+
     let { messageList} = context.data;
     messageList = messages.concat(messageList);
     let toView = '';
@@ -79,10 +83,16 @@ const getMessageList = (context, params) => {
       let message = messageList[0] || {};
       toView = message.uId || '';
     }
+    let isFirst = (position == 0);
+    if (!hasMore && !isFirst){
+      // 灰条提示
+      toView = 'message-notify-without';
+    }
     context.setData({
       messageList: messageList
     });
     context.setData({
+      hasMore: hasMore,
       toView: toView
     });
   });
@@ -102,7 +112,9 @@ Page({
     isShowEmojiSent: false,
     isRecording: false,
     isShowKeyboard: false,
-    toView: ''
+    hasMore: true,
+    toView: '',
+    playingVoice: null
   },
 
   /**
@@ -151,9 +163,24 @@ Page({
     this.setData({
       isRecording: true
     });
-    recorderManager.start({
-      format: 'mp3'
-    });
+    let record = () => {
+      recorderManager.start({
+        format: 'mp3'
+      });
+    };
+    wx.getSetting({
+      success(res) {
+        if (!res.authSetting['scope.record']) {
+          wx.authorize({
+            scope: 'scope.record',
+            success: record
+          })
+        }else{
+          record();
+        }
+      }
+    })
+
   },
   stopRecording: function(){
     this.setData({
@@ -168,9 +195,9 @@ Page({
         console.log(file)
         let content = {
           content: file.downloadUrl,
-          duration: Math.ceil(duration/1000)
+          duration: Math.ceil(duration / 1000)
         };
-        let {  type, targetId, messageList } = this.data;
+        let { type, targetId, messageList } = this.data;
         Message.sendVoice({
           type,
           targetId,
@@ -184,10 +211,7 @@ Page({
         });
       });
     })
-   
     recorderManager.stop();
-
-
   },
   showEmojis: function(){
     showSoftKeyboard(this, {
@@ -246,10 +270,12 @@ Page({
     });
   },
   getMoreMessages: function(event){
-    let {type, targetId} = this.data;
+    let {type, targetId, hasMore} = this.data;
     let position = null;
     let count = 6;
-    getMessageList(this, { type, targetId, position, count});
+    if (hasMore){
+      getMessageList(this, { type, targetId, position, count });
+    }
   },
   sendImage: function(){
     wx.chooseImage({
@@ -276,7 +302,7 @@ Page({
               name,
               content
             });
-            console.log(message);
+            
             messageList.push(message);
             this.setData({
               messageList,
@@ -299,5 +325,19 @@ Page({
         })
       }
     })
+  },
+  onPlayVoice: function(event){
+    let voiceComponent = event.detail;
+    let {playingVoice} = this.data;
+    if (playingVoice){
+      let { innerAudioContext } = playingVoice.data;
+      playingVoice.setData({
+        isPlaying: false
+      });
+      innerAudioContext.stop();
+    }
+    this.setData({
+      playingVoice: voiceComponent
+    });
   }
 })

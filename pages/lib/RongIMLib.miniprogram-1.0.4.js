@@ -5678,6 +5678,7 @@ module.exports = (function (wx) {
         return "";
       };
       PollingTransportation.prototype.onClose = function () {
+        console.log('onCloseonCloseonCloseonClose');
         if (this.xhr) {
           this.xhr.abort();
           this.xhr = null;
@@ -5721,6 +5722,7 @@ module.exports = (function (wx) {
         RongIMLib.RongIMClient._storageProvider.removeItem(RongIMLib.Navigation.Endpoint.userId + "msgId");
         this.onClose();
         this.connected = false;
+        console.log('errororororo');
         var networkunavailable = RongIMLib.ConnectionStatus.NETWORK_UNAVAILABLE;
         this.socket.fire("disconnect", networkunavailable);
       };

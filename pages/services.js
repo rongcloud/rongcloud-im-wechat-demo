@@ -260,7 +260,8 @@ Message.getList = (params) => {
     imInstance.getHistoryMessages(+type, targetId, timestamp, count, {
       onSuccess: (messageList, hasMore) => {
         bindSender(messageList, position);
-        resolve(messageList, hasMore);
+        hasMore = !!hasMore;
+        resolve({ messageList, hasMore});
       },
       onError: (error) => {
         console.error('gethistoryMessages', error);
@@ -344,7 +345,7 @@ let bindUserInfo = (list) => {
   };
   utils.map(list, (conversation) => {
     let {sentTime} = conversation;
-    conversation._sentTime = utils.dateFormat(new Date(sentTime), 'hh:mm');
+    conversation._sentTime = utils.getTime(sentTime);
     conversation.unReadCount = conversation.unreadMessageCount;
     let { latestMessage } = conversation;
     conversation.content = formatMsg(latestMessage);

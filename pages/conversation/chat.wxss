@@ -209,3 +209,10 @@
   background-size: cover;
   background-position: center;
 }
+
+.rong-notify{
+  color: #CCC;
+  text-align: center;
+  margin:30rpx;
+  font-size: 12px;
+}

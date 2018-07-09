@@ -25,8 +25,21 @@ const watchConversation = (context) => {
   });
 };
 
+const watchStatus = () => {
+ Status.watch((status) => {
+   if (status == 3) {
+     wx.getUserInfo({
+       success: (user) => {
+         Status.connect(user.userInfo);
+       }
+     });
+   }
+ })
+}
+
 const connect = (context) => {
   watchConversation(context);
+  watchStatus();
   wx.getUserInfo({
     success: (user) => {
       Status.connect(user.userInfo).then(() => {
