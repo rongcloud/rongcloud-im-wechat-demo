@@ -28,7 +28,7 @@
 }
 
 .rong-message-content{
-  max-width: 75%;
+  max-width: 70%;
   min-height: 80rpx;
   padding: 18rpx 10rpx 18rpx 10rpx;
   box-sizing: border-box;

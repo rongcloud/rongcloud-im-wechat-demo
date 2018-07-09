@@ -87,12 +87,12 @@ const getMessageList = (context, params) => {
     if (!hasMore && !isFirst){
       // 灰条提示
       toView = 'message-notify-without';
+      context.setData({
+        hasMore: hasMore
+      });
     }
     context.setData({
-      messageList: messageList
-    });
-    context.setData({
-      hasMore: hasMore,
+      messageList: messageList,
       toView: toView
     });
   });
