@@ -1,20 +1,12 @@
 <view class='rong-chat' style='bottom: {{bottom}}px;'>
-
   <scroll-view class='rong-messages' bindtouchstart='hideKeyboard' scroll-y="true" bindscrolltoupper='getMoreMessages' scroll-into-view='U-{{toView}}' scroll-with-animation='{{true}}'>
-    <view wx:if='{{!hasMore}}' class='rong-notify' id='message-notify-without'>没有更多啦~</view>
-    <view class='rong-message' wx:for="{{messageList}}" wx:key='{{message.uId}}' wx:for-item="message" id="U-{{message.uId}}">
-      <image class='rong-avatar rong-message-avatar rong-message-avatar-{{message.direction}}' src='{{message.sender.avatar}}'></image>
-      <view class='rong-message-content rong-message-content-{{message.direction}}'>
-        <TextMessage wx:if = '{{message.name == "TextMessage"}}' message='{{message}}'></TextMessage>
-         <ImageMessage wx:if = '{{message.name == "ImageMessage"}}'  message='{{message}}'></ImageMessage>
-        <VoiceMessage wx:if = '{{message.name == "VoiceMessage"}}'  message='{{message}}'  bindonplay='onPlayVoice' ></VoiceMessage> 
-      </view>
-      <view class='rong-clearfix'></view>
-    </view>
+    <WithoutMessage wx:if='{{!hasMore}}' id='message-notify-without'>没有更多啦~</WithoutMessage>
+    <Message wx:for="{{messageList}}" wx:key='{{message.uId}}' wx:for-item="message" message='{{message}}' id='U-{{message.uId}}' bindonplay='onPlayVoice'>
+    </Message>
   </scroll-view>
-  
+
   <view wx:if='{{isRecording}}' class='rong-voice-recording'></view>
-  
+
   <view class='rong-editor'>
     <view wx:if='{{!isShowKeyboard}}' class='rong-icon rong-editor-btn rong-editor-btn-voice' bindtap='showKeyboard'></view>
 
@@ -25,10 +17,7 @@
 
     <view wx:if='{{ !isShowEmojiSent }}' class='rong-icon rong-editor-btn rong-editor-btn-more' bindtap='showMore'></view>
     <view wx:if='{{isShowEmojiSent}}' class='rong-editor-btn rong-editor-btn-emojisent' bindtap='sendText'>发送</view>
-
     <view class='rong-icon rong-editor-btn rong-editor-btn-emoji' bindtap='showEmojis'></view>
-
-
   </view>
 </view>
 

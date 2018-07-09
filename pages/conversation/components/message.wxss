@@ -1,0 +1,70 @@
+
+.rong-message{
+  padding: 15rpx;
+  box-sizing: border-box;
+}
+
+.rong-message-avatar{
+  height: 80rpx;
+  width: 80rpx;
+  border-radius:10rpx;
+}
+
+.rong-message-avatar-receiver{
+  float: left;
+}
+
+.rong-message-avatar-sender{
+  float: right;
+}
+
+.rong-message-content{
+  max-width: 70%;
+  min-height: 80rpx;
+  padding: 18rpx 10rpx 18rpx 10rpx;
+  box-sizing: border-box;
+  display: inline-block;
+  border-radius: 10rpx;
+  word-wrap: break-word;
+  position: relative;
+  margin: 0 30rpx;
+}
+
+.rong-message-content-receiver::after,
+.rong-message-content-receiver::before,
+.rong-message-content-sender::after,
+.rong-message-content-sender::before{
+  content: "";
+  border: 15rpx solid;
+  position: absolute;
+  top: 20rpx;
+  border-color: transparent;
+}
+
+.rong-message-content-receiver::after{
+  border-color: transparent #FFF transparent transparent;
+  left: -23rpx;
+}
+.rong-message-content-receiver::before{
+  border-color: transparent #CCC transparent transparent;
+  left: -26.5rpx;
+}
+.rong-message-content-receiver{
+  float: left;
+  background-color: #FFF;
+  border: 1px solid #ccc;
+}
+
+.rong-message-content-sender::after{
+  border-color: transparent transparent transparent #CBE7FC;
+  right: -24rpx;
+}
+
+.rong-message-content-sender{
+  float: right;
+  background-color: #CBE7FC;
+}
+
+.rong-clearfix{
+  clear: both;
+}
