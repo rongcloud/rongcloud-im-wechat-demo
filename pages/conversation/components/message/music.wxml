@@ -1,7 +1,9 @@
 <view class='rong-music'>
   <view class='rong-music-player' style='background-image:url("{{message.content.poster}}")'>
-    <view wx:if='{{isPlaying || message.isPlaying}}' class='rong-music-btn rong-music-btn-stop' bindtap='stop'></view>
-    <view wx:if='{{!isPlaying && !message.isPlaying}}' class='rong-music-btn rong-music-btn-play' bindtap='play'></view>
+     <view wx:if='{{isPlaying || message.isPlaying}}' class='rong-music-btn rong-music-btn-stop' bindtap='stop'>
+      <image wx:if='{{loading}}' class='rong-music-btn-loading' src='../../images/play-loading.gif'></image>
+     </view>
+    <view wx:if='{{!isPlaying && !message.isPlaying}}' class='rong-music-btn rong-music-btn-play' bindtap='play'></view> 
   </view>
   <view class='rong-music-basic'>
     <view class='rong-music-basic-name'>{{message.content.name}}</view>

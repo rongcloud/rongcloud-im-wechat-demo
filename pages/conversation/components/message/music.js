@@ -11,7 +11,8 @@ Component({
    */
   data: {
     isPlaying: false,
-    innerAudioContext: null
+    innerAudioContext: null,
+    loading: false
   },
 
   /**
@@ -38,11 +39,21 @@ Component({
       innerAudioContext.autoplay = true;
       innerAudioContext.src = url;
       innerAudioContext.onPlay(() => {
+        this.setData({
+          loading: false
+        });
         console.log('音乐开始播放')
       })
+      innerAudioContext.onWaiting(() => {
+        console.log('waiting');
+        this.setData({
+          loading: true
+        });
+      });
       innerAudioContext.onEnded(() => {
         this.setData({
-          isPlaying: false
+          isPlaying: false,
+          loading: false
         });
         this.triggerEvent('onstopmusic', this)
       });

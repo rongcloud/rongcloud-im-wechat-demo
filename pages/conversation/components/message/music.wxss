@@ -29,6 +29,13 @@
   background-image: url('https://rongcloud-image.cn.ronghub.com/o_1chv6b3j3dfqt8716r12u1mr74t.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:vMNYtfFKJyW9VK37XXpiULmNv0s=');
 }
 
+.rong-music-btn-loading{
+  height:43rpx;
+  width:43rpx;
+  margin-left:4rpx;
+  margin-top:4rpx;
+}
+
 .rong-music-basic-name, .rong-music-basic-author{
   line-height: 28px;
 }
