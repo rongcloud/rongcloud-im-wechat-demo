@@ -68,3 +68,14 @@
 .rong-clearfix{
   clear: both;
 }
+
+.rong-message-content-image-sender{
+  float: right;
+  margin-right: 19rpx;
+  margin-top: -16rpx;
+}
+
+.rong-message-content-image-receiver{
+  margin-top: -16rpx;
+  margin-left:16rpx;
+}

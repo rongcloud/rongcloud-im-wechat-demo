@@ -51,6 +51,14 @@ const connect = (context) => {
           duration: 3000
         })
       })
+    },
+    fail: (error) => {
+      console.log(error);
+      wx.showToast({
+        title: '换个网络试试，只能帮你到这了～',
+        icon: 'none',
+        duration: 3000
+      })
     }
   })
 };

@@ -1,13 +1,18 @@
  <view class='rong-message'>
       <image class='rong-avatar rong-message-avatar rong-message-avatar-{{message.direction}}' src='{{message.sender.avatar}}'></image>
-      <view class='rong-message-content rong-message-content-{{message.direction}}'>
-        
-        <TextMessage wx:if =  '{{message.name == "TextMessage"}}'   message='{{message}}'></TextMessage>
-        <ImageMessage wx:if = '{{message.name == "ImageMessage"}}'  message='{{message}}'></ImageMessage>
-        <VoiceMessage wx:if = '{{message.name == "VoiceMessage"}}'  message='{{message}}' bindonplay='onPlayVoice'></VoiceMessage> 
+     
+      <view wx:if = '{{message.name == "ImageMessage"}}' class='rong-message-content rong-message-content-image-{{message.direction}}'>
+        <ImageMessage message='{{message}}'></ImageMessage>
+      </view>
 
+      <view wx:else class='rong-message-content rong-message-content-{{message.direction}}'>
+        <TextMessage wx:if =  '{{message.name == "TextMessage"}}'   message='{{message}}'></TextMessage>
+        <VoiceMessage wx:if = '{{message.name == "VoiceMessage"}}'  message='{{message}}' bindonplay='onPlayVoice'></VoiceMessage> 
         <MusicMessage wx:if = '{{message.name == "MusicMessage"}}'  message='{{message}}' bindonplaymusic='onPlayMusic' bindonstopmusic='onMusicStop'></MusicMessage> 
       </view>
+
+
+
       <view class='rong-clearfix'></view>
     </view>
 
