@@ -11,14 +11,14 @@ const recorderManager = wx.getRecorderManager()
 
 const softKeyboardHeight = 210;
 
-let getToView = (context) => {
+const getToView = (context) => {
   let { messageList } = context.data;
   let index = messageList.length - 1;
   let message = messageList[index] || {};
   return message.uId || '';
 };
 
-let setKeyboardPos = (context, keyboardHeight, adapterHeight) => {
+const setKeyboardPos = (context, keyboardHeight, adapterHeight) => {
   keyboardHeight = keyboardHeight || 0;
   let data;
   let isScroll = (keyboardHeight > 0);
@@ -37,7 +37,7 @@ let setKeyboardPos = (context, keyboardHeight, adapterHeight) => {
   context.setData(data);
 };
 
-let showSoftKeyboard = (context, display) => {
+const showSoftKeyboard = (context, display) => {
   context.setData({
     display: display,
     bottom: softKeyboardHeight,
@@ -45,7 +45,7 @@ let showSoftKeyboard = (context, display) => {
     toView: getToView(context)
   });
 };
-let hideSoftKeyboard = (context) => {
+const hideSoftKeyboard = (context) => {
   context.setData({
     display: {
       emoji: 'none',
@@ -54,7 +54,7 @@ let hideSoftKeyboard = (context) => {
   });
 };
 
-let hideKeyboard = (context) => {
+const hideKeyboard = (context) => {
   let keyboardHeight = 0;
   let { adapterHeight } = context.data;
   setKeyboardPos(context, keyboardHeight, adapterHeight);
@@ -127,6 +127,15 @@ const stopPlayMusic = (context) => {
   let newMusicComponent = null, isPlaying = false;
   updatePlayStatus(context, { newMusicComponent, isPlaying }, (message) => {
     utils.extend(message, { isPlaying });
+  });
+};
+
+const getImageUrls = (context) => {
+  let {messageList} = context.data;
+  return messageList.filter(message => {
+    return message.name == 'ImageMessage';
+  }).map(message => {
+    return message.content.imageUri;
   });
 };
 
@@ -445,6 +454,17 @@ Page({
       isPlaying: false
     });
     stopPlayMusic(this);
+  },
+  onPreviewImage: function(event){
+    let currentImageUrl = event.detail;
+    let urls = getImageUrls(this);
+    if(utils.isEmpty(urls)){
+      urls.push(currentImageUrl);
+    }
+    wx.previewImage({
+      current: currentImageUrl,
+      urls: urls
+    })
   },
   onHide: function(){
     hideKeyboard(this);

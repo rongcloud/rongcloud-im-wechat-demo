@@ -19,6 +19,9 @@ Component({
    * 组件的方法列表
    */
   methods: {
-   
+    onPreviewImage: function(){
+      let { message: { content: { imageUri } } } = this.properties;
+      this.triggerEvent('onpreviewimage', imageUri);
+    }
   }
 })

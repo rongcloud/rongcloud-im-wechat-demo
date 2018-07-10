@@ -1,1 +1,1 @@
-<image class='rong-message-image' style = 'width:{{message.content.extra.width}}px;height:{{message.content.extra.height}}px;max-width:99%;' src='{{message.content.imageUri}}'></image>
+<image class='rong-message-image' style = 'width:{{message.content.extra.width}}px;height:{{message.content.extra.height}}px;max-width:99%;' src='{{message.content.imageUri}}' bindtap='onPreviewImage'></image>

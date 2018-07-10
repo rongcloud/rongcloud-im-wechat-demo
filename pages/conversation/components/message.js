@@ -38,6 +38,10 @@ Component({
     },
     onMusicStop: function (event){
       this.triggerEvent('onmusicstop', event.detail)
+    },
+    onPreviewImage: function(event){
+      let {detail} = event;
+      this.triggerEvent('onpreviewimage', detail);
     }
   }
 })
