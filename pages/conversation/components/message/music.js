@@ -44,6 +44,7 @@ Component({
         this.setData({
           isPlaying: false
         });
+        this.triggerEvent('onstopmusic', this)
       });
       innerAudioContext.onError((res) => {
         this.setData({

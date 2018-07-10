@@ -98,6 +98,38 @@ const getMessageList = (context, params) => {
   });
 };
 
+const updatePlayStatus = (context, { newMusicComponent, isPlaying}, callback) => {
+  let { data: { messageList, playingMusicComponent} } = context;
+  callback = callback || utils.noop;
+  messageList.map((message) => {
+    callback(message);
+    return message;
+  });
+  if (playingMusicComponent) {
+    playingMusicComponent.setData({
+      isPlaying
+    });
+  }
+  if (newMusicComponent){
+    context.setData({
+      playingMusicComponent: newMusicComponent,
+      messageList
+    });
+  }else{
+    context.setData({
+      messageList
+    });
+  }
+  
+};
+
+const stopPlayMusic = (context) => {
+  let newMusicComponent = null, isPlaying = false;
+  updatePlayStatus(context, { newMusicComponent, isPlaying }, (message) => {
+    utils.extend(message, { isPlaying });
+  });
+};
+
 Page({
   data: {
     content: '',
@@ -370,32 +402,16 @@ Page({
     });
   },
   onPlayMusic: function (event){
-    let newPlayComponent = event.detail;
+    let newMusicComponent = event.detail;
     let { playingMusicComponent, messageList } = this.data;
-    let { properties: { message: { messageUId: newPlayId}}} = newPlayComponent
+    let { properties: { message: { messageUId: newPlayId}}} = newMusicComponent
     let playingId = '';
-
-    let updatePlayStatus = () => {
-      messageList.map((message) => {
-        let { messageUId } = message;
-        if (messageUId == playingId) {
-          message.isPlaying = false;
-        }
-        if (messageUId == newPlayId) {
-          message.isPlaying = true;
-        }
-        return message;
-      });
-      this.setData({
-        playingMusicComponent: newPlayComponent,
-        messageList
-      });
-    };
     
+    // 连续点击播放不同音乐
     if (playingMusicComponent) {
       let { properties: { message } } = playingMusicComponent;
       playingId = message.messageUId;
-      //点击不同音频，先停止上一个播放
+      //先停止上一个，再播放
       let isDiffMusic = (playingId != newPlayId);
       if (isDiffMusic) {
         let { innerAudioContext } = playingMusicComponent.data;
@@ -405,7 +421,16 @@ Page({
         innerAudioContext.stop();
       }
     }
-    updatePlayStatus();
+    let isPlaying = false;
+    updatePlayStatus(this, { newMusicComponent, isPlaying}, (message) => {
+      let { messageUId } = message;
+      // 默认为未播放状态
+      isPlaying = false;
+      if (messageUId == newPlayId) {
+        isPlaying = true;
+      }
+      utils.extend(message, { isPlaying});
+    });
   },
   onMusicStop: function(event){
     let musicComponent = event.detail;
@@ -416,17 +441,13 @@ Page({
       let { data: { innerAudioContext } } = playingMusicComponent;
       innerAudioContext.stop();
     }
-    messageList.map((message) => {
-      if (messageUId == message.messageUId) {
-        message.isPlaying = false;
-      }
-      return message;
+    musicComponent.setData({
+      isPlaying: false
     });
-    this.setData({
-      messageList
-    });
+    stopPlayMusic(this);
   },
   onHide: function(){
     hideKeyboard(this);
+    stopPlayMusic(this);
   }
 })
