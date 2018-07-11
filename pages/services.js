@@ -113,8 +113,9 @@ let User = {};
 let getUserIndex = (name, max) => {
   console.log(utils.toUnicode(name));
   var index = utils.toUnicode(name).slice(-1);
-  while (isNaN(index)) {
-    index = utils.toUnicode(num).slice(-1);
+  //转 unicode 后最后一个字符不是数字，给固定🈯值
+  if (isNaN(index)){
+    index = max;
   }
   if (index > max){
     index = max;
