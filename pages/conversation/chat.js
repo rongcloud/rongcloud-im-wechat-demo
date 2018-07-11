@@ -4,7 +4,7 @@ const { adapterHeight } = utils.getAdapterheight();
 const { globalData } = getApp();
 const { Service: { Status, Message, File } } = globalData;
 
-const RongEmoji = require('../lib/RongIMEmoji.js');
+const RongEmoji = require('../lib/RongIMEmoji-2.2.6.js');
 RongEmoji.init();
 
 const recorderManager = wx.getRecorderManager()

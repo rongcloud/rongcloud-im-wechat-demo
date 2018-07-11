@@ -204,6 +204,7 @@ module.exports = (function() {
     var setupEmojiRegExp = function(emojiFac ,tagReg) {
         emojiSymbols.length = 0;
         emojiHtmls.length = 0;
+        emojiDetails.length = 0;
 
         var tags = [];
         var lang = configs.lang;

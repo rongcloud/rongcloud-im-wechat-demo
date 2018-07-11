@@ -1,3 +1,10 @@
+/*
+ * 开发者后台: https://developer.rongcloud.cn
+ * 集成开发获取 Token: 请前往开发者后台 -> 应用 -> API 调试 -> 点击 `获取 Token` -> 输入对应信息得到用户 Token
+ * 生产应用获取 Token: 在开发者自己的应用服务器通过融云 Server SDK 获取用户 Token，并缓存在应用服务器
+ * Server SDK: http://www.rongcloud.cn/docs/server_sdk_api/index.html
+*/
+
 module.exports = {
   UserList: [
     {
@@ -97,4 +104,3 @@ module.exports = {
       poster: "https://rongcloud-image.cn.ronghub.com/FqQJTNDGVyZuXSqTExxxiQovo1iw?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:HGCMGN8d_bg4kHBInOQqa01v0dA="
     }]
 }
-

@@ -58,6 +58,12 @@ websdk-miniprogram
 
 开发者需要在自己应用服务器使用 [Server SDK](http://www.rongcloud.cn/docs/server_sdk_api/index.html) 向融云 IM Server 获取用户 Token
 
+>图片消息
+
+融云内置 ImageMessage 包含原图 `imageUri` 、缩略图 `content` 两个属性
+
+目前在小程序中无法直接获取 Base64 编码图片，可将原图上传到应用服务器进行转码，缩略图必须小于 `30KB`
+
 >语音消息
 
 融云内置 VoiceMessage 类型音频格式为 Base64 格式 AMR ，因此示例中音频无法直接和其他端互通 (Android、iOS)，但可间接支持播放:
@@ -67,7 +73,11 @@ websdk-miniprogram
 2、可通过示例语音消息中的 URL 播放远程音频文件
 
 
-### 参考文档
+### 参考
+
+官网: http://www.rongcloud.cn/
+
+开发者后台: https://developer.rongcloud.cn/
 
 API 示例: https://rongcloud.github.io/websdk-demo/api-test.html
 

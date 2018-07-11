@@ -248,6 +248,7 @@ Message.sendImage = (params) => {
   let { type, targetId, content, imageUri, extra } = params;
   return sendMessage(type, targetId, {
     type: 'image',
+    content,
     imageUri,
     extra
   })
