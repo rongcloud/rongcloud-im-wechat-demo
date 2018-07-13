@@ -7,8 +7,6 @@ const { Service: { Status, Message, File } } = globalData;
 const RongEmoji = require('../lib/RongIMEmoji-2.2.6.js');
 RongEmoji.init();
 
-const recorderManager = wx.getRecorderManager()
-
 const softKeyboardHeight = 210;
 
 const getToView = (context) => {
@@ -146,6 +144,317 @@ const getImageUrls = (context) => {
   });
 };
 
+const onLoad = (context, query) => {
+  let { title, type, targetId } = query;
+  wx.setNavigationBarTitle({
+    title
+  });
+  context.setData({
+    adapterHeight: adapterHeight,
+    type,
+    targetId
+  });
+  let keyboardHeight = 0;
+  setKeyboardPos(context, keyboardHeight, adapterHeight);
+
+  let position = 0;
+  let count = 15;
+  getMessageList(context, { type, targetId, position, count });
+
+  Message.watch((message) => {
+    let { messageList } = context.data;
+    messageList.push(message);
+    context.setData({
+      messageList,
+      toView: message.uId
+    });
+  });
+};
+
+const onUnload = (context) => {
+  let { playingVoice, playingMusicComponent } = context.data;
+  if (playingVoice) {
+    playingMusicComponent.stop();
+  }
+  if (playingMusicComponent) {
+    playingMusicComponent.stop();
+  }
+};
+
+const showVoice = (context) => {
+  let { adapterHeight } = context.data;
+  context.setData({
+    isShowKeyboard: false
+  });
+  hideKeyboard(context);
+};
+
+const showKeyboard = (context) => {
+  context.setData({
+    isShowKeyboard: true
+  });
+  hideKeyboard(context);
+};
+
+const recorderManager = wx.getRecorderManager()
+
+const startRecording = (context) => {
+  context.setData({
+    isRecording: true
+  });
+  let record = () => {
+    recorderManager.start({
+      format: 'mp3'
+    });
+  };
+  wx.getSetting({
+    success(res) {
+      if (!res.authSetting['scope.record']) {
+        wx.authorize({
+          scope: 'scope.record',
+          success: record
+        })
+      } else {
+        record();
+      }
+    }
+  })
+};
+
+const stopRecording = (context) => {
+  context.setData({
+    isRecording: false
+  });
+  recorderManager.onStop((res) => {
+    console.log('recorder stop', res)
+    const { tempFilePath, duration } = res
+    File.upload({
+      path: tempFilePath
+    }).then(file => {
+      console.log(file)
+      let content = {
+        content: file.downloadUrl,
+        duration: Math.ceil(duration / 1000)
+      };
+      let { type, targetId, messageList } = context.data;
+      Message.sendVoice({
+        type,
+        targetId,
+        content
+      }).then(message => {
+        messageList.push(message);
+        context.setData({
+          messageList,
+          toView: message.uId
+        });
+      });
+    });
+  })
+  recorderManager.stop();
+};
+
+const showEmojis = (context) => {
+  showSoftKeyboard(context, {
+    emoji: 'block',
+    more: 'none'
+  });
+};
+
+const showMore = (context) => {
+  showSoftKeyboard(context, {
+    emoji: 'none',
+    more: 'block'
+  });
+};
+
+const selectEmoji = (context, event) => {
+  var content = context.data.content;
+  var { emoji } = event.target.dataset;
+  content = content + emoji;
+  context.setData({
+    content: content,
+    isShowEmojiSent: true
+  });
+};
+
+const sendText = (context) => {
+  let { content, type, targetId, messageList } = context.data;
+  context.setData({
+    content: '',
+    isShowEmojiSent: false
+  });
+  if (content.length == 0) {
+    return;
+  }
+  Message.sendText({
+    type,
+    targetId,
+    content
+  }).then(message => {
+    messageList.push(message);
+    context.setData({
+      messageList,
+      toView: message.uId
+    });
+  });
+};
+
+const getMoreMessages = (context) => {
+  let { type, targetId, hasMore } = context.data;
+  let position = null;
+  let count = 5;
+  if (hasMore) {
+    context.setData({
+      isAllowScroll: false
+    });
+    getMessageList(context, { type, targetId, position, count });
+  }
+};
+
+const sendImage =  (context) => {
+  wx.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    sourceType: ['album', 'camera'],
+    success: (res) => {
+      let { tempFilePaths } = res;
+      let tempFilePath = tempFilePaths[0];
+      wx.getImageInfo({
+        src: tempFilePath,
+        success: (res) => {
+          let extra = utils.compress(res);
+          let { type, targetId, messageList } = context.data;
+
+          let name = 'ImageMessage';
+          let content = {
+            imageUri: tempFilePath,
+            extra
+          };
+          let message = Message.create({
+            type,
+            targetId,
+            name,
+            content
+          });
+
+          messageList.push(message);
+          context.setData({
+            messageList,
+            toView: message.uId
+          });
+
+          File.upload({
+            path: tempFilePath
+          }).then(result => {
+            let { downloadUrl: imageUri } = result;
+            Message.sendImage({
+              type,
+              targetId,
+              imageUri,
+              extra
+            }).then(message => {
+            });
+          });
+        }
+      })
+    }
+  })
+};
+
+const sendMusic = (context) => {
+  let { content, type, targetId, messageList } = context.data;
+  Message.sendMusic({
+    type,
+    targetId
+  }).then(message => {
+    messageList.push(message);
+    context.setData({
+      messageList,
+      toView: message.uId
+    });
+  });
+};
+
+const playVoice = (context, event) => {
+  let voiceComponent = event.detail;
+  let { playingVoice } = context.data;
+  if (playingVoice) {
+    let playingId = playingVoice.__wxExparserNodeId__;
+    let voiceId = voiceComponent.__wxExparserNodeId__;
+    // 两次播放为同个音频，状态保持不变
+    if (playingId == voiceId) {
+      return;
+    }
+    let { innerAudioContext } = playingVoice.data;
+    playingVoice.setData({
+      isPlaying: false
+    });
+    innerAudioContext.stop();
+  }
+  context.setData({
+    playingVoice: voiceComponent
+  });
+};
+
+const playMusic = (context, event) => {
+  let newMusicComponent = event.detail;
+  let { playingMusicComponent, messageList } = context.data;
+  let { properties: { message: { messageUId: newPlayId } } } = newMusicComponent
+  let playingId = '';
+
+  // 连续点击播放不同音乐
+  if (playingMusicComponent) {
+    let { properties: { message } } = playingMusicComponent;
+    playingId = message.messageUId;
+    //先停止上一个，再播放
+    let isDiffMusic = (playingId != newPlayId);
+    if (isDiffMusic) {
+      let { innerAudioContext } = playingMusicComponent.data;
+      playingMusicComponent.setData({
+        isPlaying: false
+      });
+      innerAudioContext.stop();
+    }
+  }
+  let isPlaying = false;
+  updatePlayStatus(context, { newMusicComponent, isPlaying }, (message) => {
+    let { messageUId } = message;
+    // 默认为未播放状态
+    isPlaying = false;
+    if (messageUId == newPlayId) {
+      isPlaying = true;
+    }
+    utils.extend(message, { isPlaying });
+  });
+};
+
+const previewImage = (context, event) => {
+  let currentImageUrl = event.detail;
+  let urls = getImageUrls(context);
+  if (utils.isEmpty(urls)) {
+    urls.push(currentImageUrl);
+  }
+  wx.previewImage({
+    current: currentImageUrl,
+    urls: urls
+  })
+};
+
+const stopMusic = (context, event) => {
+  let musicComponent = event.detail;
+  let { properties: { message: { messageUId } } } = musicComponent;
+
+  let { messageList, playingMusicComponent } = context.data;
+  if (playingMusicComponent) {
+    let { data: { innerAudioContext } } = playingMusicComponent;
+    innerAudioContext.stop();
+  }
+  musicComponent.setData({
+    isPlaying: false
+  });
+  stopPlayMusic(context);
+};
+
 Page({
   data: {
     content: '',
@@ -167,114 +476,48 @@ Page({
     isAllowScroll: true,
     scrollTop: 0
   },
-
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  onLoad: function (query) {
-    let { title, type, targetId} = query;
-    wx.setNavigationBarTitle({
-      title
-    });
-    this.setData({
-      adapterHeight: adapterHeight,
-      type, 
-      targetId
-    });
-    let keyboardHeight = 0;
-    setKeyboardPos(this, keyboardHeight, adapterHeight);
-
-    let position = 0;
-    let count = 15;
-    getMessageList(this, { type, targetId, position, count});
-
-    Message.watch((message) => {
-      let {messageList} = this.data;
-      messageList.push(message);
-      this.setData({
-        messageList,
-        toView: message.uId
-      });
-    });
+  hideKeyboard: function () {
+    hideKeyboard(this);
+  },
+  selectEmoji: function (event) {
+    selectEmoji(this, event);
+  },
+  sendText: function () {
+    sendText(this);
+  },
+  getMoreMessages: function (event) {
+    getMoreMessages(this);
+  },
+  sendImage: function () {
+    sendImage(this);
+  },
+  sendMusic: function () {
+    sendMusic(this);
   },
   showVoice: function(){
-    let { adapterHeight } = this.data;
-    this.setData({
-      isShowKeyboard: false
-    });
-    hideKeyboard(this);
+    showVoice(this);
   },
   showKeyboard: function(){
-    this.setData({
-      isShowKeyboard: true
-    });
-    hideKeyboard(this);
+    showKeyboard(this);
   },
   startRecording: function(){
-    this.setData({
-      isRecording: true
-    });
-    let record = () => {
-      recorderManager.start({
-        format: 'mp3'
-      });
-    };
-    wx.getSetting({
-      success(res) {
-        if (!res.authSetting['scope.record']) {
-          wx.authorize({
-            scope: 'scope.record',
-            success: record
-          })
-        }else{
-          record();
-        }
-      }
-    })
-
+    startRecording(this);
   },
   stopRecording: function(){
-    this.setData({
-      isRecording: false
-    });
-    recorderManager.onStop((res) => {
-      console.log('recorder stop', res)
-      const { tempFilePath, duration } = res
-      File.upload({
-        path: tempFilePath
-      }).then(file => {
-        console.log(file)
-        let content = {
-          content: file.downloadUrl,
-          duration: Math.ceil(duration / 1000)
-        };
-        let { type, targetId, messageList } = this.data;
-        Message.sendVoice({
-          type,
-          targetId,
-          content
-        }).then(message => {
-          messageList.push(message);
-          this.setData({
-            messageList,
-            toView: message.uId
-          });
-        });
-      });
-    })
-    recorderManager.stop();
+    stopRecording(this);
   },
   showEmojis: function(){
-    showSoftKeyboard(this, {
-      emoji: 'block',
-      more: 'none'
-    });
+    showEmojis(this);
   },
   showMore: function(){
-    showSoftKeyboard(this, {
-      emoji: 'none',
-      more: 'block'
-    });
+    showMore(this);
+  },
+  // 以下是事件
+  onLoad: function (query) {
+    onLoad(this, query)
+  },
+  onUnload: function () {
+    onUnload(this);
   },
   onInput: function(event){
     this.setData({
@@ -287,196 +530,17 @@ Page({
     setKeyboardPos(this, height, adapterHeight);
     hideSoftKeyboard(this);
   },
-  onUnload: function(){
-    let { playingVoice, playingMusicComponent} = this.data;
-    if (playingVoice){
-      playingMusicComponent.stop();
-    }
-    if (playingMusicComponent){
-      playingMusicComponent.stop();
-    }
-  },
-  hideKeyboard: function () {
-    hideKeyboard(this);
-  },
-  selectEmoji: function (event){
-    var content = this.data.content;
-    var { emoji } = event.target.dataset;
-    content = content + emoji;
-    this.setData({
-      content: content,
-      isShowEmojiSent: true
-    });
-  },
-  sendText: function(){
-    let {content, type, targetId, messageList} = this.data;
-    this.setData({
-      content: '',
-      isShowEmojiSent: false
-    });
-    if(content.length == 0){
-      return;
-    }
-    Message.sendText({
-      type, 
-      targetId,
-      content
-    }).then(message => {
-      messageList.push(message);
-      this.setData({
-        messageList,
-        toView: message.uId
-      });
-    });
-  },
-  getMoreMessages: function(event){
-    let {type, targetId, hasMore} = this.data;
-    let position = null;
-    let count = 5;
-    if (hasMore){
-      this.setData({
-        isAllowScroll: false
-      });
-      getMessageList(this, { type, targetId, position, count });
-    }
-  },
-  sendImage: function(){
-    wx.chooseImage({
-      count: 1, 
-      sizeType: ['compressed'], 
-      sourceType: ['album', 'camera'], 
-      success:  (res) => {
-        let { tempFilePaths} = res;
-        let tempFilePath = tempFilePaths[0];
-        wx.getImageInfo({
-          src: tempFilePath,
-          success:  (res) =>  {
-            let extra = utils.compress(res);
-            let { type, targetId, messageList } = this.data;
-
-            let name = 'ImageMessage';
-            let content = {
-              imageUri: tempFilePath,
-              extra
-            };
-            let message = Message.create({
-              type,
-              targetId,
-              name,
-              content
-            });
-            
-            messageList.push(message);
-            this.setData({
-              messageList,
-              toView: message.uId
-            });
-            
-            File.upload({
-              path: tempFilePath
-            }).then(result => {
-              let { downloadUrl: imageUri} = result;
-              Message.sendImage({
-                type, 
-                targetId,
-                imageUri,
-                extra
-              }).then(message => {
-              });
-            });
-          }
-        })
-      }
-    })
-  },
-  sendMusic: function(){
-    let { content, type, targetId, messageList } = this.data;
-    Message.sendMusic({
-      type,
-      targetId
-    }).then(message => {
-      messageList.push(message);
-      this.setData({
-        messageList,
-        toView: message.uId
-      });
-    });
-  },
   onPlayVoice: function(event){
-    let voiceComponent = event.detail;
-    let {playingVoice} = this.data;
-    if (playingVoice){
-      let playingId = playingVoice.__wxExparserNodeId__;
-      let voiceId = voiceComponent.__wxExparserNodeId__;
-      // 两次播放为同个音频，状态保持不变
-      if (playingId == voiceId){
-          return;
-      }
-      let { innerAudioContext } = playingVoice.data;
-      playingVoice.setData({
-        isPlaying: false
-      });
-      innerAudioContext.stop();
-    }
-    this.setData({
-      playingVoice: voiceComponent
-    });
+    playVoice(this, event);
   },
   onPlayMusic: function (event){
-    let newMusicComponent = event.detail;
-    let { playingMusicComponent, messageList } = this.data;
-    let { properties: { message: { messageUId: newPlayId}}} = newMusicComponent
-    let playingId = '';
-    
-    // 连续点击播放不同音乐
-    if (playingMusicComponent) {
-      let { properties: { message } } = playingMusicComponent;
-      playingId = message.messageUId;
-      //先停止上一个，再播放
-      let isDiffMusic = (playingId != newPlayId);
-      if (isDiffMusic) {
-        let { innerAudioContext } = playingMusicComponent.data;
-        playingMusicComponent.setData({
-          isPlaying: false
-        });
-        innerAudioContext.stop();
-      }
-    }
-    let isPlaying = false;
-    updatePlayStatus(this, { newMusicComponent, isPlaying}, (message) => {
-      let { messageUId } = message;
-      // 默认为未播放状态
-      isPlaying = false;
-      if (messageUId == newPlayId) {
-        isPlaying = true;
-      }
-      utils.extend(message, { isPlaying});
-    });
+    playMusic(this, event);
   },
   onMusicStop: function(event){
-    let musicComponent = event.detail;
-    let { properties: { message: { messageUId } }} = musicComponent;
-
-    let { messageList, playingMusicComponent } = this.data;
-    if (playingMusicComponent){
-      let { data: { innerAudioContext } } = playingMusicComponent;
-      innerAudioContext.stop();
-    }
-    musicComponent.setData({
-      isPlaying: false
-    });
-    stopPlayMusic(this);
+    stopMusic(this, event);
   },
   onPreviewImage: function(event){
-    let currentImageUrl = event.detail;
-    let urls = getImageUrls(this);
-    if(utils.isEmpty(urls)){
-      urls.push(currentImageUrl);
-    }
-    wx.previewImage({
-      current: currentImageUrl,
-      urls: urls
-    })
+    previewImage(this, event);
   },
   onHide: function(){
     hideKeyboard(this);
