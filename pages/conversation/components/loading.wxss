@@ -1,5 +1,5 @@
 .rong-loading{
-  padding-top: 15rpx;
+  padding-top: 10rpx;
 }
 .rong-loading-process{
     width: 40rpx;

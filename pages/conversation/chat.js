@@ -88,11 +88,20 @@ const getMessageList = (context, params) => {
         hasMore: hasMore
       });
     }
-    context.setData({
-      messageList: messageList,
-      isAllowScroll: true,
-      toView: toView
-    });
+
+    if(isFirst){
+      context.setData({
+        messageList: messageList,
+        isAllowScroll: true,
+        toView: toView
+      });
+    }else{
+      context.setData({
+        messageList: messageList,
+        isAllowScroll: true
+      });
+    } 
+    
   });
 };
 
@@ -155,7 +164,8 @@ Page({
     toView: '',
     playingVoice: null,
     playingMusicComponent: null,
-    isAllowScroll: true
+    isAllowScroll: true,
+    scrollTop: 0
   },
 
   /**
@@ -322,7 +332,7 @@ Page({
   getMoreMessages: function(event){
     let {type, targetId, hasMore} = this.data;
     let position = null;
-    let count = 6;
+    let count = 20;
     if (hasMore){
       this.setData({
         isAllowScroll: false
