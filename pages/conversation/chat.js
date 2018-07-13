@@ -79,9 +79,6 @@ const getMessageList = (context, params) => {
       let index = messageList.length - 1;
       let message = messageList[index] || {};
       toView = message.uId || '';
-    }else{
-      let message = messageList[0] || {};
-      toView = message.uId || '';
     }
     let isFirst = (position == 0);
     if (!hasMore && !isFirst){
@@ -93,6 +90,7 @@ const getMessageList = (context, params) => {
     }
     context.setData({
       messageList: messageList,
+      isAllowScroll: true,
       toView: toView
     });
   });
@@ -156,7 +154,8 @@ Page({
     hasMore: true,
     toView: '',
     playingVoice: null,
-    playingMusicComponent: null
+    playingMusicComponent: null,
+    isAllowScroll: true
   },
 
   /**
@@ -325,6 +324,9 @@ Page({
     let position = null;
     let count = 6;
     if (hasMore){
+      this.setData({
+        isAllowScroll: false
+      });
       getMessageList(this, { type, targetId, position, count });
     }
   },

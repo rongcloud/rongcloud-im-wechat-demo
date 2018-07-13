@@ -1,6 +1,7 @@
 {
   "usingComponents": {
     "Message": "./components/message",
-    "WithoutMessage": "./components/message/without"
+    "WithoutMessage": "./components/message/without",
+    "Loading": "./components/loading"
   }
 }

@@ -1,0 +1,12 @@
+<view class='rong-loading'>
+  <view class="rong-loading-process">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </view>
+</view>
