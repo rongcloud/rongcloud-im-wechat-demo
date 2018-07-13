@@ -332,7 +332,7 @@ Page({
   getMoreMessages: function(event){
     let {type, targetId, hasMore} = this.data;
     let position = null;
-    let count = 20;
+    let count = 5;
     if (hasMore){
       this.setData({
         isAllowScroll: false

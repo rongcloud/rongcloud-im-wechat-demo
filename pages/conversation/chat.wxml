@@ -1,5 +1,5 @@
 <view class='rong-chat' style='bottom: {{bottom}}px;'>
-  <scroll-view class='rong-messages' bindtouchstart='hideKeyboard' scroll-y  bindscrolltoupper='getMoreMessages' scroll-into-view='U-{{toView}}' scroll-with-animation='{{true}}' bindscroll='onScroll'>
+  <scroll-view class='rong-messages' bindtouchstart='hideKeyboard' scroll-y  bindscrolltoupper='getMoreMessages' scroll-into-view='U-{{toView}}' scroll-with-animation='{{true}}' >
     <Loading style='visibility:{{!isAllowScroll ? "visible" : "hidden"}}'></Loading>
     <WithoutMessage wx:if='{{!hasMore}}' id='message-notify-without'>没有更多啦~</WithoutMessage>
     <Message wx:for="{{messageList}}" wx:key='{{message.uId}}' wx:for-item="message" message='{{message}}' id='U-{{message.uId}}' bindonplay='onPlayVoice' bindonplaymusic='onPlayMusic' bindonmusicstop='onMusicStop' bindonpreviewimage='onPreviewImage'>
