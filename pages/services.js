@@ -1,4 +1,4 @@
-const RongIMLib = require('./lib/RongIMLib.miniprogram-1.0.4.js');
+const RongIMLib = require('./lib/RongIMLib.miniprogram-1.0.8.js');
 const RongIMClient = RongIMLib.RongIMClient;
 
 const utils = require('./utils/utils.js');

@@ -1,5 +1,37 @@
 'use strict';
+/*
+    1、bugfix 切换用户后, 依然获取到前一个用户的 conversationList
+    修改位置:
+      2211 行增加:
+          this.clearCache();
+      2751-2753 行增加:
+          RongIMClient.prototype.clearCache = function () {
+              RongIMClient._dataAccessProvider.clearCache();
+          };
+      8040-8044 行增加:
+          ServerDataProvider.prototype.clearCache = function () {
+              var memoryStore = RongIMLib.RongIMClient._memoryStore || {};
+              memoryStore.conversationList = [];
+              memoryStore.isSyncRemoteConverList = true;
+          };
 
+    2、bugfix 主动调用 disconnect 后, 状态监听 同时收到 用户主动断开连接 和 网络不可用
+    修改位置:
+      3529 - 2532 行增加:
+        if (me.connectionStatus === RongIMLib.ConnectionStatus.DISCONNECTED && code === RongIMLib.ConnectionStatus.NETWORK_UNAVAILABLE) {
+          me.connectionStatus = code;
+          return;
+        }
+
+    3、RCE 消息重复在 sdk 中声明
+    修改时间: 2018-10-10
+    修改位置:
+      注释掉以下代码:
+        RCEUpdateStatusMessage: { objectName: "RCE:UpdateStatus", msgTag: new RongIMLib.MessageTag(false, false) }
+        RCEUpdateStatusMessage: "RCEUpdateStatusMessage"
+        RCEUpdateStatusMessage: "RCEUpdateStatusMessage"
+
+ */
 module.exports = (function (wx) {
 
   var Modules = {
@@ -164,6 +196,9 @@ module.exports = (function (wx) {
       };
       this.setIsPullSend = function (b) {
         a.isPullSend = !!b;
+      };
+      this.setSendBoxSyncTime = function (b) {
+        a.sendBoxSyncTime = b;
       };
       this.toArrayBuffer = function () {
         return a;
@@ -903,8 +938,8 @@ module.exports = (function (wx) {
           watchers = [watcher];
         }
         if (tools.isArray(watcher)) {
-          for (let i = 0, len = watchers.length; i < len; i++) {
-            for (let j = 0; j < this.watcherList.length; j++) {
+          for (var i = 0, len = watchers.length; i < len; i++) {
+            for (var j = 0; j < this.watcherList.length; j++) {
               if (watchers[i] === this.watcherList[j]) {
                 this.removeAt(i);
                 break;
@@ -915,7 +950,7 @@ module.exports = (function (wx) {
       }
 
       this.notify = function (content) {
-        for (let i = 0, len = this.watcherList.length; i < len; i++) {
+        for (var i = 0, len = this.watcherList.length; i < len; i++) {
           this.watcherList[i](content);
         }
       }
@@ -1311,6 +1346,7 @@ module.exports = (function (wx) {
     })(RongIMLib.DiscussionInviteStatus || (RongIMLib.DiscussionInviteStatus = {}));
     var DiscussionInviteStatus = RongIMLib.DiscussionInviteStatus;
     (function (ErrorCode) {
+      ErrorCode[ErrorCode["MINI_PROGAM_SERVICE_NOT_OPEN"] = 20000] = "MINI_PROGAM_SERVICE_NOT_OPEN";
       /**
        * 发送频率过快
        */
@@ -1711,6 +1747,8 @@ module.exports = (function (wx) {
        VoIP 不可用
        */
       ErrorCode[ErrorCode["VOIP_NOT_AVALIABLE"] = 18] = "VOIP_NOT_AVALIABLE";
+
+      
     })(RongIMLib.ErrorCode || (RongIMLib.ErrorCode = {}));
     var ErrorCode = RongIMLib.ErrorCode;
     (function (VoIPMediaType) {
@@ -2008,8 +2046,8 @@ module.exports = (function (wx) {
           SuspendMessage: { objectName: "RC:CsSp", msgTag: new RongIMLib.MessageTag(false, false) },
           TerminateMessage: { objectName: "RC:CsEnd", msgTag: new RongIMLib.MessageTag(false, false) },
           CustomerStatusUpdateMessage: { objectName: "RC:CsUpdate", msgTag: new RongIMLib.MessageTag(false, false) },
-          ReadReceiptMessage: { objectName: "RC:ReadNtf", msgTag: new RongIMLib.MessageTag(false, false) },
-          RCEUpdateStatusMessage: { objectName: "RCE:UpdateStatus", msgTag: new RongIMLib.MessageTag(false, false) }
+          ReadReceiptMessage: { objectName: "RC:ReadNtf", msgTag: new RongIMLib.MessageTag(false, false) }
+          // RCEUpdateStatusMessage: { objectName: "RCE:UpdateStatus", msgTag: new RongIMLib.MessageTag(false, false) }
         };
         // if ('RongCallLib' in RongIMLib) {
         RongIMClient.MessageParams["AcceptMessage"] = { objectName: "RC:VCAccept", msgTag: new RongIMLib.MessageTag(false, false) };
@@ -2056,8 +2094,8 @@ module.exports = (function (wx) {
           MediaModifyMessage: "MediaModifyMessage",
           MemberModifyMessage: "MemberModifyMessage",
           JrmfReadPacketMessage: "JrmfReadPacketMessage",
-          JrmfReadPacketOpenedMessage: "JrmfReadPacketOpenedMessage",
-          RCEUpdateStatusMessage: "RCEUpdateStatusMessage"
+          JrmfReadPacketOpenedMessage: "JrmfReadPacketOpenedMessage"
+          // RCEUpdateStatusMessage: "RCEUpdateStatusMessage"
         };
 
         RongIMClient.Conversation = RongIMClient._dataAccessProvider.Conversation;
@@ -2187,6 +2225,7 @@ module.exports = (function (wx) {
        * 清理所有连接相关的变量
        */
       RongIMClient.prototype.logout = function () {
+        this.clearCache();
         RongIMClient._dataAccessProvider.logout();
       };
       /**
@@ -2736,6 +2775,9 @@ module.exports = (function (wx) {
       };
       RongIMClient.prototype.searchMessageByContent = function (conversationType, targetId, keyword, timestamp, count, total, callback) {
         RongIMClient._dataAccessProvider.searchMessageByContent(conversationType, targetId, keyword, timestamp, count, total, callback);
+      };
+      RongIMClient.prototype.clearCache = function () {
+          RongIMClient._dataAccessProvider.clearCache();
       };
       RongIMClient.prototype.clearConversations = function (callback) {
         var conversationTypes = [];
@@ -3501,6 +3543,10 @@ module.exports = (function (wx) {
         if (typeof Channel._ConnectionStatusListener == "object" && "onChanged" in Channel._ConnectionStatusListener) {
           var me = this;
           me.socket.on("StatusChanged", function (code) {
+            if (me.connectionStatus === RongIMLib.ConnectionStatus.DISCONNECTED && code === RongIMLib.ConnectionStatus.NETWORK_UNAVAILABLE) {
+              me.connectionStatus = code;
+              return;
+            }
             me.connectionStatus = code;
             if (code === RongIMLib.ConnectionStatus.NETWORK_UNAVAILABLE) {
               var temp = RongIMLib.RongIMClient._storageProvider.getItemKey("navi");
@@ -3697,7 +3743,7 @@ module.exports = (function (wx) {
       function Client(token, appId) {
         this.timeoutMillis = 100000;
         this.timeout_ = 0;
-        this.sdkVer = "2.3.0";
+        this.sdkVer = "2.3.1";
         this.apiVer = Math.floor(Math.random() * 1e6);
         this.channel = null;
         this.handler = null;
@@ -3816,7 +3862,7 @@ module.exports = (function (wx) {
         });
       };
       Client.prototype.queryMessage = function (_topic, _data, _targetId, _qos, _callback, pbtype) {
-        RongIMLib.RongIMClient.ready((_client) => {
+        RongIMLib.RongIMClient.ready(function(_client) {
           if (_topic == "userInf") {
             if (Client.userInfoMapping[_targetId]) {
               _callback.onSuccess(Client.userInfoMapping[_targetId]);
@@ -3840,13 +3886,17 @@ module.exports = (function (wx) {
           return;
         }
         this.SyncTimeQueue.state = "pending";
+        var storageSyncTime = RongIMLib.MessageUtil.getSyncTime();
         if (temp.type != 2) {
           //普通消息
-          time = RongIMLib.RongIMClient._storageProvider.getItem(this.userId) || '0';
+          time = storageSyncTime.received;
           modules = new Modules.SyncRequestMsg();
           modules.setIspolling(false);
           str = "pullMsg";
           target = this.userId;
+
+          var sendBoxTime = storageSyncTime.send;
+          modules.setSendBoxSyncTime(sendBoxTime);
         }
         else {
           //聊天室消息
@@ -3870,6 +3920,18 @@ module.exports = (function (wx) {
         }
         modules.setSyncTime(time);
         //发送queryMessage请求
+
+        var isInCache = function(messageUId){
+          var result = false;
+          for(var i = 0, len = me.cacheMessageIds.length; i < len; i++){
+            var uId = me.cacheMessageIds[i];
+            if(uId == messageUId){
+              result = true;
+              break;
+            }
+          }
+          return result;
+        };
         this.queryMessage(str, RongIMLib.MessageUtil.ArrayForm(modules.toArrayBuffer()), target, Qos.AT_LEAST_ONCE, {
           onSuccess: function (collection) {
             var sync = RongIMLib.MessageUtil.int64ToTimestamp(collection.syncTime), symbol = target;
@@ -3878,25 +3940,17 @@ module.exports = (function (wx) {
               symbol += Bridge._client.userId + "CST";
               RongIMLib.RongIMClient._memoryStore.lastReadTime.set(symbol, sync);
             }
-            else {
-              var storage = RongIMLib.RongIMClient._storageProvider;
-              if (sync > storage.getItem(symbol)) {
-                storage.setItem(symbol, sync);
-              }
-            }
-            //防止因离线消息造成会话列表不为空而无法从服务器拉取会话列表。
-            offlineMsg && (RongIMLib.RongIMClient._memoryStore.isSyncRemoteConverList = true);
-            me.SyncTimeQueue.state = "complete";
-            me.invoke(isPullMsg, target);
+ 
             //把拉取到的消息逐条传给消息监听器
             var list = collection.list;
             var len = list.length
             for (var i = 0, count = len; i < len; i++) {
-              if (!(list[i].msgId in me.cacheMessageIds)) {
+              if (!isInCache(list[i].msgId)) {
                 Bridge._client.handler.onReceived(list[i], undefined, offlineMsg, --count);
                 var arrLen = me.cacheMessageIds.unshift(list[i].msgId);
-                if (arrLen > 20)
-                  me.cacheMessageIds.length = 20;
+                if (arrLen > 200){
+                  me.cacheMessageIds.length = 180;
+                }
               }
             }
             if (len <= 200 && str == 'pullMsg') {
@@ -3905,6 +3959,11 @@ module.exports = (function (wx) {
               var conversationList = RongIMClient._memoryStore.conversationList;
               Conversation._notify(conversationList);
             }
+
+            //防止因离线消息造成会话列表不为空而无法从服务器拉取会话列表。
+            offlineMsg && (RongIMLib.RongIMClient._memoryStore.isSyncRemoteConverList = true);
+            me.SyncTimeQueue.state = "complete";
+            me.invoke(isPullMsg, target);
           },
           onError: function (error) {
             me.SyncTimeQueue.state = "complete";
@@ -4019,7 +4078,7 @@ module.exports = (function (wx) {
           con;
         if (msg._name != "PublishMessage") {
           entity = msg;
-          RongIMLib.RongIMClient._storageProvider.setItem(this._client.userId, RongIMLib.MessageUtil.int64ToTimestamp(entity.dataTime));
+          //RongIMLib.RongIMClient._storageProvider.setItem(this._client.userId, RongIMLib.MessageUtil.int64ToTimestamp(entity.dataTime));
         }
         else {
           if (msg.getTopic() == "s_ntf") {
@@ -4030,8 +4089,8 @@ module.exports = (function (wx) {
           else if (msg.getTopic() == "s_msg") {
             entity = Modules.DownStreamMessage.decode(msg.getData());
             var timestamp = RongIMLib.MessageUtil.int64ToTimestamp(entity.dataTime);
-            RongIMLib.RongIMClient._storageProvider.setItem(this._client.userId, timestamp);
-            RongIMLib.RongIMClient._memoryStore.lastReadTime.get(this._client.userId, timestamp);
+            // Martin:edit RongIMLib.RongIMClient._storageProvider.setItem(this._client.userId, timestamp); 移动至 下方 messageParser
+            // RongIMLib.RongIMClient._memoryStore.lastReadTime.get(this._client.userId, timestamp);
           }
           else {
             if (Bridge._client.sdkVer && Bridge._client.sdkVer == "1.0.0") {
@@ -4066,6 +4125,7 @@ module.exports = (function (wx) {
         }
         //解析实体对象为消息对象。
         message = RongIMLib.MessageUtil.messageParser(entity, this._onReceived, offlineMsg);
+        
         if (pubAckItem) {
           message.messageUId = pubAckItem.getMessageUId();
           message.sentTime = pubAckItem.getTimestamp();
@@ -4073,23 +4133,16 @@ module.exports = (function (wx) {
         if (message === null) {
           return;
         }
+        
+        var msgTag = RongIMLib.RongIMClient.MessageParams[message.messageType].msgTag.getMessageTag();
+
+        if (msgTag == 3 || msgTag == 1){
+          RongIMLib.MessageUtil.updateSyncTime(message);
+        }
         // 设置会话时间戳并且判断是否传递 message  发送消息未处理会话时间戳
         // key：'converST_' + 当前用户 + conversationType + targetId
         // RongIMClient._storageProvider.setItem('converST_' + Bridge._client.userId + message.conversationType + message.targetId, message.sentTime);
-        var stKey = 'converST_' + Bridge._client.userId + message.conversationType + message.targetId;
-        var stValue = RongIMLib.RongIMClient._memoryStore.lastReadTime.get(stKey);
-        if (stValue) {
-          if (message.sentTime > stValue) {
-            RongIMLib.RongIMClient._memoryStore.lastReadTime.set(stKey, message.sentTime);
-          }
-          else {
-            return;
-          }
-        }
-        else {
-          RongIMLib.RongIMClient._memoryStore.lastReadTime.set(stKey, message.sentTime);
-        }
-        if (RongIMLib.RongIMClient.MessageParams[message.messageType].msgTag.getMessageTag() == 3) {
+        if (msgTag == 3) {
           RongIMLib.RongIMClient._dataAccessProvider.getConversation(message.conversationType, message.targetId, {
             onSuccess: function (con) {
               if (!con) {
@@ -4394,7 +4447,12 @@ module.exports = (function (wx) {
           if (_msg) {
             _msg.setSentStatus = _status;
           }
-          RongIMLib.RongIMClient._storageProvider.setItem(RongIMLib.Bridge._client.userId, timestamp);
+          // Martin:edit RongIMLib.RongIMClient._storageProvider.setItem(RongIMLib.Bridge._client.userId, timestamp);
+          RongIMLib.MessageUtil.updateSyncTime({
+            messageDirection: RongIMLib.MessageDirection.SEND,
+            sentTime: timestamp
+          });
+          
           RongIMLib.RongIMClient._memoryStore.lastReadTime.get(RongIMLib.Bridge._client.userId, timestamp);
           this._cb({ messageUId: messageUId, timestamp: timestamp, messageId: messageId });
         }
@@ -5601,11 +5659,14 @@ module.exports = (function (wx) {
           }
         }, {
             success: function (res) {
-              var data = res.data;
               var isError = (res.statusCode == 400);
               if (isError) {
                 me.onError();
                 return;
+              }
+              var data = res.data;
+              if (data.status == 3){
+                return me.onError(RongIMLib.ErrorCode.MINI_PROGAM_SERVICE_NOT_OPEN);
               }
               me.onSuccess(JSON.stringify(data), isconnect);
               callback();
@@ -5678,7 +5739,6 @@ module.exports = (function (wx) {
         return "";
       };
       PollingTransportation.prototype.onClose = function () {
-        console.log('onCloseonCloseonCloseonClose');
         if (this.xhr) {
           this.xhr.abort();
           this.xhr = null;
@@ -5717,14 +5777,13 @@ module.exports = (function (wx) {
         this.connected = true;
         isconnect && this.socket.fire("connect");
       };
-      PollingTransportation.prototype.onError = function () {
+      PollingTransportation.prototype.onError = function (code) {
         RongIMLib.RongIMClient._storageProvider.removeItem("sId" + RongIMLib.Navigation.Endpoint.userId);
         RongIMLib.RongIMClient._storageProvider.removeItem(RongIMLib.Navigation.Endpoint.userId + "msgId");
         this.onClose();
         this.connected = false;
-        console.log('errororororo');
-        var networkunavailable = RongIMLib.ConnectionStatus.NETWORK_UNAVAILABLE;
-        this.socket.fire("disconnect", networkunavailable);
+        code = code || RongIMLib.ConnectionStatus.NETWORK_UNAVAILABLE;
+        this.socket.fire("disconnect", code);
       };
       return PollingTransportation;
     }());
@@ -5769,8 +5828,8 @@ module.exports = (function (wx) {
     "RC:RRReqMsg": "ReadReceiptRequestMessage",
     "RC:RRRspMsg": "ReadReceiptResponseMessage",
     "RCJrmf:RpMsg": "JrmfReadPacketMessage",
-    "RCJrmf:RpOpendMsg": "JrmfReadPacketOpenedMessage",
-    "RCE:UpdateStatus": "RCEUpdateStatusMessage"
+    "RCJrmf:RpOpendMsg": "JrmfReadPacketOpenedMessage"
+    // "RCE:UpdateStatus": "RCEUpdateStatusMessage"
   },
     //自定义消息类型
     registerMessageTypeMapping = {}, HistoryMsgType = {
@@ -5888,6 +5947,38 @@ module.exports = (function (wx) {
           return new Date(timestamp);
         }
         return timestamp;
+      };
+
+      var getSyncTimeKey = function(message){
+        var _client = RongIMLib.Bridge._client || {};
+        var userId = _client.userId;
+        var direction = (message.messageDirection == 1 ? 'send' : 'received');
+        var tpl = '{userId}_{direction}box';
+        return tools.tplEngine(tpl, {
+          userId: userId,
+          direction: direction
+        });
+      };
+      MessageUtil.updateSyncTime = function(message){
+        var key = getSyncTimeKey(message)
+        var sentTime = message.sentTime;
+        var storage = RongIMLib.RongIMClient._storageProvider;
+        storage.setItem(key, sentTime);
+      };
+      MessageUtil.getSyncTime = function(){
+        var sendKey = getSyncTimeKey({
+          messageDirection: RongIMLib.MessageDirection.SEND
+        });
+
+        var receivedKey = getSyncTimeKey({
+          messageDirection: RongIMLib.MessageDirection.RECEIVED
+        });
+
+        var storage = RongIMLib.RongIMClient._storageProvider;
+        return {
+          send: storage.getItem(sendKey) || 0,
+          received: storage.getItem(receivedKey) || 0
+        };
       };
       //消息转换方法
       MessageUtil.messageParser = function (entity, onReceived, offlineMsg) {
@@ -6993,10 +7084,10 @@ module.exports = (function (wx) {
         if (this.isCounted && this.isPersited) {
           return 3;
         }
-        else if (this.isCounted || !this.isPersited) {
+        else if (this.isCounted) {
           return 2;
         }
-        else if (!this.isCounted || this.isPersited) {
+        else if (this.isPersited) {
           return 1;
         }
         else if (!this.isCounted && !this.isPersited) {
@@ -7722,26 +7813,23 @@ module.exports = (function (wx) {
         if (Object.prototype.toString.call(content) == "[object ArrayBuffer]") {
           content = [].slice.call(new Int8Array(content));
         }
-        var c = null, me = this, msg = new RongIMLib.Message();
-        this.getConversation(conversationType, targetId, {
-          onSuccess: function (conver) {
-            c = conver;
-            if (RongIMLib.RongIMClient.MessageParams[messageContent.messageName].msgTag.getMessageTag() == 3) {
-              if (!c) {
-                c = RongIMLib.RongIMClient.getInstance().createConversation(conversationType, targetId, "");
-              }
-              c.sentTime = new Date().getTime();
-              c.sentStatus = RongIMLib.SentStatus.SENDING;
-              c.senderUserName = "";
-              c.senderUserId = RongIMLib.Bridge._client.userId;
-              c.notificationStatus = RongIMLib.ConversationNotificationStatus.DO_NOT_DISTURB;
-              c.latestMessage = msg;
-              c.unreadMessageCount = 0;
-              RongIMLib.RongIMClient._dataAccessProvider.addConversation(c, { onSuccess: function (data) { } });
-            }
-            RongIMLib.RongIMClient._memoryStore.converStore = c;
+        var me = this, msg = new RongIMLib.Message();
+        var c = this.getConversation(conversationType, targetId);
+        if (RongIMLib.RongIMClient.MessageParams[messageContent.messageName].msgTag.getMessageTag() == 3) {
+          if (!c) {
+            c = RongIMLib.RongIMClient.getInstance().createConversation(conversationType, targetId, "");
           }
-        });
+          c.sentTime = new Date().getTime();
+          c.sentStatus = RongIMLib.SentStatus.SENDING;
+          c.senderUserName = "";
+          c.senderUserId = RongIMLib.Bridge._client.userId;
+          c.notificationStatus = RongIMLib.ConversationNotificationStatus.DO_NOT_DISTURB;
+          c.latestMessage = msg;
+          c.unreadMessageCount = 0;
+          RongIMLib.RongIMClient._dataAccessProvider.addConversation(c, { onSuccess: function (data) { } });
+        }
+        RongIMLib.RongIMClient._memoryStore.converStore = c;
+
         msg.content = messageContent;
         msg.conversationType = conversationType;
         msg.senderUserId = RongIMLib.Bridge._client.userId;
@@ -7753,9 +7841,6 @@ module.exports = (function (wx) {
         msg.messageType = messageContent.messageName;
         RongIMLib.RongIMClient.bridge.pubMsg(conversationType.valueOf(), content, targetId, {
           onSuccess: function (data) {
-            if (data && data.timestamp) {
-              RongIMLib.RongIMClient._memoryStore.lastReadTime.set('converST_' + RongIMLib.Bridge._client.userId + conversationType + targetId, data.timestamp);
-            }
             if ((conversationType == RongIMLib.ConversationType.DISCUSSION || conversationType == RongIMLib.ConversationType.GROUP) && messageContent.messageName == RongIMLib.RongIMClient.MessageType["ReadReceiptRequestMessage"]) {
               var reqMsg = msg.content;
               var sentkey = RongIMLib.Bridge._client.userId + reqMsg.messageUId + "SENT";
@@ -7948,7 +8033,8 @@ module.exports = (function (wx) {
             }
           }
         }
-        callback.onSuccess(conver);
+        callback && callback.onSuccess(conver);
+        return conver;
       };
       ServerDataProvider.prototype.getConversationList = function (callback, conversationTypes, count, isHidden) {
         var _Cache = RongIMLib.RongIMClient._Cahche;
@@ -7978,6 +8064,11 @@ module.exports = (function (wx) {
           }
         }, conversationTypes, count, isHidden);
         _Cache.isRunning = true;
+      };
+      ServerDataProvider.prototype.clearCache = function () {
+          var memoryStore = RongIMLib.RongIMClient._memoryStore || {};
+          memoryStore.conversationList = [];
+          memoryStore.isSyncRemoteConverList = true;
       };
       ServerDataProvider.prototype.clearConversations = function (conversationTypes, callback) {
         Array.forEach(conversationTypes, function (conversationType) {
@@ -8247,76 +8338,6 @@ module.exports = (function (wx) {
         }
       };
       FeaturePatcher.prototype.patchJSON = function () {
-        // if (!window["JSON"]) {
-        wx["JSON"] = (function () {
-          function JSON() {
-          }
-          JSON.parse = function (sJSON) {
-            return eval('(' + sJSON + ')');
-          };
-          JSON.stringify = function (value) {
-            return this.str("", { "": value });
-          };
-          JSON.str = function (key, holder) {
-            var i, k, v, length, mind = "", partial, value = holder[key], me = this;
-            if (value && typeof value === "object" && typeof value.toJSON === "function") {
-              value = value.toJSON(key);
-            }
-            switch (typeof value) {
-              case "string":
-                return me.quote(value);
-              case "number":
-                return isFinite(value) ? String(value) : "null";
-              case "boolean":
-              case "null":
-                return String(value);
-              case "object":
-                if (!value) {
-                  return "null";
-                }
-                partial = [];
-                if (Object.prototype.toString.apply(value) === "[object Array]") {
-                  length = value.length;
-                  for (i = 0; i < length; i += 1) {
-                    partial[i] = me.str(i, value) || "null";
-                  }
-                  v = partial.length === 0 ? "[]" : "[" + partial.join(",") + "]";
-                  return v;
-                }
-                for (k in value) {
-                  if (Object.prototype.hasOwnProperty.call(value, k)) {
-                    v = me.str(k, value);
-                    if (v) {
-                      partial.push(me.quote(k) + ":" + v);
-                    }
-                  }
-                }
-                v = partial.length === 0 ? "{}" : "{" + partial.join(",") + "}";
-                return v;
-            }
-          };
-          JSON.quote = function (string) {
-            var me = this;
-            me.rx_escapable.lastIndex = 0;
-            return me.rx_escapable.test(string) ? '"' + string.replace(me.rx_escapable, function (a) {
-              var c = me.meta[a];
-              return typeof c === "string" ? c : "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
-            }) + '"' : '"' + string + '"';
-          };
-          JSON.rx_escapable = new RegExp('[\\\"\\\\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]', "g");
-          JSON.meta = {
-            "\b": "\\b",
-            "   ": "\\t",
-            "\n": "\\n",
-            "\f": "\\f",
-            "\r": "\\r",
-            '"': '\\"',
-            "''": "\\''",
-            "\\": "\\\\"
-          };
-          return JSON;
-        }());
-        // }
       };
       return FeaturePatcher;
     }());

@@ -11,10 +11,10 @@
 	"libVersion": "2.1.1",
 	"appid": "wx722931d0b9bb4e67",
 	"projectname": "rongcloud-miniapp",
-	"svr": "",
-	"client": "",
-	"qcloudRoot": "",
-	"miniprogramRoot": "",
+	"svr": "/",
+	"client": "/",
+	"qcloudRoot": "/",
+	"miniprogramRoot": "/",
 	"condition": {
 		"search": {
 			"current": -1,
