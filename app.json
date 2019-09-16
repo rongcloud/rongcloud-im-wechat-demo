@@ -6,6 +6,6 @@
   "window": {
     "navigationBarBackgroundColor": "#1BA3FC",
     "navigationBarTitleText": "SealTalk",
-    "navigationBarTextStyle": "#fff"
+    "navigationBarTextStyle": "white"
   }
 }
