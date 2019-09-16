@@ -7,5 +7,6 @@
     "navigationBarBackgroundColor": "#1BA3FC",
     "navigationBarTitleText": "SealTalk",
     "navigationBarTextStyle": "white"
-  }
+  },
+  "sitemapLocation": "sitemap.json"
 }
