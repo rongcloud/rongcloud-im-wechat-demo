@@ -110,24 +110,46 @@ Friend.getList = () => {
 
 let User = {};
 
-let getUserIndex = (name, max) => {
-  console.log(utils.toUnicode(name));
-  var index = utils.toUnicode(name).slice(-1);
-  //转 unicode 后最后一个字符不是数字，给固定🈯值
-  if (isNaN(index)){
-    index = max;
-  }
-  if (index > max){
-    index = max;
-  }
-  return index;
+let userKey = 'user';
+
+let setLocalUser = (user) => {
+  wx.setStorage({
+    key: userKey,
+    data: user,
+  })
 };
 
-let getUser = (user) => {
-  user = utils.rename(user, {avatarUrl: 'avatar', nickName: 'name'});
-  let maxIndex = UserList.length - 1;
-  let index = getUserIndex(user.name,  maxIndex);
+let getLocalUser = () => {
+  return wx.getStorageSync(userKey);
+};
+
+let getUserIndex = (/*name, max*/) => {
+  var maxIndex = UserList.length - 1;
+  return Math.ceil(Math.random() * maxIndex);
+
+  // console.log(utils.toUnicode(name));
+  // var index = utils.toUnicode(name).slice(-1);
+  // //转 unicode 后最后一个字符不是数字，给固定🈯值
+  // if (isNaN(index)){
+  //   index = max;
+  // }
+  // if (index > max){
+  //   index = max;
+  // }
+  // return index;
+};
+
+let getUser = (/*user*/) => {
+  let user = getLocalUser();
+  if (user) {
+    return user;
+  }
+  // user = utils.rename(user, {avatarUrl: 'avatar', nickName: 'name'});
+  // let maxIndex = UserList.length - 1;
+  // let index = getUserIndex(user.name,  maxIndex);
+  let index = getUserIndex();
   let _user = UserList[index];
+  setLocalUser(_user);
   // utils.extend(_user, user);
   return _user
 };
@@ -144,6 +166,7 @@ let getUserById = (id) => {
 
 User.getToken = (user) => {
   currentUser = getUser(user);
+  console.log('currentUser', currentUser);
   return Promise.resolve(currentUser);
 };
 
@@ -327,11 +350,11 @@ let Conversation = {
 let bindUserInfo = (list) => {
   let unknowUser = {
     name: '火星人',
-    avatar: 'https://rongcloud-image.cn.ronghub.com/FjGxbmdZ7wyIqMHvaa3SqOgSZGk_?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:OCCilgLZtkK8G9AmayjUzP9J66w='
+    avatar: 'https://rongcloud-image.ronghub.com/1b4d6c41f0840d8905.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:a0xpi-rFs3wQamvJ8zZveqwdvNY='
   };
   let unknowGroup = {
     name: '火星群组',
-    avatar: 'https://rongcloud-image.cn.ronghub.com/FjGxbmdZ7wyIqMHvaa3SqOgSZGk_?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:OCCilgLZtkK8G9AmayjUzP9J66w='
+    avatar: 'https://rongcloud-image.ronghub.com/1b4d6c41f0840d8905.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:a0xpi-rFs3wQamvJ8zZveqwdvNY='
   };
   if (!utils.isArray(list)){
     list = [list];

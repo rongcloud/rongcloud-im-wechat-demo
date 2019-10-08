@@ -40,27 +40,29 @@ const watchStatus = () => {
 const connect = (context) => {
   watchConversation(context);
   watchStatus();
-  wx.getUserInfo({
-    success: (user) => {
-      Status.connect(user.userInfo).then(() => {
-        console.log('connect successfully');
-      }, (error) => {
-        wx.showToast({
-          title: error.msg,
-          icon: 'none',
-          duration: 3000
-        })
-      })
-    },
-    fail: (error) => {
-      console.log(error);
-      wx.showToast({
-        title: '换个网络试试，只能帮你到这了～',
-        icon: 'none',
-        duration: 3000
-      })
-    }
+  Status.connect().then(() => {
+    console.log('connect successfully');
+  }, (error) => {
+    wx.showToast({
+      title: error.msg,
+      icon: 'none',
+      duration: 3000
+    })
   })
+  // wx.getUserInfo({
+  //   success: (user) => {
+  //     console.log(user);
+      
+  //   },
+  //   fail: (error) => {
+  //     console.log(error);
+  //     wx.showToast({
+  //       title: '换个网络试试，只能帮你到这了～',
+  //       icon: 'none',
+  //       duration: 3000
+  //     })
+  //   }
+  // })
 };
 
 Page({
@@ -76,24 +78,26 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: function (options) {
-    requestUserAuth().then((hasUserAuth) => {
-      this.setData({
-        hasUserAuth
-      });
-      if (hasUserAuth){
-        connect(this);
-      }
-    });
+    connect(this);
+    // requestUserAuth().then((hasUserAuth) => {
+    //   this.setData({
+    //     hasUserAuth
+    //   });
+    //   if (hasUserAuth){
+    //     connect(this);
+    //   }
+    // });
   },
   onAuthCompleted: function(user){
-    requestUserAuth().then((hasUserAuth) => {
-      this.setData({
-        hasUserAuth
-      });
-      if (hasUserAuth) {
-        connect(this);
-      }
-    });
+    connect(this);
+    // requestUserAuth().then((hasUserAuth) => {
+    //   this.setData({
+    //     hasUserAuth
+    //   });
+    //   if (hasUserAuth) {
+    //     connect(this);
+    //   }
+    // });
   },
   gotoChat: function(event){
     let { currentTarget: { dataset: { item } } } = event;
