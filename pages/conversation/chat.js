@@ -162,12 +162,14 @@ const onLoad = (context, query) => {
   getMessageList(context, { type, targetId, position, count });
 
   Message.watch((message) => {
-    let { messageList } = context.data;
-    messageList.push(message);
-    context.setData({
-      messageList,
-      toView: message.uId
-    });
+    if (message.conversationType == type && message.targetId == targetId) {
+      let { messageList } = context.data;
+      messageList.push(message);
+      context.setData({
+        messageList,
+        toView: message.uId
+      }); 
+    }
   });
 };
 
