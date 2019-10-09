@@ -60,9 +60,11 @@
   background: #1BA3FC;
   border-radius: 6rpx;
   color: #FFF;
-  margin-top: 8rpx;
-  margin-right: 20rpx;
-  padding: 6rpx 2rpx;
+  margin-right: 2rpx;
+  margin-top: 7rpx;
+  height: 58rpx;
+  line-height: 58rpx;
+  padding: 0 10rpx;
 }
 
 .rong-editor-btn-keyboard{

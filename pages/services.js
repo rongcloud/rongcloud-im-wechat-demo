@@ -110,17 +110,19 @@ Friend.getList = () => {
 
 let User = {};
 
-let userKey = 'user';
+let getUserKey = () => {
+  return 'user-' + config.appkey;
+};
 
 let setLocalUser = (user) => {
   wx.setStorage({
-    key: userKey,
+    key: getUserKey(),
     data: user,
   })
 };
 
 let getLocalUser = () => {
-  return wx.getStorageSync(userKey);
+  return wx.getStorageSync(getUserKey());
 };
 
 let getUserIndex = (/*name, max*/) => {
@@ -347,7 +349,30 @@ let Conversation = {
   watcher: new ObserverList()
 };
 
+let getMockMessage = (targetId, type) => {
+  return {
+    content: {
+      messageName: "TextMessage",
+      content: ""
+    },
+    conversationType: type,
+    objectName: "RC:TxtMsg",
+    targetId: targetId,
+    messageType: "TextMessage",
+    sentTime: Date.now()
+  };
+}
+
 let bindUserInfo = (list) => {
+  let includedTargetMarkList = []; // 已有会话合集
+  let getTargetMark = (target) => {
+    return target.type + '_' + target.id;
+  };
+  let isTargetIncluded = (target) => {
+    let targetMark = getTargetMark(target);
+    return includedTargetMarkList.indexOf(targetMark) !== -1;
+  };
+
   let unknowUser = {
     name: '火星人',
     avatar: 'https://rongcloud-image.ronghub.com/1b4d6c41f0840d8905.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:a0xpi-rFs3wQamvJ8zZveqwdvNY='
@@ -362,17 +387,25 @@ let bindUserInfo = (list) => {
 
   let infoMap = {
       1: (conversation) => {
-        conversation.target = utils.find(UserList, (user) => {
+        var target = utils.find(UserList, (user) => {
           return user.id == conversation.targetId
         }) || unknowUser;
+        if (target.id) {
+          includedTargetMarkList.push(getTargetMark(target));
+        }
+        conversation.target = target;
       },
       2: (conversation) => {
         conversation.target = unknowUser;
       },
       3: (conversation) => {
-        conversation.target = utils.find(GroupList, (group) => {
+        var target = utils.find(GroupList, (group) => {
           return group.id == conversation.targetId
         }) || unknowGroup;
+        if (target.id) {
+          includedTargetMarkList.push(getTargetMark(target));
+        }
+        conversation.target = target;
       },
       10: (conversation) => {
         conversation.target = unknowUser;
@@ -407,6 +440,19 @@ let bindUserInfo = (list) => {
     let _type = conversation.conversationType;
     _type = _type > 3 ? 10 : _type;
     infoMap[_type](conversation);
+  });
+
+  utils.map(utils.deepExtend(UserList, GroupList), (user) => {
+    if (!isTargetIncluded(user)) {
+      let latestMessage = getMockMessage(user.id, user.type); 
+      list.push({
+        target: user,
+        targetId: user.id,
+        conversationType: user.type,
+        latestMessage: latestMessage,
+        sentTime: latestMessage.sentTime
+      });
+    }
   });
 
 };

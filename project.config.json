@@ -8,7 +8,7 @@
 		"newFeature": true
 	},
 	"compileType": "miniprogram",
-	"libVersion": "2.1.1",
+	"libVersion": "2.8.3",
 	"appid": "wx722931d0b9bb4e67",
 	"projectname": "rongcloud-miniapp",
 	"simulatorType": "wechat",

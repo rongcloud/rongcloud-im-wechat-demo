@@ -17,6 +17,7 @@ const toUnicode = (str) => {
 }
 
 let utils = {
+  
   tplEngine: (temp, data, regexp) => {
     if (!(Object.prototype.toString.call(data) === "[object Array]")) data = [data];
     var ret = [];
@@ -34,6 +35,11 @@ let utils = {
   },
   deepCopy: (obj) => {
     return JSON.parse(JSON.stringify(obj));
+  },
+  deepExtend: (obj1, obj2) => {
+    obj1 = utils.deepCopy(obj1);
+    obj2 = utils.deepCopy(obj2);
+    return underscore.extend(obj1, obj2);
   },
   rename: (obj, newNames) => {
     return underscore.reduce(newNames, function (memo, val, index) {

@@ -40,8 +40,8 @@ const watchStatus = () => {
 const connect = (context) => {
   watchConversation(context);
   watchStatus();
-  Status.connect().then(() => {
-    console.log('connect successfully');
+  Status.connect().then((userId) => {
+    console.log('connect successfully', userId);
   }, (error) => {
     wx.showToast({
       title: error.msg,
