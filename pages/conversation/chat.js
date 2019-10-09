@@ -476,7 +476,8 @@ Page({
     playingVoice: null,
     playingMusicComponent: null,
     isAllowScroll: true,
-    scrollTop: 0
+    scrollTop: 0,
+    isShowImagePanel: Date.now() > 1570676400000 // 2019-10-10 11:00:00
   },
   hideKeyboard: function () {
     hideKeyboard(this);

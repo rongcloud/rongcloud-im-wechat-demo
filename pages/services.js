@@ -23,6 +23,14 @@ let registerMessages = () => {
   RongIMClient.registerMessageType(messageName, objectName, mesasgeTag, prototypes);
 };
 
+let handleTextMessage = (message) => {
+  if (message.messageType === 'TextMessage') {
+    let content = message.content.content || '';
+    message.content.content = utils.replaceSensitiveWords(content);
+  }
+  return message;
+};
+
 let ErrorInfo = {
   4: {
     code: 4,
@@ -225,6 +233,7 @@ let sendMessage = (type, targetId, message) => {
     let messageMap = {
       text: () => {
         let {content} = message;
+        content = utils.replaceSensitiveWords(content);
         return new RongIMLib.TextMessage({ content, user });
       },
       image: () => {
@@ -309,6 +318,10 @@ Message.getList = (params) => {
     let timestamp = position > 0 ? null : position;
     imInstance.getHistoryMessages(+type, targetId, timestamp, count, {
       onSuccess: (messageList, hasMore) => {
+        messageList = messageList.map((message) => {
+          message = handleTextMessage(message);
+          return message;
+        });
         // 过滤未处理的消息类型
         messageList = messageList.filter((message) => {
           return message.messageType != 'RecallCommandMessage'
@@ -436,6 +449,7 @@ let bindUserInfo = (list) => {
     conversation._sentTime = utils.getTime(sentTime);
     conversation.unReadCount = conversation.unreadMessageCount;
     let { latestMessage } = conversation;
+    latestMessage = handleTextMessage(latestMessage);
     conversation.content = formatMsg(latestMessage);
     let _type = conversation.conversationType;
     _type = _type > 3 ? 10 : _type;
@@ -489,6 +503,7 @@ Status.connect = (user) => {
       let {messageType} = message;
       let messageCtrol = {
         otherMessage: () => {
+          message = handleTextMessage(message);
           Message._push(message);
         }
       };

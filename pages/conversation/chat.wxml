@@ -38,7 +38,7 @@
   <swiper indicator-dots="{{true}}" class='rong-modules-swiper'>
     <block>
       <swiper-item>
-        <view class='rong-editor-modules'>
+        <view class='rong-editor-modules' wx:if='{{isShowImagePanel}}'>
           <view class='rong-editor-module rong-editor-module-image' bindtap='sendImage'></view>
         </view>
 
