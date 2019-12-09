@@ -25,6 +25,9 @@ const replaceSensitiveWords = (str) => {
 
 
 let utils = {
+  parseObj: (obj) => {
+    return JSON.parse(JSON.stringify(obj));
+  },
   replaceSensitiveWords: replaceSensitiveWords,
   tplEngine: (temp, data, regexp) => {
     if (!(Object.prototype.toString.call(data) === "[object Array]")) data = [data];

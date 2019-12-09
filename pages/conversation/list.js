@@ -27,11 +27,14 @@ const watchConversation = (context) => {
 
 const watchStatus = () => {
  Status.watch((status) => {
+   console.log('status changed', status);
    if (status == 3) {
-     wx.getUserInfo({
-       success: (user) => {
-         Status.connect(user.userInfo);
-       }
+     Status.reconnect();
+   } else if (status === 6) {
+     wx.showToast({
+       title: '已被其他端踢掉',
+       icon: 'error',
+       duration: 3000
      });
    }
  })

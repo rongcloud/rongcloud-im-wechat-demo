@@ -1,4 +1,4 @@
-const RongIMLib = require('./lib/RongIMLib.miniprogram-1.0.8.js');
+const RongIMLib = require('./lib/RongIMLib.wx-1.1.4.js');
 const RongIMClient = RongIMLib.RongIMClient;
 
 const utils = require('./utils/utils.js');
@@ -12,6 +12,15 @@ let config = {
   url: '',
   wsScheme: 'wss://',
   protocol: 'https://'
+};
+
+let unknowUser = {
+  name: '火星人',
+  avatar: 'http://fsprodrcx.cn.ronghub.com/x5sJTceaCHnQcglNx5sJTcccuuLHmlZlqv56Pqb8bA/%E7%81%AB%E6%98%9F%E7%8C%8E%E4%BA%BA.png?token=Um9uZ2Nsb3VkMTQyMDE5MTIwOTAzMDcwNzM2MDBtZXNzYWdlOzs7OTkzNTI3Mzg5'
+};
+let unknowGroup = {
+  name: '火星群组',
+  avatar: 'http://fsprodrcx.cn.ronghub.com/mXjs5Zl67dGOkezlmXjs5ZnJPTiZeWe_9B2flvgfiQ/%E7%81%AB%E6%98%9F.png?token=Um9uZ2Nsb3VkMTQyMDE5MTIwOTAzMDcwNzM2MDBtZXNzYWdlOzs7OTkzNTI3Mzg5'
 };
 
 
@@ -188,12 +197,12 @@ let bindSender = (message, position) => {
     1: (msg) => {
       msg.sender = utils.find(UserList, (user) => {
         return (user.id == msg.senderUserId);
-      });
+      }) || Object.assign(unknowUser, msg);
     },
     3: (msg) => {
       msg.sender = utils.find(UserList, (user) => {
         return (user.id == msg.senderUserId);
-      });
+      }) || Object.assign(unknowGroup, msg);;
     }
   };
   utils.map(message, (msg) => {
@@ -386,14 +395,6 @@ let bindUserInfo = (list) => {
     return includedTargetMarkList.indexOf(targetMark) !== -1;
   };
 
-  let unknowUser = {
-    name: '火星人',
-    avatar: 'https://rongcloud-image.ronghub.com/1b4d6c41f0840d8905.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:a0xpi-rFs3wQamvJ8zZveqwdvNY='
-  };
-  let unknowGroup = {
-    name: '火星群组',
-    avatar: 'https://rongcloud-image.ronghub.com/1b4d6c41f0840d8905.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:a0xpi-rFs3wQamvJ8zZveqwdvNY='
-  };
   if (!utils.isArray(list)){
     list = [list];
   }
@@ -453,21 +454,23 @@ let bindUserInfo = (list) => {
     conversation.content = formatMsg(latestMessage);
     let _type = conversation.conversationType;
     _type = _type > 3 ? 10 : _type;
-    infoMap[_type](conversation);
-  });
-
-  utils.map(utils.deepExtend(UserList, GroupList), (user) => {
-    if (!isTargetIncluded(user)) {
-      let latestMessage = getMockMessage(user.id, user.type); 
-      list.push({
-        target: user,
-        targetId: user.id,
-        conversationType: user.type,
-        latestMessage: latestMessage,
-        sentTime: latestMessage.sentTime
-      });
+    if (infoMap[_type]) {
+      infoMap[_type](conversation);
     }
   });
+
+  // utils.map(utils.deepExtend(UserList, GroupList), (user) => {
+  //   if (!isTargetIncluded(user)) {
+  //     let latestMessage = getMockMessage(user.id, user.type); 
+  //     list.push({
+  //       target: user,
+  //       targetId: user.id,
+  //       conversationType: user.type,
+  //       latestMessage: latestMessage,
+  //       sentTime: latestMessage.sentTime
+  //     });
+  //   }
+  // });
 
 };
 
@@ -480,6 +483,12 @@ Conversation.clearUnreadCount = (conversation) => {
 };
 Conversation.watch = (watcher) => {
   RongIMClient.Conversation.watch(function(list){
+    list = utils.parseObj(list);
+    list = list.filter(function(item) {
+      var allowTypes = [RongIMLib.ConversationType.PRIVATE, RongIMLib.ConversationType.GROUP];
+      return allowTypes.indexOf(item.conversationType) !== -1;
+    });
+    console.log('Conversation Watch:', list);
     bindUserInfo(list);
     watcher(list);
   });
@@ -489,6 +498,30 @@ let Status = {
 };
 Status.disconnect = () => {
   RongIMClient.getInstance().disconnect();
+};
+Status.reconnect = () => {
+  wx.showLoading({
+    title: '正在重连...',
+  });
+  var callback = {
+    onSuccess: function (userId) {
+      wx.hideLoading();
+      wx.showToast({
+        title: '重连成功',
+        icon: 'success',
+        duration: 2000
+      });
+    },
+    onError: function (errorCode) {
+      Status.reconnect();
+    }
+  };
+  var config = {
+    auto: true,
+    url: 'cdn.ronghub.com/RongIMLib-2.2.6.min.js?d=' + Date.now(),
+    rate: [100, 1000, 1000, 1000, 1000]
+  };
+  RongIMClient.reconnect(callback, config);
 };
 Status.connect = (user) => {
   console.log(user);
