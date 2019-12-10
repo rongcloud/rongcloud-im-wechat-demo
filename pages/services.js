@@ -251,7 +251,11 @@ let sendMessage = (type, targetId, message) => {
       },
       voice: () => {
         let { content, duration } = message;
-        return new RongIMLib.VoiceMessage({ content, duration, user });
+        return new RongIMLib.HQVoiceMessage({
+          remoteUrl: content,
+          duration,
+          user
+        });
       },
       music: () => {
         let {name, url, author, poster} = message;
@@ -431,7 +435,7 @@ let bindUserInfo = (list) => {
     if (messageType == 'TextMessage'){
       content = msg.content.content;
     }
-    if (messageType == 'VoiceMessage') {
+    if (messageType == 'HQVoiceMessage') {
       content = '[语音]';
     }
     if (messageType == 'ImageMessage') {
@@ -578,7 +582,7 @@ Status.watch = (watch) => {
 let File = {};
 
 File.upload = (file) => {
-  let fileType = RongIMLib.FileType.FILE;
+  let fileType = file.fileType || RongIMLib.FileType.FILE;
   return new Promise((resolve, reject) => {
     imInstance.getFileToken(fileType, {
       onSuccess: (result) => {

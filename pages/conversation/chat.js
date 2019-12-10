@@ -231,7 +231,8 @@ const stopRecording = (context) => {
     console.log('recorder stop', res)
     const { tempFilePath, duration } = res
     File.upload({
-      path: tempFilePath
+      path: tempFilePath,
+      fileType: 2
     }).then(file => {
       console.log(file)
       let content = {
