@@ -108,12 +108,26 @@
 // SealTalk
 module.exports = {
   UserList: [
+    // {
+    //   "name": "RongCloud",
+    //   "type": 1,
+    //   "token": "lf9HbDMkZPsd//6VQxobsKE4ovwvabHEXU8xDrUJSvGbGR9MLd943n+qwLC82mavdHBX/uTWVQLPN16KxesqM2uFhtIxyExT",
+    //   "id": "y9VzEqPMn",
+    //   "avatar": 'http://7xogjk.com1.z0.glb.clouddn.com/y9VzEqPMn1551340238617557129'
+    // },
+    // {
+    //   "name": "hht_183",
+    //   "type": 1,
+    //   "token": "S+YntIwts4aU58Uppk2qgHxpRjANxKgfakOnYLFljI91bj3UrWbtkzZCm99rBKR2iHk0oc8ijBXWsF94pfMAyQ==",
+    //   "id": "YjIGxi0eQ",
+    //   "avatar": 'http://7xogjk.com1.z0.glb.clouddn.com/Fuqx7m-DBTuQn8T3qkPzUSz58CFo'
+    // },
     {
-      "name": "rtc_ceshi2",
+      "name": "hht131",
       "type": 1,
-      "token": "lNo1oFQcoSYQtutHmqf9IHxpRjANxKgfakOnYLFljI9Vu1C3uZzVd9MmglQIX2/9AkCa62k4IRwWdAf8F/oyzQ==",
-      "id": "dD6Tm8tik",
-      "avatar": 'http://7xogjk.com1.z0.glb.clouddn.com/y9VzEqPMn1551340238617557129'
+      "token": "mBPuyv+/L0oS474IiKK/m6E4ovwvabHEXU8xDrUJSvFFU2JV0wnzrCfdfvRmqpQWbCVEGgWYosj9GfQQ+L9gjSgqt6keUmg1",
+      "id": "JZtweu629",
+      "avatar": 'http://7xogjk.com1.z0.glb.clouddn.com/FoGaewQbQuR_O5_6kjzQyuccpwMq'
     }
   ],
   GroupList: [{

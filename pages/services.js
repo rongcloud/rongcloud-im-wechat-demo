@@ -277,6 +277,25 @@ let sendMessage = (type, targetId, message) => {
   });
 };
 
+Message.clearByTime = (msg) => {
+  msg.timestamp = msg.sentTime;
+  return new Promise((resolve, reject) => {
+    imInstance.clearRemoteHistoryMessages(msg, {
+      onSuccess: resolve,
+      onError: reject
+    });
+  });
+};
+
+Message.clearByMsg = (msg) => {
+  return new Promise((resolve, reject) => {
+    imInstance.deleteRemoteMessages(msg.conversationType, msg.targetId, [msg], {
+      onSuccess: resolve,
+      onError: reject
+    });
+  });
+};
+
 //params.type
 //params.targetId
 //params.content  
@@ -373,6 +392,15 @@ Message.watch = (watch) => {
 
 let Conversation = {
   watcher: new ObserverList()
+};
+
+Conversation.remove = (type, targetId) => {
+  return new Promise((resolve, reject) => {
+    imInstance.removeConversation(type, targetId, {
+      onSuccess: resolve,
+      onError: reject
+    });
+  });
 };
 
 let getMockMessage = (targetId, type) => {
@@ -478,8 +506,36 @@ let bindUserInfo = (list) => {
 
 };
 
+const sendSyncReadReceipt = (conversation) => {
+  var { latestMessage, conversationType, targetId } = conversation;
+  if (!latestMessage) {
+    return;
+  }
+  var { sentTime } = latestMessage;
+  var msg = new RongIMLib.SyncReadStatusMessage({ lastMessageSendTime: sentTime });
+  imInstance.sendMessage(conversationType, targetId, msg, {
+    onSuccess: function() {},
+    onError: function() {}
+  });
+};
+
+const sendReadReceipt = (conversation) => {
+  var { latestMessage, conversationType, targetId } = conversation;
+  if (!latestMessage) {
+    return;
+  }
+  var { messageUId, sentTime } = latestMessage;
+  var msg = new RongIMLib.ReadReceiptMessage({ messageUId: messageUId, lastMessageSendTime: sentTime, type: conversationType });
+  imInstance.sendMessage(conversationType, targetId, msg, {
+    onSuccess: function() {},
+    onError: function() {}
+  });
+};
+
 Conversation.clearUnreadCount = (conversation) => {
   let { conversationType, targetId } = conversation;
+  let isGroup = conversationType === RongIMLib.ConversationType.GROUP;
+  isGroup ? sendSyncReadReceipt(conversation) : sendReadReceipt(conversation);
   imInstance.clearUnreadCount(conversationType, targetId, {
     onSuccess: function(){},
     onError: function(){}
@@ -536,12 +592,19 @@ Status.connect = (user) => {
   });
 
   let receiveMessage = (message) => {
-    console.log(message);
       let {messageType} = message;
       let messageCtrol = {
         otherMessage: () => {
           message = handleTextMessage(message);
           Message._push(message);
+        },
+        SyncReadStatusMessage: () => {
+          var isSelfSend = currentUser.id === message.senderUserId;
+          isSelfSend && Conversation.clearUnreadCount(message);
+        },
+        ReadReceiptMessage: () => {
+          var isSelfSend = currentUser.id === message.senderUserId;
+          isSelfSend && Conversation.clearUnreadCount(message);
         }
       };
       let messageHandler = messageCtrol[messageType] || messageCtrol.otherMessage;
@@ -577,6 +640,11 @@ Status.connect = (user) => {
 Status.watch = (watch) => {
   var force = true;
   Status.watcher.add(watch, force);
+};
+
+Status.clearLocal = () => {
+  wx.clearStorage();
+  return Promise.resolve();
 };
 
 let File = {};

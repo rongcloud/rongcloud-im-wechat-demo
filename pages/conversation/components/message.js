@@ -1,4 +1,7 @@
 // pages/conversation/components/message.js
+const { globalData } = getApp();
+const { Service: { Status, Conversation } } = globalData;
+
 Component({
   options: {
     multipleSlots: true

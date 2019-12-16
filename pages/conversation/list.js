@@ -102,6 +102,42 @@ Page({
     //   }
     // });
   },
+  clearLocal: function() {
+    return Status.clearLocal().then(() => {
+      wx.reLaunch({
+        url: '/pages/conversation/list'
+      });
+    });
+  },
+  showConversationHandles: function(event) {
+    let { currentTarget: { dataset: { item } } } = event;
+    let { conversationType: type, targetId } = item;
+    let handlers = [
+      { name: '清空缓存', event: this.clearLocal },
+      { name: '删除会话', event: Conversation.remove }
+    ];
+    let handlerNames = handlers.map((handle) => {
+      return handle.name;
+    });
+    let showToast = (title) => {
+      wx.showToast({
+        title: title,
+        duration: 1000
+      });
+    };
+    wx.showActionSheet({
+      itemList: handlerNames,
+      success: function(res) {
+        let { event, name } = handlers[res.tapIndex];
+        event(type, targetId).then(() => {
+          showToast(name + '成功');
+        }).catch((error) => {
+          showToast(name + '失败' + error);
+        });
+      }
+    });
+
+  },
   gotoChat: function(event){
     let { currentTarget: { dataset: { item } } } = event;
     let { conversationType: type, targetId, target } = item;
@@ -116,7 +152,7 @@ Page({
     url = utils.tplEngine(url, {
       type,
       targetId,
-      title: target.name
+      title: target.name + ` (${targetId})`
     });
     wx.navigateTo({
       url: url,
