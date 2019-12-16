@@ -1,4 +1,4 @@
-const RongIMLib = require('./lib/RongIMLib.wx-1.1.4.js');
+const RongIMLib = require('./lib/RongIMLib.miniprogram-1.1.3');
 const RongIMClient = RongIMLib.RongIMClient;
 
 const utils = require('./utils/utils.js');
@@ -20,6 +20,11 @@ let unknowUser = {
 };
 let unknowGroup = {
   name: '火星群组',
+  avatar: 'http://fsprodrcx.cn.ronghub.com/mXjs5Zl67dGOkezlmXjs5ZnJPTiZeWe_9B2flvgfiQ/%E7%81%AB%E6%98%9F.png?token=Um9uZ2Nsb3VkMTQyMDE5MTIwOTAzMDcwNzM2MDBtZXNzYWdlOzs7OTkzNTI3Mzg5'
+};
+
+let unkownChatroom = {
+  name: '火星聊天室',
   avatar: 'http://fsprodrcx.cn.ronghub.com/mXjs5Zl67dGOkezlmXjs5ZnJPTiZeWe_9B2flvgfiQ/%E7%81%AB%E6%98%9F.png?token=Um9uZ2Nsb3VkMTQyMDE5MTIwOTAzMDcwNzM2MDBtZXNzYWdlOzs7OTkzNTI3Mzg5'
 };
 
@@ -189,6 +194,15 @@ User.getToken = (user) => {
   return Promise.resolve(currentUser);
 };
 
+User.joinChatroom = (id) => {
+  return new Promise((resolve, reject) => {
+    imInstance.joinChatRoom(id, 50, {
+      onSuccess: resolve,
+      onError: reject
+    });
+  });
+};
+
 let bindSender = (message, position) => {
   if (!utils.isArray(message)) {
     message = [message];
@@ -202,7 +216,12 @@ let bindSender = (message, position) => {
     3: (msg) => {
       msg.sender = utils.find(UserList, (user) => {
         return (user.id == msg.senderUserId);
-      }) || Object.assign(unknowGroup, msg);;
+      }) || Object.assign(unknowGroup, msg);
+    },
+    4: (msg) => {
+      msg.sender = utils.find(UserList, (user) => {
+        return (user.id == msg.senderUserId);
+      }) || Object.assign(unkownChatroom, msg);;
     }
   };
   utils.map(message, (msg) => {
