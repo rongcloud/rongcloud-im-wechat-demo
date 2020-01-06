@@ -131,6 +131,7 @@ Page({
     let { conversationType: type, targetId } = item;
     let handlers = [
       { name: '加入聊天室: ' + ChatroomId, event: this.joinChatroom },
+      { name: '清除所有未读数', event: Conversation.clearTotalUnreadCount },
       { name: '清空缓存', event: this.clearLocal },
       { name: '删除会话', event: Conversation.remove }
     ];

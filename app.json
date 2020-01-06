@@ -10,8 +10,5 @@
     "navigationBarTitleText": "SealTalk",
     "navigationBarTextStyle": "white"
   },
-  "networkTimeout": {
-    "request": 41000
-  },
   "sitemapLocation": "sitemap.json"
 }

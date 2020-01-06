@@ -1,4 +1,4 @@
-const RongIMLib = require('./lib/RongIMLib.miniprogram-1.1.3');
+const RongIMLib = require('./lib/RongIMLib.wx-1.1.4');
 const RongIMClient = RongIMLib.RongIMClient;
 
 const utils = require('./utils/utils.js');
@@ -25,6 +25,11 @@ let unknowGroup = {
 
 let unkownChatroom = {
   name: '火星聊天室',
+  avatar: 'http://fsprodrcx.cn.ronghub.com/mXjs5Zl67dGOkezlmXjs5ZnJPTiZeWe_9B2flvgfiQ/%E7%81%AB%E6%98%9F.png?token=Um9uZ2Nsb3VkMTQyMDE5MTIwOTAzMDcwNzM2MDBtZXNzYWdlOzs7OTkzNTI3Mzg5'
+};
+
+let unkownSystem = {
+  name: '火星系统',
   avatar: 'http://fsprodrcx.cn.ronghub.com/mXjs5Zl67dGOkezlmXjs5ZnJPTiZeWe_9B2flvgfiQ/%E7%81%AB%E6%98%9F.png?token=Um9uZ2Nsb3VkMTQyMDE5MTIwOTAzMDcwNzM2MDBtZXNzYWdlOzs7OTkzNTI3Mzg5'
 };
 
@@ -222,6 +227,11 @@ let bindSender = (message, position) => {
       msg.sender = utils.find(UserList, (user) => {
         return (user.id == msg.senderUserId);
       }) || Object.assign(unkownChatroom, msg);;
+    },
+    6: (msg) => {
+      msg.sender = utils.find(UserList, (user) => {
+        return (user.id == msg.senderUserId);
+      }) || Object.assign(unkownSystem, msg);;
     }
   };
   utils.map(message, (msg) => {
@@ -340,6 +350,15 @@ Message.sendImage = (params) => {
   })
 };
 
+Message.recall = (msg) => {
+  return new Promise((resolve, reject) => {
+    imInstance.sendRecallMessage(msg, {
+      onSuccess: resolve,
+      onError: reject
+    });
+  });
+};
+
 //params.type
 //params.targetId
 Message.sendVoice = (params) => {
@@ -373,10 +392,10 @@ Message.getList = (params) => {
           message = handleTextMessage(message);
           return message;
         });
-        // 过滤未处理的消息类型
-        messageList = messageList.filter((message) => {
-          return message.messageType != 'RecallCommandMessage'
-        });
+        // // 过滤未处理的消息类型
+        // messageList = messageList.filter((message) => {
+        //   return message.messageType != 'RecallCommandMessage'
+        // });
         bindSender(messageList, position);
         hasMore = !!hasMore;
         resolve({ messageList, hasMore});
@@ -472,6 +491,9 @@ let bindUserInfo = (list) => {
         }
         conversation.target = target;
       },
+      6: (conversation) => {
+        conversation.target = unkownSystem;
+      },
       10: (conversation) => {
         conversation.target = unknowUser;
       }
@@ -504,7 +526,7 @@ let bindUserInfo = (list) => {
     latestMessage = handleTextMessage(latestMessage);
     conversation.content = formatMsg(latestMessage);
     let _type = conversation.conversationType;
-    _type = _type > 3 ? 10 : _type;
+    _type = _type > 6 ? 10 : _type;
     if (infoMap[_type]) {
       infoMap[_type](conversation);
     }
@@ -560,11 +582,19 @@ Conversation.clearUnreadCount = (conversation) => {
     onError: function(){}
   });
 };
+Conversation.clearTotalUnreadCount = () => {
+  return new Promise((resolve, reject) => {
+    imInstance.clearTotalUnreadCount({
+      onSuccess: resolve,
+      onError: reject
+    });
+  });
+};
 Conversation.watch = (watcher) => {
   RongIMClient.Conversation.watch(function(list){
     list = utils.parseObj(list);
     list = list.filter(function(item) {
-      var allowTypes = [RongIMLib.ConversationType.PRIVATE, RongIMLib.ConversationType.GROUP];
+      var allowTypes = [RongIMLib.ConversationType.PRIVATE, RongIMLib.ConversationType.GROUP, RongIMLib.ConversationType.SYSTEM];
       return allowTypes.indexOf(item.conversationType) !== -1;
     });
     console.log('Conversation Watch:', list);
@@ -718,7 +748,8 @@ module.exports = (_config) => {
     navi: config.navi,
     cmp: config.cmp,
     wsScheme: config.wsScheme,
-    protocol: config.protocol
+    protocol: 'http://',
+    cometList: ['cometxq.rongcloud.net:8200']
   });
   registerMessages();
   imInstance = RongIMClient.getInstance();
