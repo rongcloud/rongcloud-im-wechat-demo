@@ -40,17 +40,17 @@
   margin-top: 4rpx;
 }
 .rong-editor-btn-voice{
-  background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-voice.png");
+  background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-talk.png");
   float: left;
 }
 
 .rong-editor-btn-emoji{
-   background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-emoji.png");
+   background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-emoji-new.png");
    float: right;
 }
 
 .rong-editor-btn-more{
-   background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-more.png"); 
+   background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-plus.png"); 
   float: right;
 }
 
@@ -66,7 +66,7 @@
 }
 
 .rong-editor-btn-keyboard{
-  background-image: url("https://rongcloud-image.cn.ronghub.com/o_1chk2kfkpso212071oevn0e3fe19.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:QIOf02NbmqvFMlOwcMXZAXbGDVU=");
+  background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-keyboard.png");
   float: left;
 }
 
@@ -91,7 +91,7 @@
   opacity: 0.8;
   border-radius: 10rpx;
   padding: 10rpx;
-  background-image: url("https://rongcloud-image.cn.ronghub.com/o_1chlab8nk1gp014f11vdu5u11v74l.gif?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:a9LUbvDq5PbI5H5-MtJP49SFGdE=");
+  background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-image.png");
 }
 
 .rong-editor-emojis,.rong-editor-more{
@@ -133,20 +133,26 @@
   box-sizing: border-box;
   margin: 20px;
   float: left;
+  position: relative;
 }
 
 .rong-editor-module{
-  height: 40px;
-  width: 40px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 35px;
+  width: 35px;
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
+
 }
 .rong-editor-module-image{
-  background-image: url('https://rongcloud-image.cn.ronghub.com/FsB5XchwrDjI3yt2MiJODkqbxg7a?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:2L0FW-2g8vuK6-8tL6DYB9x7_mw=');
+  background-image: url('http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-image.png');
 }
 
 .rong-editor-module-music{
-  background-image: url('https://rongcloud-image.cn.ronghub.com/o_1chuu8j7g15bm3qbpvc1e891tmog.png?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:vSoaCmGeTC7GIpsVzWmR6zSRnaI=');
+  background-image: url('http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-music.png');
   height: 35px;
 }
