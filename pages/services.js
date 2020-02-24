@@ -327,11 +327,11 @@ let Conversation = {
 let bindUserInfo = (list) => {
   let unknowUser = {
     name: '火星人',
-    avatar: 'https://rongcloud-image.cn.ronghub.com/FjGxbmdZ7wyIqMHvaa3SqOgSZGk_?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:OCCilgLZtkK8G9AmayjUzP9J66w='
+    avatar: 'http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-user-unkown.png'
   };
   let unknowGroup = {
     name: '火星群组',
-    avatar: 'https://rongcloud-image.cn.ronghub.com/FjGxbmdZ7wyIqMHvaa3SqOgSZGk_?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:OCCilgLZtkK8G9AmayjUzP9J66w='
+    avatar: 'http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-group-unkown.png'
   };
   if (!utils.isArray(list)){
     list = [list];

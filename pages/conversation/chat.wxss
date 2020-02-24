@@ -40,17 +40,17 @@
   margin-top: 4rpx;
 }
 .rong-editor-btn-voice{
-  background-image: url("https://rongcloud-image.cn.ronghub.com/o_1chk2kfkpr8pdm31j56t49fg1a.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:7JEmLgDyTGVPaqFkfv1XlIIvKTY=");
+  background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-voice.png");
   float: left;
 }
 
 .rong-editor-btn-emoji{
-   background-image: url("https://rongcloud-image.cn.ronghub.com/o_1chk2kfkp4mt946187t1tu6fo517.png?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:M3ESBWxl56cSKODXRIEfZ2lEyJk=");
+   background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-emoji.png");
    float: right;
 }
 
 .rong-editor-btn-more{
-   background-image: url("https://rongcloud-image.cn.ronghub.com/o_1chk2kfkpfcj1glterl29mi6618.png?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:Y0nRdX5kK_T2YWxIWsoA236DCL4="); 
+   background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-more.png"); 
   float: right;
 }
 
