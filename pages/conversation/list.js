@@ -1,9 +1,7 @@
 const utils = require('../utils/utils');
 
 const {globalData} = getApp();
-const {Service: {User, Status, Conversation}} = globalData;
-
-const ChatroomId = 'chrm1';
+const {Service: {Status, Conversation}} = globalData;
 
 const requestUserAuth = () => {
   return new Promise((resolve, reject) => {
@@ -29,14 +27,11 @@ const watchConversation = (context) => {
 
 const watchStatus = () => {
  Status.watch((status) => {
-   console.log('status changed', status);
    if (status == 3) {
-     Status.reconnect();
-   } else if (status === 6) {
-     wx.showToast({
-       title: '已被其他端踢掉',
-       icon: 'error',
-       duration: 3000
+     wx.getUserInfo({
+       success: (user) => {
+         Status.connect(user.userInfo);
+       }
      });
    }
  })
@@ -45,29 +40,27 @@ const watchStatus = () => {
 const connect = (context) => {
   watchConversation(context);
   watchStatus();
-  Status.connect().then((userId) => {
-    console.log('connect successfully', userId);
-  }, (error) => {
-    wx.showToast({
-      title: error.msg,
-      icon: 'none',
-      duration: 3000
-    })
+  wx.getUserInfo({
+    success: (user) => {
+      Status.connect(user.userInfo).then(() => {
+        console.log('connect successfully');
+      }, (error) => {
+        wx.showToast({
+          title: error.msg,
+          icon: 'none',
+          duration: 3000
+        })
+      })
+    },
+    fail: (error) => {
+      console.log(error);
+      wx.showToast({
+        title: '换个网络试试，只能帮你到这了～',
+        icon: 'none',
+        duration: 3000
+      })
+    }
   })
-  // wx.getUserInfo({
-  //   success: (user) => {
-  //     console.log(user);
-      
-  //   },
-  //   fail: (error) => {
-  //     console.log(error);
-  //     wx.showToast({
-  //       title: '换个网络试试，只能帮你到这了～',
-  //       icon: 'none',
-  //       duration: 3000
-  //     })
-  //   }
-  // })
 };
 
 Page({
@@ -83,79 +76,24 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: function (options) {
-    connect(this);
-    // requestUserAuth().then((hasUserAuth) => {
-    //   this.setData({
-    //     hasUserAuth
-    //   });
-    //   if (hasUserAuth){
-    //     connect(this);
-    //   }
-    // });
-  },
-  onAuthCompleted: function(user){
-    connect(this);
-    // requestUserAuth().then((hasUserAuth) => {
-    //   this.setData({
-    //     hasUserAuth
-    //   });
-    //   if (hasUserAuth) {
-    //     connect(this);
-    //   }
-    // });
-  },
-  clearLocal: function() {
-    return Status.clearLocal().then(() => {
-      wx.reLaunch({
-        url: '/pages/conversation/list'
+    requestUserAuth().then((hasUserAuth) => {
+      this.setData({
+        hasUserAuth
       });
-    });
-  },
-  joinChatroom: function() {
-    return User.joinChatroom(ChatroomId).then(() => {
-      let targetId = ChatroomId;
-      let type = 4;
-      let url = './chat?type={type}&targetId={targetId}&title={title}';
-      url = utils.tplEngine(url, {
-        type,
-        targetId,
-        title: `聊天室 (${targetId})`
-      });
-      return wx.navigateTo({
-        url: url,
-      });
-    });
-  },
-  showConversationHandles: function(event) {
-    let { currentTarget: { dataset: { item } } } = event;
-    let { conversationType: type, targetId } = item;
-    let handlers = [
-      { name: '加入聊天室: ' + ChatroomId, event: this.joinChatroom },
-      { name: '清除所有未读数', event: Conversation.clearTotalUnreadCount },
-      { name: '清空缓存', event: this.clearLocal },
-      { name: '删除会话', event: Conversation.remove }
-    ];
-    let handlerNames = handlers.map((handle) => {
-      return handle.name;
-    });
-    let showToast = (title) => {
-      wx.showToast({
-        title: title,
-        duration: 1000
-      });
-    };
-    wx.showActionSheet({
-      itemList: handlerNames,
-      success: function(res) {
-        let { event, name } = handlers[res.tapIndex];
-        event(type, targetId).then(() => {
-          showToast(name + '成功');
-        }).catch((error) => {
-          showToast(name + '失败' + error);
-        });
+      if (hasUserAuth){
+        connect(this);
       }
     });
-
+  },
+  onAuthCompleted: function(user){
+    requestUserAuth().then((hasUserAuth) => {
+      this.setData({
+        hasUserAuth
+      });
+      if (hasUserAuth) {
+        connect(this);
+      }
+    });
   },
   gotoChat: function(event){
     let { currentTarget: { dataset: { item } } } = event;
@@ -171,7 +109,7 @@ Page({
     url = utils.tplEngine(url, {
       type,
       targetId,
-      title: target.name + ` (${targetId})`
+      title: target.name
     });
     wx.navigateTo({
       url: url,

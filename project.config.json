@@ -5,20 +5,10 @@
 		"es6": true,
 		"postcss": true,
 		"minified": false,
-		"newFeature": true,
-		"coverView": true,
-		"autoAudits": false,
-		"checkInvalidKey": true,
-		"checkSiteMap": true,
-		"uploadWithSourceMap": true,
-		"babelSetting": {
-			"ignore": [],
-			"disablePlugins": [],
-			"outputPath": ""
-		}
+		"newFeature": true
 	},
 	"compileType": "miniprogram",
-	"libVersion": "2.8.3",
+	"libVersion": "2.1.1",
 	"appid": "wx722931d0b9bb4e67",
 	"projectname": "rongcloud-miniapp",
 	"simulatorType": "wechat",

@@ -1,4 +1,4 @@
-const RongIMLib = require('./lib/RongIMLib.wx-1.1.4');
+const RongIMLib = require('./lib/RongIMLib.miniprogram-1.1.3.js');
 const RongIMClient = RongIMLib.RongIMClient;
 
 const utils = require('./utils/utils.js');
@@ -14,25 +14,6 @@ let config = {
   protocol: 'https://'
 };
 
-let unknowUser = {
-  name: '火星人',
-  avatar: 'http://fsprodrcx.cn.ronghub.com/x5sJTceaCHnQcglNx5sJTcccuuLHmlZlqv56Pqb8bA/%E7%81%AB%E6%98%9F%E7%8C%8E%E4%BA%BA.png?token=Um9uZ2Nsb3VkMTQyMDE5MTIwOTAzMDcwNzM2MDBtZXNzYWdlOzs7OTkzNTI3Mzg5'
-};
-let unknowGroup = {
-  name: '火星群组',
-  avatar: 'http://fsprodrcx.cn.ronghub.com/mXjs5Zl67dGOkezlmXjs5ZnJPTiZeWe_9B2flvgfiQ/%E7%81%AB%E6%98%9F.png?token=Um9uZ2Nsb3VkMTQyMDE5MTIwOTAzMDcwNzM2MDBtZXNzYWdlOzs7OTkzNTI3Mzg5'
-};
-
-let unkownChatroom = {
-  name: '火星聊天室',
-  avatar: 'http://fsprodrcx.cn.ronghub.com/mXjs5Zl67dGOkezlmXjs5ZnJPTiZeWe_9B2flvgfiQ/%E7%81%AB%E6%98%9F.png?token=Um9uZ2Nsb3VkMTQyMDE5MTIwOTAzMDcwNzM2MDBtZXNzYWdlOzs7OTkzNTI3Mzg5'
-};
-
-let unkownSystem = {
-  name: '火星系统',
-  avatar: 'http://fsprodrcx.cn.ronghub.com/mXjs5Zl67dGOkezlmXjs5ZnJPTiZeWe_9B2flvgfiQ/%E7%81%AB%E6%98%9F.png?token=Um9uZ2Nsb3VkMTQyMDE5MTIwOTAzMDcwNzM2MDBtZXNzYWdlOzs7OTkzNTI3Mzg5'
-};
-
 
 let registerMessages = () => {
   let messageName = "MusicMessage"; 
@@ -40,14 +21,6 @@ let registerMessages = () => {
   let mesasgeTag = new RongIMLib.MessageTag(true, true); 
   let prototypes = ["url", "name", "author", "poster"]; 
   RongIMClient.registerMessageType(messageName, objectName, mesasgeTag, prototypes);
-};
-
-let handleTextMessage = (message) => {
-  if (message.messageType === 'TextMessage') {
-    let content = message.content.content || '';
-    message.content.content = utils.replaceSensitiveWords(content);
-  }
-  return message;
 };
 
 let ErrorInfo = {
@@ -137,48 +110,24 @@ Friend.getList = () => {
 
 let User = {};
 
-let getUserKey = () => {
-  return 'user-' + config.appkey;
-};
-
-let setLocalUser = (user) => {
-  wx.setStorage({
-    key: getUserKey(),
-    data: user,
-  })
-};
-
-let getLocalUser = () => {
-  return wx.getStorageSync(getUserKey());
-};
-
-let getUserIndex = (/*name, max*/) => {
-  var maxIndex = UserList.length - 1;
-  return Math.ceil(Math.random() * maxIndex);
-
-  // console.log(utils.toUnicode(name));
-  // var index = utils.toUnicode(name).slice(-1);
-  // //转 unicode 后最后一个字符不是数字，给固定🈯值
-  // if (isNaN(index)){
-  //   index = max;
-  // }
-  // if (index > max){
-  //   index = max;
-  // }
-  // return index;
-};
-
-let getUser = (/*user*/) => {
-  let user = getLocalUser();
-  if (user) {
-    return user;
+let getUserIndex = (name, max) => {
+  console.log(utils.toUnicode(name));
+  var index = utils.toUnicode(name).slice(-1);
+  //转 unicode 后最后一个字符不是数字，给固定🈯值
+  if (isNaN(index)){
+    index = max;
   }
-  // user = utils.rename(user, {avatarUrl: 'avatar', nickName: 'name'});
-  // let maxIndex = UserList.length - 1;
-  // let index = getUserIndex(user.name,  maxIndex);
-  let index = getUserIndex();
+  if (index > max){
+    index = max;
+  }
+  return index;
+};
+
+let getUser = (user) => {
+  user = utils.rename(user, {avatarUrl: 'avatar', nickName: 'name'});
+  let maxIndex = UserList.length - 1;
+  let index = getUserIndex(user.name,  maxIndex);
   let _user = UserList[index];
-  setLocalUser(_user);
   // utils.extend(_user, user);
   return _user
 };
@@ -195,17 +144,7 @@ let getUserById = (id) => {
 
 User.getToken = (user) => {
   currentUser = getUser(user);
-  console.log('currentUser', currentUser);
   return Promise.resolve(currentUser);
-};
-
-User.joinChatroom = (id) => {
-  return new Promise((resolve, reject) => {
-    imInstance.joinChatRoom(id, 50, {
-      onSuccess: resolve,
-      onError: reject
-    });
-  });
 };
 
 let bindSender = (message, position) => {
@@ -216,22 +155,12 @@ let bindSender = (message, position) => {
     1: (msg) => {
       msg.sender = utils.find(UserList, (user) => {
         return (user.id == msg.senderUserId);
-      }) || Object.assign(unknowUser, msg);
+      });
     },
     3: (msg) => {
       msg.sender = utils.find(UserList, (user) => {
         return (user.id == msg.senderUserId);
-      }) || Object.assign(unknowGroup, msg);
-    },
-    4: (msg) => {
-      msg.sender = utils.find(UserList, (user) => {
-        return (user.id == msg.senderUserId);
-      }) || Object.assign(unkownChatroom, msg);;
-    },
-    6: (msg) => {
-      msg.sender = utils.find(UserList, (user) => {
-        return (user.id == msg.senderUserId);
-      }) || Object.assign(unkownSystem, msg);;
+      });
     }
   };
   utils.map(message, (msg) => {
@@ -271,7 +200,6 @@ let sendMessage = (type, targetId, message) => {
     let messageMap = {
       text: () => {
         let {content} = message;
-        content = utils.replaceSensitiveWords(content);
         return new RongIMLib.TextMessage({ content, user });
       },
       image: () => {
@@ -280,11 +208,7 @@ let sendMessage = (type, targetId, message) => {
       },
       voice: () => {
         let { content, duration } = message;
-        return new RongIMLib.HQVoiceMessage({
-          remoteUrl: content,
-          duration,
-          user
-        });
+        return new RongIMLib.VoiceMessage({ content, duration, user });
       },
       music: () => {
         let {name, url, author, poster} = message;
@@ -302,25 +226,6 @@ let sendMessage = (type, targetId, message) => {
         console.warn('service promise sendmessage error: ', error);
         //bindUser(message, reject);
       }
-    });
-  });
-};
-
-Message.clearByTime = (msg) => {
-  msg.timestamp = msg.sentTime;
-  return new Promise((resolve, reject) => {
-    imInstance.clearRemoteHistoryMessages(msg, {
-      onSuccess: resolve,
-      onError: reject
-    });
-  });
-};
-
-Message.clearByMsg = (msg) => {
-  return new Promise((resolve, reject) => {
-    imInstance.deleteRemoteMessages(msg.conversationType, msg.targetId, [msg], {
-      onSuccess: resolve,
-      onError: reject
     });
   });
 };
@@ -348,15 +253,6 @@ Message.sendImage = (params) => {
     imageUri,
     extra
   })
-};
-
-Message.recall = (msg) => {
-  return new Promise((resolve, reject) => {
-    imInstance.sendRecallMessage(msg, {
-      onSuccess: resolve,
-      onError: reject
-    });
-  });
 };
 
 //params.type
@@ -388,14 +284,10 @@ Message.getList = (params) => {
     let timestamp = position > 0 ? null : position;
     imInstance.getHistoryMessages(+type, targetId, timestamp, count, {
       onSuccess: (messageList, hasMore) => {
-        messageList = messageList.map((message) => {
-          message = handleTextMessage(message);
-          return message;
+        // 过滤未处理的消息类型
+        messageList = messageList.filter((message) => {
+          return message.messageType != 'RecallCommandMessage'
         });
-        // // 过滤未处理的消息类型
-        // messageList = messageList.filter((message) => {
-        //   return message.messageType != 'RecallCommandMessage'
-        // });
         bindSender(messageList, position);
         hasMore = !!hasMore;
         resolve({ messageList, hasMore});
@@ -432,67 +324,32 @@ let Conversation = {
   watcher: new ObserverList()
 };
 
-Conversation.remove = (type, targetId) => {
-  return new Promise((resolve, reject) => {
-    imInstance.removeConversation(type, targetId, {
-      onSuccess: resolve,
-      onError: reject
-    });
-  });
-};
-
-let getMockMessage = (targetId, type) => {
-  return {
-    content: {
-      messageName: "TextMessage",
-      content: ""
-    },
-    conversationType: type,
-    objectName: "RC:TxtMsg",
-    targetId: targetId,
-    messageType: "TextMessage",
-    sentTime: Date.now()
-  };
-}
-
 let bindUserInfo = (list) => {
-  let includedTargetMarkList = []; // 已有会话合集
-  let getTargetMark = (target) => {
-    return target.type + '_' + target.id;
+  let unknowUser = {
+    name: '火星人',
+    avatar: 'https://rongcloud-image.cn.ronghub.com/FjGxbmdZ7wyIqMHvaa3SqOgSZGk_?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:OCCilgLZtkK8G9AmayjUzP9J66w='
   };
-  let isTargetIncluded = (target) => {
-    let targetMark = getTargetMark(target);
-    return includedTargetMarkList.indexOf(targetMark) !== -1;
+  let unknowGroup = {
+    name: '火星群组',
+    avatar: 'https://rongcloud-image.cn.ronghub.com/FjGxbmdZ7wyIqMHvaa3SqOgSZGk_?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:OCCilgLZtkK8G9AmayjUzP9J66w='
   };
-
   if (!utils.isArray(list)){
     list = [list];
   }
 
   let infoMap = {
       1: (conversation) => {
-        var target = utils.find(UserList, (user) => {
+        conversation.target = utils.find(UserList, (user) => {
           return user.id == conversation.targetId
         }) || unknowUser;
-        if (target.id) {
-          includedTargetMarkList.push(getTargetMark(target));
-        }
-        conversation.target = target;
       },
       2: (conversation) => {
         conversation.target = unknowUser;
       },
       3: (conversation) => {
-        var target = utils.find(GroupList, (group) => {
+        conversation.target = utils.find(GroupList, (group) => {
           return group.id == conversation.targetId
         }) || unknowGroup;
-        if (target.id) {
-          includedTargetMarkList.push(getTargetMark(target));
-        }
-        conversation.target = target;
-      },
-      6: (conversation) => {
-        conversation.target = unkownSystem;
       },
       10: (conversation) => {
         conversation.target = unknowUser;
@@ -504,7 +361,7 @@ let bindUserInfo = (list) => {
     if (messageType == 'TextMessage'){
       content = msg.content.content;
     }
-    if (messageType == 'HQVoiceMessage') {
+    if (messageType == 'VoiceMessage') {
       content = '[语音]';
     }
     if (messageType == 'ImageMessage') {
@@ -523,81 +380,23 @@ let bindUserInfo = (list) => {
     conversation._sentTime = utils.getTime(sentTime);
     conversation.unReadCount = conversation.unreadMessageCount;
     let { latestMessage } = conversation;
-    latestMessage = handleTextMessage(latestMessage);
     conversation.content = formatMsg(latestMessage);
     let _type = conversation.conversationType;
-    _type = _type > 6 ? 10 : _type;
-    if (infoMap[_type]) {
-      infoMap[_type](conversation);
-    }
+    _type = _type > 3 ? 10 : _type;
+    infoMap[_type](conversation);
   });
 
-  // utils.map(utils.deepExtend(UserList, GroupList), (user) => {
-  //   if (!isTargetIncluded(user)) {
-  //     let latestMessage = getMockMessage(user.id, user.type); 
-  //     list.push({
-  //       target: user,
-  //       targetId: user.id,
-  //       conversationType: user.type,
-  //       latestMessage: latestMessage,
-  //       sentTime: latestMessage.sentTime
-  //     });
-  //   }
-  // });
-
-};
-
-const sendSyncReadReceipt = (conversation) => {
-  var { latestMessage, conversationType, targetId } = conversation;
-  if (!latestMessage) {
-    return;
-  }
-  var { sentTime } = latestMessage;
-  var msg = new RongIMLib.SyncReadStatusMessage({ lastMessageSendTime: sentTime });
-  imInstance.sendMessage(conversationType, targetId, msg, {
-    onSuccess: function() {},
-    onError: function() {}
-  });
-};
-
-const sendReadReceipt = (conversation) => {
-  var { latestMessage, conversationType, targetId } = conversation;
-  if (!latestMessage) {
-    return;
-  }
-  var { messageUId, sentTime } = latestMessage;
-  var msg = new RongIMLib.ReadReceiptMessage({ messageUId: messageUId, lastMessageSendTime: sentTime, type: conversationType });
-  imInstance.sendMessage(conversationType, targetId, msg, {
-    onSuccess: function() {},
-    onError: function() {}
-  });
 };
 
 Conversation.clearUnreadCount = (conversation) => {
   let { conversationType, targetId } = conversation;
-  let isGroup = conversationType === RongIMLib.ConversationType.GROUP;
-  isGroup ? sendSyncReadReceipt(conversation) : sendReadReceipt(conversation);
   imInstance.clearUnreadCount(conversationType, targetId, {
     onSuccess: function(){},
     onError: function(){}
   });
 };
-Conversation.clearTotalUnreadCount = () => {
-  return new Promise((resolve, reject) => {
-    imInstance.clearTotalUnreadCount({
-      onSuccess: resolve,
-      onError: reject
-    });
-  });
-};
 Conversation.watch = (watcher) => {
   RongIMClient.Conversation.watch(function(list){
-    list = utils.parseObj(list);
-    list = list.filter(function(item) {
-      var allowTypes = [RongIMLib.ConversationType.PRIVATE, RongIMLib.ConversationType.GROUP, RongIMLib.ConversationType.SYSTEM];
-      return allowTypes.indexOf(item.conversationType) !== -1;
-    });
-    console.log('Conversation Watch:', list);
     bindUserInfo(list);
     watcher(list);
   });
@@ -608,30 +407,6 @@ let Status = {
 Status.disconnect = () => {
   RongIMClient.getInstance().disconnect();
 };
-Status.reconnect = () => {
-  wx.showLoading({
-    title: '正在重连...',
-  });
-  var callback = {
-    onSuccess: function (userId) {
-      wx.hideLoading();
-      wx.showToast({
-        title: '重连成功',
-        icon: 'success',
-        duration: 2000
-      });
-    },
-    onError: function (errorCode) {
-      Status.reconnect();
-    }
-  };
-  var config = {
-    auto: true,
-    url: 'cdn.ronghub.com/RongIMLib-2.2.6.min.js?d=' + Date.now(),
-    rate: [100, 1000, 1000, 1000, 1000]
-  };
-  RongIMClient.reconnect(callback, config);
-};
 Status.connect = (user) => {
   console.log(user);
   RongIMClient.setConnectionStatusListener({
@@ -641,19 +416,11 @@ Status.connect = (user) => {
   });
 
   let receiveMessage = (message) => {
+    console.log(message);
       let {messageType} = message;
       let messageCtrol = {
         otherMessage: () => {
-          message = handleTextMessage(message);
           Message._push(message);
-        },
-        SyncReadStatusMessage: () => {
-          var isSelfSend = currentUser.id === message.senderUserId;
-          isSelfSend && Conversation.clearUnreadCount(message);
-        },
-        ReadReceiptMessage: () => {
-          var isSelfSend = currentUser.id === message.senderUserId;
-          isSelfSend && Conversation.clearUnreadCount(message);
         }
       };
       let messageHandler = messageCtrol[messageType] || messageCtrol.otherMessage;
@@ -691,15 +458,10 @@ Status.watch = (watch) => {
   Status.watcher.add(watch, force);
 };
 
-Status.clearLocal = () => {
-  wx.clearStorage();
-  return Promise.resolve();
-};
-
 let File = {};
 
 File.upload = (file) => {
-  let fileType = file.fileType || RongIMLib.FileType.FILE;
+  let fileType = RongIMLib.FileType.FILE;
   return new Promise((resolve, reject) => {
     imInstance.getFileToken(fileType, {
       onSuccess: (result) => {
@@ -748,8 +510,7 @@ module.exports = (_config) => {
     navi: config.navi,
     cmp: config.cmp,
     wsScheme: config.wsScheme,
-    protocol: 'http://',
-    cometList: ['cometxq.rongcloud.net:8200']
+    protocol: config.protocol
   });
   registerMessages();
   imInstance = RongIMClient.getInstance();

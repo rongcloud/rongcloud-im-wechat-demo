@@ -13,6 +13,7 @@ Component({
   data: {
     
   },
+  
   methods: {
 
   }

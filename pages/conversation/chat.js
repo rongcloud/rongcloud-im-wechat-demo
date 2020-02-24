@@ -162,14 +162,12 @@ const onLoad = (context, query) => {
   getMessageList(context, { type, targetId, position, count });
 
   Message.watch((message) => {
-    if (message.conversationType == type && message.targetId == targetId) {
-      let { messageList } = context.data;
-      messageList.push(message);
-      context.setData({
-        messageList,
-        toView: message.uId
-      }); 
-    }
+    let { messageList } = context.data;
+    messageList.push(message);
+    context.setData({
+      messageList,
+      toView: message.uId
+    });
   });
 };
 
@@ -231,8 +229,7 @@ const stopRecording = (context) => {
     console.log('recorder stop', res)
     const { tempFilePath, duration } = res
     File.upload({
-      path: tempFilePath,
-      fileType: 2
+      path: tempFilePath
     }).then(file => {
       console.log(file)
       let content = {
@@ -477,8 +474,7 @@ Page({
     playingVoice: null,
     playingMusicComponent: null,
     isAllowScroll: true,
-    scrollTop: 0,
-    isShowImagePanel: Date.now() > 1570676400000 // 2019-10-10 11:00:00
+    scrollTop: 0
   },
   hideKeyboard: function () {
     hideKeyboard(this);
@@ -549,65 +545,5 @@ Page({
   onHide: function(){
     hideKeyboard(this);
     stopPlayMusic(this);
-  },
-  clearByMsg: function(msg) {
-    let me = this;
-    return Message.clearByMsg(msg);
-    // .then(() => {
-    //   let messageList = me.messageList;
-    //   for (var i = 0; i < messageList.length; i++) {
-    //     if (messageList[i].messageUId === msg.messageUId) {
-    //       messageList.splice(i, 1);
-    //       return me.setData({
-    //         messageList: messageList
-    //       });
-    //     }
-    //   }
-    // });
-  },
-  clearByTime: function(msg) {
-    let me = this;
-    return Message.clearByTime(msg);
-    // .then(() => {
-    //   let messageList = me.messageList;
-    //   for (var i = messageList.length; i <= 0; i--) {
-    //     if (messageList[i].sentTime < msg.sentTime ) {
-    //       messageList.splice(i, 1);
-    //     }
-    //   }
-    //   return me.setData({
-    //     messageList: messageList
-    //   });
-    // });
-  },
-  showMessageHandler: function (event) {
-    let { currentTarget: { dataset: { item } } } = event;
-    let handlers = [
-      { name: '撤回消息', event: Message.recall },
-      { name: '删除单条消息', event: this.clearByMsg },
-      { name: '清除此消息之前所有消息', event: this.clearByTime }
-    ];
-    let handlerNames = handlers.map((handle) => {
-      return handle.name;
-    });
-    let showToast = (title) => {
-      wx.showToast({
-        title: title,
-        duration: 1000,
-        icon: 'none'
-      });
-    };
-    wx.showActionSheet({
-      itemList: handlerNames,
-      success: function (res) {
-        let { event, name } = handlers[res.tapIndex];
-        event(item).then(() => {
-          showToast(name + '成功, 需返回重新会话获取最新历史消息');
-        }).catch((error) => {
-          showToast(name + '失败' + error);
-        });
-      }
-    });
-
   }
 })

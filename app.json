@@ -1,9 +1,7 @@
 {
   "pages": [
     "pages/conversation/list",
-    "pages/conversation/chat",
-    "pages/chatroom",
-    "pages/chatroom/chatroom"
+    "pages/conversation/chat"
   ],
   "window": {
     "navigationBarBackgroundColor": "#1BA3FC",

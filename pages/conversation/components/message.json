@@ -4,7 +4,6 @@
     "TextMessage": "./message/text",
     "ImageMessage": "./message/image",
     "VoiceMessage": "./message/voice",
-    "MusicMessage": "./message/music",
-    "NotSupport": "./message/not-support"
+    "MusicMessage": "./message/music"
   }
 }

@@ -1,2 +1,0 @@
-<!--pages/conversation/components/message/not-support.wxml-->
-<text>不支持的消息类型: {{message.objectName}}</text>
