@@ -34,6 +34,12 @@ const watchStatus = () => {
        }
      });
    }
+   if (status == 6) {
+     wx.showModal({
+      title: '提示',
+      content: '当前用户已在其他端登录'
+     })
+   }
  })
 }
 

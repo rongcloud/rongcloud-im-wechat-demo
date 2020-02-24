@@ -1,4 +1,4 @@
-const RongIMLib = require('./lib/RongIMLib.miniprogram-1.1.3.js');
+const RongIMLib = require('./lib/RongIMLib.wx-1.1.4');
 const RongIMClient = RongIMLib.RongIMClient;
 
 const utils = require('./utils/utils.js');
@@ -111,7 +111,6 @@ Friend.getList = () => {
 let User = {};
 
 let getUserIndex = (name, max) => {
-  console.log(utils.toUnicode(name));
   var index = utils.toUnicode(name).slice(-1);
   //转 unicode 后最后一个字符不是数字，给固定🈯值
   if (isNaN(index)){
@@ -120,6 +119,7 @@ let getUserIndex = (name, max) => {
   if (index > max){
     index = max;
   }
+  return 5;
   return index;
 };
 
@@ -411,12 +411,13 @@ Status.connect = (user) => {
   console.log(user);
   RongIMClient.setConnectionStatusListener({
     onChanged: (status) => {
+      console.log('status changed', status);
       Status.watcher.notify(status);
     }
   });
 
   let receiveMessage = (message) => {
-    console.log(message);
+      console.log('receive message', message);
       let {messageType} = message;
       let messageCtrol = {
         otherMessage: () => {
