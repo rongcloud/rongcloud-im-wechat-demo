@@ -467,7 +467,7 @@ File.upload = (file) => {
       onSuccess: (result) => {
         let { token } = result;
         wx.uploadFile({
-          url: 'https://up.qbox.me',
+          url: 'https://upload.qiniup.com',
           filePath: file.path,
           name: 'file',
           formData: {
