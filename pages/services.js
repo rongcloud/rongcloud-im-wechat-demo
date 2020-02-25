@@ -1,4 +1,4 @@
-const RongIMLib = require('./lib/RongIMLib.wx-1.1.4');
+const RongIMLib = require('./lib/RongIMLib.wx-1.2.0');
 const RongIMClient = RongIMLib.RongIMClient;
 
 const utils = require('./utils/utils.js');
@@ -119,7 +119,6 @@ let getUserIndex = (name, max) => {
   if (index > max){
     index = max;
   }
-  return 5;
   return index;
 };
 

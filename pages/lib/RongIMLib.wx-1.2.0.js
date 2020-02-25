@@ -1,6 +1,6 @@
 
 /*
-* RongIMLib-miniprogram.js v1.1.4
+* RongIMLib-miniprogram.js v1.2.0
 * Based on RongIMLib-2.5.5.js
 * Copyright 2020 RongCloud
 '* Released under the MIT License.'
