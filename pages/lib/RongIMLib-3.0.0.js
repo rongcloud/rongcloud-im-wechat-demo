@@ -1,6 +1,6 @@
 /*
 * RongIMLib.js v3.0.0
-* Release Date: Mon Apr 13 2020 17:41:55 GMT+0800 (China Standard Time)
+* Release Date: Mon Apr 13 2020 19:23:48 GMT+0800 (China Standard Time)
 * Copyright 2020 RongCloud
 * Released under the MIT License.
 */
@@ -6079,26 +6079,32 @@
       }
 
       var execResult = execEngineByEvent(params, engine);
-      return utils.isPromise(execResult) ? execResult["catch"](function (error) {
-        Logger.write({
-          content: {
-            info: 'SDK Errir',
-            error: error
-          }
-        });
-        var errorCode = error.status || error.code || error;
-        var errorInfo = ERROR_CODE_TO_INFO[errorCode] || {
-          code: errorCode
-        };
-        var isValidErrorCode = utils.isNumberData(errorCode);
-
-        if (!isValidErrorCode) {
-          errorInfo = utils.extendInShallow(ERROR_INFO.SDK_INTERNAL_ERROR, {
-            error: error
+      return utils.isPromise(execResult) ? utils.deferred(function (resolve, reject) {
+        execResult.then(function (result) {
+          setTimeout(function () {
+            resolve(result);
+          }, 0);
+        }, function (error) {
+          Logger.write({
+            content: {
+              info: 'SDK Errir',
+              error: error
+            }
           });
-        }
+          var errorCode = error.status || error.code || error;
+          var errorInfo = ERROR_CODE_TO_INFO[errorCode] || {
+            code: errorCode
+          };
+          var isValidErrorCode = utils.isNumberData(errorCode);
 
-        return utils.Defer.reject(errorInfo);
+          if (!isValidErrorCode) {
+            errorInfo = utils.extendInShallow(ERROR_INFO.SDK_INTERNAL_ERROR, {
+              error: error
+            });
+          }
+
+          return reject(errorInfo);
+        });
       }) : execResult;
     };
 

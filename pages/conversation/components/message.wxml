@@ -1,14 +1,15 @@
  <view class='rong-message'>
       <image class='rong-avatar rong-message-avatar rong-message-avatar-{{message.direction}}' src='{{message.sender.avatar}}'></image>
      
-      <view wx:if = '{{message.name == "ImageMessage"}}' class='rong-message-content rong-message-content-image-{{message.direction}}'>
+      <view wx:if = '{{message.name == "RC:ImgMsg"}}' class='rong-message-content rong-message-content-image-{{message.direction}}'>
         <ImageMessage message='{{message}}' bindonpreviewimage='onPreviewImage'></ImageMessage>
       </view>
 
       <view wx:else class='rong-message-content rong-message-content-{{message.direction}}'>
-        <TextMessage wx:if =  '{{message.name == "TextMessage"}}'   message='{{message}}'></TextMessage>
-        <VoiceMessage wx:if = '{{message.name == "VoiceMessage"}}'  message='{{message}}' bindonplay='onPlayVoice'></VoiceMessage> 
-        <MusicMessage wx:if = '{{message.name == "MusicMessage"}}'  message='{{message}}' bindonplaymusic='onPlayMusic' bindonstopmusic='onMusicStop'></MusicMessage> 
+        <TextMessage wx:if =  '{{message.name == "RC:TxtMsg"}}'   message='{{message}}'></TextMessage>
+        <VoiceMessage wx:if = '{{message.name == "RC:HQVCMsg"}}'  message='{{message}}' bindonplay='onPlayVoice'></VoiceMessage> 
+                <VoiceMessage wx:if='{{message.name == "RC:VcMsg"}}' message='{{message}}' bindonplay='onPlayVoice'></VoiceMessage>
+        <MusicMessage wx:if = '{{message.name == "seal:music"}}'  message='{{message}}' bindonplaymusic='onPlayMusic' bindonstopmusic='onMusicStop'></MusicMessage> 
       </view>
 
 

@@ -300,8 +300,10 @@ const sendText = (context) => {
 };
 
 const getMoreMessages = (context) => {
-  let { type, targetId, hasMore } = context.data;
-  let position = null;
+  let { type, targetId, hasMore, messageList } = context.data;
+  messageList = messageList || [];
+  let firstMessage = messageList[0] || {};
+  let position = firstMessage.sentTime || 0;
   let count = 5;
   if (hasMore) {
     context.setData({

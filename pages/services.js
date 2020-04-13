@@ -282,7 +282,7 @@ Message.sendMusic = (params) => {
 Message.getList = (params) => {
   let {type, targetId, position, count} = params;
   count = count || 5;
-  let timestamp = position > 0 ? null : position;
+  let timestamp = position;
   let conversation = imInstance.Conversation.get({
     type: +type,
     targetId
