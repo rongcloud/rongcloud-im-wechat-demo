@@ -28,11 +28,11 @@ const watchConversation = (context) => {
 const watchStatus = () => {
  Status.watch((status) => {
    if (status == 3) {
-     wx.getUserInfo({
-       success: (user) => {
-         Status.connect(user.userInfo);
-       }
-     });
+    //  wx.getUserInfo({
+    //    success: (user) => {
+    //      Status.connect(user.userInfo);
+    //    }
+    //  });
    }
    if (status == 6) {
      wx.showModal({
@@ -48,9 +48,14 @@ const connect = (context) => {
   watchStatus();
   wx.getUserInfo({
     success: (user) => {
-      Status.connect(user.userInfo).then(() => {
-        console.log('connect successfully');
-      }, (error) => {
+      Status.connect(user.userInfo).then((user) => {
+        console.log('connect successfully', user);
+        return Conversation.getList();
+      }).then((list) => {
+        context.setData({
+          conversationList: list
+        });
+      }).catch((error) => {
         wx.showToast({
           title: error.msg,
           icon: 'none',
@@ -103,10 +108,10 @@ Page({
   },
   gotoChat: function(event){
     let { currentTarget: { dataset: { item } } } = event;
-    let { conversationType: type, targetId, target } = item;
+    let { type, targetId, target } = item;
     
     let isSame = (conversation, another) => {
-      let isSaveType = (conversation.conversationType == another.conversationType);
+      let isSaveType = (conversation.type == another.type);
       let isSaveTarget = (conversation.targetId == another.targetId);
       return (isSaveType && isSaveTarget);
     };

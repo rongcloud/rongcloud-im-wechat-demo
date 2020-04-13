@@ -1,5 +1,4 @@
-const RongIMLib = require('./lib/RongIMLib.wx-1.2.0');
-const RongIMClient = RongIMLib.RongIMClient;
+const RongIMLib = require('./lib/RongIMLib-3.0.0.js');
 
 const utils = require('./utils/utils.js');
 const { UserList, GroupList, MusicList} = require('./mock.js');
@@ -15,13 +14,13 @@ let config = {
 };
 
 
-let registerMessages = () => {
-  let messageName = "MusicMessage"; 
-  let objectName = "seal:music";
-  let mesasgeTag = new RongIMLib.MessageTag(true, true); 
-  let prototypes = ["url", "name", "author", "poster"]; 
-  RongIMClient.registerMessageType(messageName, objectName, mesasgeTag, prototypes);
-};
+// let registerMessages = () => {
+//   let messageName = "MusicMessage"; 
+//   let objectName = "seal:music";
+//   let mesasgeTag = new RongIMLib.MessageTag(true, true); 
+//   let prototypes = ["url", "name", "author", "poster"]; 
+//   RongIMClient.registerMessageType(messageName, objectName, mesasgeTag, prototypes);
+// };
 
 let ErrorInfo = {
   4: {
@@ -163,8 +162,9 @@ let bindSender = (message, position) => {
     }
   };
   utils.map(message, (msg) => {
+    const { type } = msg;
     msg.pos = position;
-    getSender[msg.conversationType](msg);
+    getSender[type](msg);
     utils.formatMessage(msg);
     return msg;
   });
@@ -174,7 +174,7 @@ let Message = {
   watcher: new ObserverList(),
   _push: (message) => {
     //不处理离线消息
-    if(message.offLineMessage){
+    if (message.isOffLineMessage){
       return;
     }
     bindSender(message);
@@ -186,7 +186,6 @@ let Message = {
 let sendMessage = (type, targetId, message) => {
   let bindUser = (_msg, next) => {
     bindSender(_msg);
-    next(_msg);
   };
 
   return new Promise((resolve, reject) => {
@@ -197,34 +196,38 @@ let sendMessage = (type, targetId, message) => {
     };
 
     let messageMap = {
-      text: () => {
-        let {content} = message;
-        return new RongIMLib.TextMessage({ content, user });
+      text: (params) => {
+        params.messageType = 'RC:TxtMsg';
+        return params;
       },
-      image: () => {
-        let { content, imageUri, extra } = message;
-        return new RongIMLib.ImageMessage({ content, imageUri, user, extra });
+      image: (params) => {
+        params.messageType = 'RC:ImgMsg';
+        return params;
       },
-      voice: () => {
-        let { content, duration } = message;
-        return new RongIMLib.VoiceMessage({ content, duration, user });
+      voice: (params) => {
+        params.messageType = 'RC:HQVCMsg';
+        return params;
       },
-      music: () => {
-        let {name, url, author, poster} = message;
-        return new RongIMClient.RegisterMessage.MusicMessage({ name, url, author, poster, user});
+      music: (params) => {
+        params.messageType = 'seal:music';
+        return params;
       }
     };
 
-    let msg = messageMap[message.type]();
-    imInstance.sendMessage(+type, targetId, msg, {
-      onSuccess: result => {
-        console.warn('service promise sendmessage success: ', msg);
-        bindUser(result, resolve);
-      },
-      onError: (error, result) => {
-        console.warn('service promise sendmessage error: ', error);
-        //bindUser(message, reject);
-      }
+    message.user = user;
+    let params = {
+      content: message
+    };
+    params = messageMap[message.type](params);
+    let conversation = imInstance.Conversation.get({
+      type: +type,
+      targetId
+    });
+    return conversation.send(params).then((message) => {
+      bindUser(message);
+      return message;
+    }).catch((e) => {
+      console.error('发消息失败', e);
     });
   });
 };
@@ -279,23 +282,24 @@ Message.sendMusic = (params) => {
 Message.getList = (params) => {
   let {type, targetId, position, count} = params;
   count = count || 5;
-  return new Promise((resolve, reject) => {
-    let timestamp = position > 0 ? null : position;
-    imInstance.getHistoryMessages(+type, targetId, timestamp, count, {
-      onSuccess: (messageList, hasMore) => {
-        // 过滤未处理的消息类型
-        messageList = messageList.filter((message) => {
-          return message.messageType != 'RecallCommandMessage'
-        });
-        bindSender(messageList, position);
-        hasMore = !!hasMore;
-        resolve({ messageList, hasMore});
-      },
-      onError: (error) => {
-        console.error('gethistoryMessages', error);
-        reject(error);
-      }
+  let timestamp = position > 0 ? null : position;
+  let conversation = imInstance.Conversation.get({
+    type: +type,
+    targetId
+  });
+  return conversation.getMessages({
+    timestrap: timestamp,
+    count
+  }).then(({ list, hasMore }) => {
+    let messageList = list.filter((message) => {
+      return message.messageType != 'RC:RcCmd';
     });
+    bindSender(messageList, position);
+    hasMore = !!hasMore;
+    return {
+      messageList,
+      hasMore
+    };
   });
 };
 
@@ -321,6 +325,13 @@ Message.watch = (watch) => {
 
 let Conversation = {
   watcher: new ObserverList()
+};
+
+Conversation.getList = () => {
+  return imInstance.Conversation.getList().then((list) => {
+    bindUserInfo(list);
+    return list;
+  });
 };
 
 let bindUserInfo = (list) => {
@@ -355,33 +366,32 @@ let bindUserInfo = (list) => {
       }
   };
   let formatMsg = (msg) => {
-    let {messageType} = msg;
+    let { messageType } = msg;
     let content = '[此消息类型未解析]';
-    if (messageType == 'TextMessage'){
+    if (messageType == 'RC:TxtMsg'){
       content = msg.content.content;
     }
-    if (messageType == 'VoiceMessage') {
+    if (messageType == 'RC:VcMsg' || messageType == 'RC:HQVCMsg') {
       content = '[语音]';
     }
-    if (messageType == 'ImageMessage') {
+    if (messageType == 'RC:ImgMsg') {
       content = '[图片]';
     }
-    if (messageType == 'FileMessage') {
+    if (messageType == 'RC:FileMsg') {
       content = '[文件]';
     }
-    if (messageType == 'MusicMessage') {
+    if (messageType == 'seal:music') {
       content = '[音乐]';
     }
     return content;
   };
   utils.map(list, (conversation) => {
-    let {sentTime} = conversation;
+    const { latestMessage, unreadMessageCount, type } = conversation;
+    const { sentTime } = latestMessage;
     conversation._sentTime = utils.getTime(sentTime);
-    conversation.unReadCount = conversation.unreadMessageCount;
-    let { latestMessage } = conversation;
+    conversation.unReadCount = unreadMessageCount;
     conversation.content = formatMsg(latestMessage);
-    let _type = conversation.conversationType;
-    _type = _type > 3 ? 10 : _type;
+    let _type = type > 3 ? 10 : type;
     infoMap[_type](conversation);
   });
 
@@ -395,29 +405,29 @@ Conversation.clearUnreadCount = (conversation) => {
   });
 };
 Conversation.watch = (watcher) => {
-  RongIMClient.Conversation.watch(function(list){
-    bindUserInfo(list);
-    watcher(list);
+  imInstance.watch({
+    conversation: function (event) {
+      const { list } = event;
+      bindUserInfo(list);
+      watcher(list);
+    }
   });
 };
 let Status = {
   watcher: new ObserverList()
 };
 Status.disconnect = () => {
-  RongIMClient.getInstance().disconnect();
+  imInstance.disconnect();
 };
 Status.connect = (user) => {
   console.log(user);
-  RongIMClient.setConnectionStatusListener({
-    onChanged: (status) => {
+  imInstance.watch({
+    status: function ({ status }) {
       console.log('status changed', status);
       Status.watcher.notify(status);
-    }
-  });
-
-  let receiveMessage = (message) => {
-      console.log('receive message', message);
-      let {messageType} = message;
+    },
+    message: function ({ message  }) {
+      let { messageType } = message;
       let messageCtrol = {
         otherMessage: () => {
           Message._push(message);
@@ -425,31 +435,10 @@ Status.connect = (user) => {
       };
       let messageHandler = messageCtrol[messageType] || messageCtrol.otherMessage;
       messageHandler();
-  };
-  RongIMClient.setOnReceiveMessageListener({
-    onReceived: receiveMessage
+    }
   });
-
   return User.getToken(user).then((user) => {
-    return new Promise((resolve, reject) => {
-      RongIMClient.connect(user.token, {
-        onSuccess: (userId) => {
-          resolve(userId);
-        },
-        onTokenIncorrect: () => {
-          var msg = ErrorInfo[RongIMLib.ConnectionState.TOKEN_INCORRECT];
-          reject(msg);
-        },
-        onError: (error) => {
-          console.log('eeeeaaaa', error);
-          var msg = ErrorInfo[RongIMLib.ConnectionState.TOKEN_INCORRECT] || {
-            code: error,
-            msg: error
-          };
-          reject(msg);
-        }
-      });
-    });
+    return imInstance.connect(user);
   });
 };
 
@@ -461,38 +450,38 @@ Status.watch = (watch) => {
 let File = {};
 
 File.upload = (file) => {
-  let fileType = RongIMLib.FileType.FILE;
-  return new Promise((resolve, reject) => {
-    imInstance.getFileToken(fileType, {
-      onSuccess: (result) => {
-        let { token } = result;
-        wx.uploadFile({
-          url: 'https://upload.qiniup.com',
-          filePath: file.path,
-          name: 'file',
-          formData: {
-            token: token
-          },
-          success: function (res) {
-            var data = res.data
-            var result = JSON.parse(data);
-            var hash = result.hash;
-            imInstance.getFileUrl(fileType, hash, 'vioce.mp3', {
-              onSuccess: (file) => {
-                resolve(file);
-              },
-              onError: (error) => {
-                console.log('upload file, getFileURL:', error);
-              }
-            });
-          }
-        })
-      },
-      onError: (error) => {
-        console.log('upload file: ', error);
-      }
-    });
-  });
+  // let fileType = RongIMLib.FileType.FILE;
+  // return new Promise((resolve, reject) => {
+  //   imInstance.getFileToken(fileType, {
+  //     onSuccess: (result) => {
+  //       let { token } = result;
+  //       wx.uploadFile({
+  //         url: 'https://upload.qiniup.com',
+  //         filePath: file.path,
+  //         name: 'file',
+  //         formData: {
+  //           token: token
+  //         },
+  //         success: function (res) {
+  //           var data = res.data
+  //           var result = JSON.parse(data);
+  //           var hash = result.hash;
+  //           imInstance.getFileUrl(fileType, hash, 'vioce.mp3', {
+  //             onSuccess: (file) => {
+  //               resolve(file);
+  //             },
+  //             onError: (error) => {
+  //               console.log('upload file, getFileURL:', error);
+  //             }
+  //           });
+  //         }
+  //       })
+  //     },
+  //     onError: (error) => {
+  //       console.log('upload file: ', error);
+  //     }
+  //   });
+  // });
 };
 
 let modules = {
@@ -502,17 +491,11 @@ let modules = {
   Friend,
   Status,
   File,
-  ConnectionStatus: RongIMLib.ConnectionStatus
+  ConnectionStatus: RongIMLib.CONNECTION_STATUS
 };
 module.exports = (_config) => {
   utils.extend(config, _config);
-  RongIMClient.init(config.appkey, null, {
-    navi: config.navi,
-    cmp: config.cmp,
-    wsScheme: config.wsScheme,
-    protocol: config.protocol
-  });
-  registerMessages();
-  imInstance = RongIMClient.getInstance();
+  // config.connectType = 'comet';
+  imInstance = RongIMLib.init(config);
   return modules;
 };
