@@ -2,7 +2,7 @@ const utils = require('../utils/utils.js');
 const { adapterHeight } = utils.getAdapterheight();
 
 const { globalData } = getApp();
-const { Service: { Status, Message, File } } = globalData;
+const { Service: { Status, Message, File, Conversation } } = globalData;
 
 const RongEmoji = require('../lib/RongIMEmoji-2.2.6.js');
 RongEmoji.init();
@@ -168,6 +168,11 @@ const onLoad = (context, query) => {
       messageList,
       toView: message.uId
     });
+    if (message.type == type && message.targetId === targetId) {
+      Conversation.clearUnreadCount({
+        type, targetId
+      });
+    }
   });
 };
 
@@ -230,10 +235,10 @@ const stopRecording = (context) => {
     const { tempFilePath, duration } = res
     File.upload({
       path: tempFilePath
-    }).then(file => {
+    }, 2).then(file => {
       console.log(file)
       let content = {
-        content: file.downloadUrl,
+        remoteUrl: file.downloadUrl,
         duration: Math.ceil(duration / 1000)
       };
       let { type, targetId, messageList } = context.data;
@@ -327,7 +332,7 @@ const sendImage =  (context) => {
           let extra = utils.compress(res);
           let { type, targetId, messageList } = context.data;
 
-          let name = 'ImageMessage';
+          let name = 'RC:ImgMsg';
           let content = {
             imageUri: tempFilePath,
             extra
@@ -353,7 +358,8 @@ const sendImage =  (context) => {
               type,
               targetId,
               imageUri,
-              extra
+              extra,
+              content: ''
             }).then(message => {
             });
           });

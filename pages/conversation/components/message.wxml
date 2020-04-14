@@ -7,9 +7,10 @@
 
       <view wx:else class='rong-message-content rong-message-content-{{message.direction}}'>
         <TextMessage wx:if =  '{{message.name == "RC:TxtMsg"}}'   message='{{message}}'></TextMessage>
-        <VoiceMessage wx:if = '{{message.name == "RC:HQVCMsg"}}'  message='{{message}}' bindonplay='onPlayVoice'></VoiceMessage> 
-                <VoiceMessage wx:if='{{message.name == "RC:VcMsg"}}' message='{{message}}' bindonplay='onPlayVoice'></VoiceMessage>
-        <MusicMessage wx:if = '{{message.name == "seal:music"}}'  message='{{message}}' bindonplaymusic='onPlayMusic' bindonstopmusic='onMusicStop'></MusicMessage> 
+        <VoiceMessage wx:elif = '{{message.name == "RC:HQVCMsg"}}'  message='{{message}}' bindonplay='onPlayVoice'></VoiceMessage> 
+        <VoiceMessage wx:elif='{{message.name == "RC:VcMsg"}}' message='{{message}}' bindonplay='onPlayVoice'></VoiceMessage>
+        <MusicMessage wx:elif = '{{message.name == "seal:music"}}'  message='{{message}}' bindonplaymusic='onPlayMusic' bindonstopmusic='onMusicStop'></MusicMessage> 
+        <view wx:else>{{message.messageType}}</view>
       </view>
 
 

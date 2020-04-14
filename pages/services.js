@@ -6,6 +6,8 @@ const { UserList, GroupList, MusicList} = require('./mock.js');
 let imInstance = null;
 let currentUser = null;
 
+let conversationList = [];
+
 let config = {
   appkey: '',
   url: '',
@@ -188,47 +190,43 @@ let sendMessage = (type, targetId, message) => {
     bindSender(_msg);
   };
 
-  return new Promise((resolve, reject) => {
-    let { name, avatar } = currentUser;
-    let user = {
-      name,
-      avatar
-    };
+  let { name, avatar } = currentUser;
+  let user = {
+    name,
+    avatar
+  };
 
-    let messageMap = {
-      text: (params) => {
-        params.messageType = 'RC:TxtMsg';
-        return params;
-      },
-      image: (params) => {
-        params.messageType = 'RC:ImgMsg';
-        return params;
-      },
-      voice: (params) => {
-        params.messageType = 'RC:HQVCMsg';
-        return params;
-      },
-      music: (params) => {
-        params.messageType = 'seal:music';
-        return params;
-      }
-    };
+  let messageMap = {
+    text: (params) => {
+      params.messageType = 'RC:TxtMsg';
+      return params;
+    },
+    image: (params) => {
+      params.messageType = 'RC:ImgMsg';
+      return params;
+    },
+    voice: (params) => {
+      params.messageType = 'RC:HQVCMsg';
+      return params;
+    },
+    music: (params) => {
+      params.messageType = 'seal:music';
+      return params;
+    }
+  };
 
-    message.user = user;
-    let params = {
-      content: message
-    };
-    params = messageMap[message.type](params);
-    let conversation = imInstance.Conversation.get({
-      type: +type,
-      targetId
-    });
-    return conversation.send(params).then((message) => {
-      bindUser(message);
-      return message;
-    }).catch((e) => {
-      console.error('发消息失败', e);
-    });
+  message.user = user;
+  let params = {
+    content: message
+  };
+  params = messageMap[message.type](params);
+  let conversation = imInstance.Conversation.get({
+    type: +type,
+    targetId
+  });
+  return conversation.send(params).then((message) => {
+    bindUser(message);
+    return message;
   });
 };
 
@@ -307,7 +305,7 @@ Message.create = (params) => {
   let {name, type, targetId, content} = params;
   let message = {
     messageType: name,
-    conversationType: type,
+    type,
     targetId: targetId,
     senderUserId: currentUser.id,
     content: content,
@@ -330,6 +328,10 @@ let Conversation = {
 Conversation.getList = () => {
   return imInstance.Conversation.getList().then((list) => {
     bindUserInfo(list);
+    conversationList = imInstance.Conversation.merge({
+      conversationList,
+      updatedConversationList: list
+    });
     return list;
   });
 };
@@ -398,18 +400,19 @@ let bindUserInfo = (list) => {
 };
 
 Conversation.clearUnreadCount = (conversation) => {
-  let { conversationType, targetId } = conversation;
-  imInstance.clearUnreadCount(conversationType, targetId, {
-    onSuccess: function(){},
-    onError: function(){}
-  });
+  let { type, targetId } = conversation;
+  imInstance.Conversation.get(conversation).read();
 };
 Conversation.watch = (watcher) => {
   imInstance.watch({
     conversation: function (event) {
-      const { list } = event;
-      bindUserInfo(list);
-      watcher(list);
+      const { updatedConversationList } = event;
+      bindUserInfo(updatedConversationList);
+      conversationList = imInstance.Conversation.merge({
+        conversationList,
+        updatedConversationList
+      });
+      watcher(conversationList);
     }
   });
 };
@@ -449,39 +452,32 @@ Status.watch = (watch) => {
 
 let File = {};
 
-File.upload = (file) => {
-  // let fileType = RongIMLib.FileType.FILE;
-  // return new Promise((resolve, reject) => {
-  //   imInstance.getFileToken(fileType, {
-  //     onSuccess: (result) => {
-  //       let { token } = result;
-  //       wx.uploadFile({
-  //         url: 'https://upload.qiniup.com',
-  //         filePath: file.path,
-  //         name: 'file',
-  //         formData: {
-  //           token: token
-  //         },
-  //         success: function (res) {
-  //           var data = res.data
-  //           var result = JSON.parse(data);
-  //           var hash = result.hash;
-  //           imInstance.getFileUrl(fileType, hash, 'vioce.mp3', {
-  //             onSuccess: (file) => {
-  //               resolve(file);
-  //             },
-  //             onError: (error) => {
-  //               console.log('upload file, getFileURL:', error);
-  //             }
-  //           });
-  //         }
-  //       })
-  //     },
-  //     onError: (error) => {
-  //       console.log('upload file: ', error);
-  //     }
-  //   });
-  // });
+const wxUpload = (file, token) => {
+  return new Promise((resolve, reject) => {
+    wx.uploadFile({
+      url: 'https://upload.qiniup.com',
+      filePath: file.path,
+      name: 'file',
+      formData: {
+        token: token
+      },
+      success: resolve,
+      error: reject
+    })
+  });
+};
+
+File.upload = (file, uploadType) => {
+  let fileType = uploadType || RongIMLib.FILE_TYPE.FILE;
+  return imInstance.getFileToken(fileType).then((result) => {
+    let { token } = result;
+    return wxUpload(file, token);
+  }).then((res) => {
+    var data = res.data
+    var result = JSON.parse(data);
+    var hash = result.hash;
+    return imInstance.getFileUrl(fileType, hash, 'voice.mp3');
+  });
 };
 
 let modules = {

@@ -1,6 +1,6 @@
 /*
 * RongIMLib.js v3.0.0
-* Release Date: Mon Apr 13 2020 19:23:48 GMT+0800 (China Standard Time)
+* Release Date: Tue Apr 14 2020 14:17:41 GMT+0800 (China Standard Time)
 * Copyright 2020 RongCloud
 * Released under the MIT License.
 */
@@ -232,7 +232,8 @@
     GROUP: 3,
     CHATROOM: 4,
     CUSTOMER_SERVICE: 5,
-    SYSTEM: 6
+    SYSTEM: 6,
+    RTC_ROOM: 12
   };
   var MESSAGE_DIRECTION = {
     SEND: 1,
@@ -263,7 +264,17 @@
     SIGHT: 'RC:SightMsg',
     COMBINE: 'RC:CombineMsg'
   };
-  var CONST = {
+  var RTC_API_TYPE = {
+    ROOM: 1,
+    PERSON: 2
+  };
+  var FILE_TYPE = {
+    IMAGE: 1,
+    AUDIO: 2,
+    VIDEO: 3,
+    FILE: 4
+  };
+  var product = {
     CONNECT_TYPE: CONNECT_TYPE,
     CONNECTION_STATUS: CONNECTION_STATUS,
     CONVERSATION_TYPE: CONVERSATION_TYPE,
@@ -272,7 +283,9 @@
     CHATROOM_ORDER: CHATROOM_ORDER,
     RECALL_MESSAGE_TYPE: RECALL_MESSAGE_TYPE,
     MESSAGE_TYPE: MESSAGE_TYPE,
-    MENTIOND_TYPE: MENTIOND_TYPE
+    MENTIOND_TYPE: MENTIOND_TYPE,
+    SDK_VERSION: SDK_VERSION,
+    FILE_TYPE: FILE_TYPE
   };
 
   var IM_TIMEOUT = 30000;
@@ -2039,6 +2052,7 @@
     consoleError: consoleError,
     noop: noop,
     deferNoop: deferNoop,
+    setTimeout: setTimeout$1,
     toJSON: toJSON,
     parseJSON: parseJSON,
     copy: copy,
@@ -2189,12 +2203,29 @@
     GET_CHATROOM_INFO: 'queryChrmI',
     GET_OLD_CONVERSATION_LIST: 'qryRelation',
     REMOVE_OLD_CONVERSATION: 'delRelation',
+    GET_UPLOAD_FILE_TOKEN: 'qnTkn',
+    GET_UPLOAD_FILE_URL: 'qnUrl',
     CLEAR_MESSAGES: {
       PRIVATE: 'cleanPMsg',
       GROUP: 'cleanGMsg',
       CUSTOMER_SERVICE: 'cleanCMsg',
       SYSTEM: 'cleanSMsg'
-    }
+    },
+    JOIN_RTC_ROOM: 'rtcRJoin_data',
+    QUIT_RTC_ROOM: 'rtcRExit',
+    PING_RTC: 'rtcPing',
+    SET_RTC_DATA: 'rtcSetData',
+    GET_RTC_DATA: 'rtcQryData',
+    DEL_RTC_DATA: 'rtcDelData',
+    SET_RTC_OUT_DATA: 'rtcSetOutData',
+    GET_RTC_OUT_DATA: 'rtcQryUserOutData',
+    GET_RTC_TOKEN: 'rtcToken',
+    SET_RTC_STATE: 'rtcUserState',
+    GET_RTC_ROOM_INFO: 'rtcRInfo',
+    GET_RTC_USER_INFO_LIST: 'rtcUData',
+    SET_RTC_USER_INFO: 'rtcUPut',
+    DEL_RTC_USER_INFO: 'rtcUDel',
+    GET_RTC_USER_LIST: 'rtcUList'
   };
   var QUERY_HISTORY_TOPIC = {
     PRIVATE: 'qryPMsg',
@@ -2978,25 +3009,46 @@
   var _PUBLISH_TOPIC_MAP_SE;
   var ENGINE_EVENT = {
     WATCH: 'watch',
+    UN_WATCH: 'unwatch',
     CONNECT: 'connect',
     RECONNECT: 'reconnect',
     DISCONNECT: 'disconnect',
-    CHANGE_USER: 'change_user',
-    GET_CONVERSATION_LIST: 'get_conversation_list',
-    REMOVE_CONVERSATION_LIST: 'remove_conversation_list',
-    REMOVE_CONVERSATION: 'remove_conversation',
-    GET_TOTAL_UNREAD_COUNT: 'get_total_unread_count',
-    CLEAR_UNREAD_COUNT: 'clear_unread_count',
-    GET_LOCAL_CONVERSATION: 'get_local_conversation',
-    SEND_MESSAGE: 'send_message',
-    GET_HISTORY_MSGS: 'get_history_msgs',
-    DELETE_MESSAGES: 'delete_history_msgs',
-    CLEAR_MESSAGES: 'clear_history_msgs',
-    RECALL_MESSAGE: 'recall_message',
-    JOIN_CHATROOM: 'join_chatRoom',
-    QUIT_CHATROOM: 'quit_chatRoom',
-    GET_CHATROOM_INFO: 'get_chatRoom_info',
-    GET_CHATROOM_MSGS: 'get_chatRoom_msgs'
+    CHANGE_USER: 'changeUser',
+    GET_CONNECTION_STATUS: 'getConnectionStatus',
+    GET_CONNECTION_USER_ID: 'getConnectionUserId',
+    GET_APP_INFO: 'getAppInfo',
+    GET_CONVERSATION_LIST: 'getConversationList',
+    REMOVE_CONVERSATION_LIST: 'removeConversationList',
+    REMOVE_CONVERSATION: 'removeConversation',
+    GET_TOTAL_UNREAD_COUNT: 'getTotalUnreadCount',
+    CLEAR_UNREAD_COUNT: 'clearUnreadCount',
+    GET_LOCAL_CONVERSATION: 'getLocalConversation',
+    SEND_MESSAGE: 'sendMessage',
+    GET_HISTORY_MSGS: 'getHistoryMessages',
+    DELETE_MESSAGES: 'deleteHistoryMessages',
+    CLEAR_MESSAGES: 'clearHistoryMessages',
+    RECALL_MESSAGE: 'recallMessage',
+    JOIN_CHATROOM: 'joinChatRoom',
+    QUIT_CHATROOM: 'quitChatRoom',
+    GET_CHATROOM_INFO: 'getChatRoomInfo',
+    GET_CHATROOM_MSGS: 'getChatRoomHistoryMessages',
+    JOIN_RTC: 'joinRTCRoom',
+    QUIT_RTC: 'quitRTCRoom',
+    PING_RTC: 'RTCPing',
+    GET_RTC_ROOM_INFO: 'getRTCRoomInfo',
+    SET_RTC_DATA: 'setRTCData',
+    GET_RTC_DATA: 'getRTCData',
+    DEL_RTC_DATA: 'removeRTCData',
+    SET_RTC_OUT_DATA: 'setRTCOutData',
+    GET_RTC_OUT_DATA: 'getRTCOutData',
+    GET_RTC_TOKEN: 'getRTCToken',
+    SET_RTC_STATE: 'setRTCState',
+    GET_RTC_USER_INFO_LIST: 'getRTCUserInfoList',
+    SET_RTC_USER_INFO: 'setRTCUserInfo',
+    DEL_RTC_USER_INFO: 'removeRTCUserInfo',
+    GET_RTC_USER_LIST: 'getRTCUserList',
+    GET_UPLOAD_TOKEN: 'getFileToken',
+    GET_UPLOAD_URL: 'getFileUrl'
   };
   var ENGINE_EVENT_NEED_CONNECTED = [ENGINE_EVENT.GET_CONVERSATION_LIST, ENGINE_EVENT.REMOVE_CONVERSATION_LIST, ENGINE_EVENT.REMOVE_CONVERSATION, ENGINE_EVENT.GET_TOTAL_UNREAD_COUNT, ENGINE_EVENT.CLEAR_UNREAD_COUNT, ENGINE_EVENT.SEND_MESSAGE, ENGINE_EVENT.GET_HISTORY_MSGS, ENGINE_EVENT.DELETE_MESSAGES, ENGINE_EVENT.CLEAR_MESSAGES, ENGINE_EVENT.RECALL_MESSAGE, ENGINE_EVENT.JOIN_CHATROOM, ENGINE_EVENT.QUIT_CHATROOM, ENGINE_EVENT.GET_CHATROOM_INFO, ENGINE_EVENT.GET_CHATROOM_MSGS];
   var ENGINE_EVENT_NEED_DISCONNECTED = [ENGINE_EVENT.CONNECT, ENGINE_EVENT.RECONNECT];
@@ -3416,7 +3468,12 @@
     server = server || '';
     backupServer = backupServer || '';
     var backupCMPList = backupServer.split(DOMAIN_SEPARATOR_IN_CMPLIST);
-    var cmpList = [server];
+    var cmpList = [];
+
+    if (!utils.isEmpty(server)) {
+      cmpList.push(server);
+    }
+
     utils.forEach(backupCMPList, function (cmp) {
       if (!utils.isEmpty(cmp)) {
         cmpList.push(cmp);
@@ -4054,11 +4111,30 @@
     SessionMsgReadInput: 'SessionMsgReadInput',
     ChrmInput: 'ChrmInput',
     QueryChatRoomInfoInput: 'QueryChatRoomInfoInput',
-    QueryChatRoomInfoOutput: 'QueryChatRoomInfoOutput'
+    QueryChatRoomInfoOutput: 'QueryChatRoomInfoOutput',
+    RtcInput: 'RtcInput',
+    RtcUserListOutput: 'RtcUserListOutput',
+    SetUserStatusInput: 'SetUserStatusInput',
+    RtcSetDataInput: 'RtcSetDataInput',
+    RtcDataInput: 'RtcDataInput',
+    RtcSetOutDataInput: 'RtcSetOutDataInput',
+    MCFollowInput: 'MCFollowInput',
+    RtcTokenOutput: 'RtcTokenOutput',
+    RtcQryOutput: 'RtcQryOutput',
+    RtcQryUserOutDataInput: 'RtcQryUserOutDataInput',
+    RtcUserOutDataOutput: 'RtcUserOutDataOutput',
+    RtcQueryListInput: 'RtcQueryListInput',
+    RtcRoomInfoOutput: 'RtcRoomInfoOutput',
+    RtcValueInfo: 'RtcValueInfo',
+    RtcKeyDeleteInput: 'RtcKeyDeleteInput',
+    GetQNupTokenInput: 'GetQNupTokenInput',
+    GetQNupTokenOutput: 'GetQNupTokenOutput',
+    GetQNdownloadUrlInput: 'GetQNdownloadUrlInput',
+    GetQNdownloadUrlOutput: 'GetQNdownloadUrlOutput'
   };
 
   var _SSMsg;
-  var SSMsg = (_SSMsg = {}, _SSMsg[PBName.UpStreamMessage] = ['sessionId', 'classname', 'content', 'pushText', 'userId', 'configFlag', 'appData'], _SSMsg[PBName.DownStreamMessages] = ['list', 'syncTime', 'finished'], _SSMsg[PBName.DownStreamMessage] = ['fromUserId', 'type', 'groupId', 'classname', 'content', 'dataTime', 'status', 'msgId'], _SSMsg[PBName.SessionsAttQryInput] = ['nothing'], _SSMsg[PBName.SessionsAttOutput] = ['inboxTime', 'sendboxTime', 'totalUnreadCount'], _SSMsg[PBName.SyncRequestMsg] = ['syncTime', 'ispolling', 'isweb', 'isPullSend', 'isKeeping', 'sendBoxSyncTime'], _SSMsg[PBName.ChrmPullMsg] = ['syncTime', 'count'], _SSMsg[PBName.NotifyMsg] = ['type', 'time', 'chrmId'], _SSMsg[PBName.HistoryMsgInput] = ['targetId', 'time', 'count', 'order'], _SSMsg[PBName.HistoryMsgOuput] = ['list', 'syncTime', 'hasMsg'], _SSMsg[PBName.RelationQryInput] = ['type', 'count', 'startTime', 'order'], _SSMsg[PBName.RelationsOutput] = ['info'], _SSMsg[PBName.DeleteSessionsInput] = ['sessions'], _SSMsg[PBName.SessionInfo] = ['type', 'channelId'], _SSMsg[PBName.DeleteSessionsOutput] = ['nothing'], _SSMsg[PBName.RelationsInput] = ['type', 'msg', 'count', 'offset', 'startTime', 'endTime'], _SSMsg[PBName.DeleteMsgInput] = ['type', 'conversationId', 'msgs'], _SSMsg[PBName.CleanHisMsgInput] = ['targetId', 'dataTime', 'conversationType'], _SSMsg[PBName.SessionMsgReadInput] = ['type', 'msgTime', 'channelId'], _SSMsg[PBName.ChrmInput] = ['nothing'], _SSMsg[PBName.QueryChatRoomInfoInput] = ['count', 'order'], _SSMsg[PBName.QueryChatRoomInfoOutput] = ['userTotalNums', 'userInfos'], _SSMsg);
+  var SSMsg = (_SSMsg = {}, _SSMsg[PBName.UpStreamMessage] = ['sessionId', 'classname', 'content', 'pushText', 'userId', 'configFlag', 'appData'], _SSMsg[PBName.DownStreamMessages] = ['list', 'syncTime', 'finished'], _SSMsg[PBName.DownStreamMessage] = ['fromUserId', 'type', 'groupId', 'classname', 'content', 'dataTime', 'status', 'msgId'], _SSMsg[PBName.SessionsAttQryInput] = ['nothing'], _SSMsg[PBName.SessionsAttOutput] = ['inboxTime', 'sendboxTime', 'totalUnreadCount'], _SSMsg[PBName.SyncRequestMsg] = ['syncTime', 'ispolling', 'isweb', 'isPullSend', 'isKeeping', 'sendBoxSyncTime'], _SSMsg[PBName.ChrmPullMsg] = ['syncTime', 'count'], _SSMsg[PBName.NotifyMsg] = ['type', 'time', 'chrmId'], _SSMsg[PBName.HistoryMsgInput] = ['targetId', 'time', 'count', 'order'], _SSMsg[PBName.HistoryMsgOuput] = ['list', 'syncTime', 'hasMsg'], _SSMsg[PBName.RelationQryInput] = ['type', 'count', 'startTime', 'order'], _SSMsg[PBName.RelationsOutput] = ['info'], _SSMsg[PBName.DeleteSessionsInput] = ['sessions'], _SSMsg[PBName.SessionInfo] = ['type', 'channelId'], _SSMsg[PBName.DeleteSessionsOutput] = ['nothing'], _SSMsg[PBName.RelationsInput] = ['type', 'msg', 'count', 'offset', 'startTime', 'endTime'], _SSMsg[PBName.DeleteMsgInput] = ['type', 'conversationId', 'msgs'], _SSMsg[PBName.CleanHisMsgInput] = ['targetId', 'dataTime', 'conversationType'], _SSMsg[PBName.SessionMsgReadInput] = ['type', 'msgTime', 'channelId'], _SSMsg[PBName.ChrmInput] = ['nothing'], _SSMsg[PBName.QueryChatRoomInfoInput] = ['count', 'order'], _SSMsg[PBName.QueryChatRoomInfoOutput] = ['userTotalNums', 'userInfos'], _SSMsg[PBName.GetQNupTokenInput] = ['type'], _SSMsg[PBName.GetQNdownloadUrlInput] = ['type', 'key', 'fileName'], _SSMsg[PBName.GetQNupTokenOutput] = ['deadline', 'token'], _SSMsg[PBName.GetQNdownloadUrlOutput] = ['downloadUrl'], _SSMsg);
 
   var Codec = {};
   utils.forEach(SSMsg, function (paramList, name) {
@@ -4117,7 +4193,7 @@
   e.name=f,this.tn.skip("="),e.id=h(this.tn.next()),f=this.tn.peek(),"["===f&&this._parseFieldOptions(e),this.tn.skip(";");}return a.fields.push(e),e},g._parseMessageOneOf=function(a){var e,d,f,c=this.tn.next();if(!b.NAME.test(c))throw Error("illegal oneof name: "+c);for(d=c,f=[],this.tn.skip("{");"}"!==(c=this.tn.next());)e=this._parseMessageField(a,"optional",c),e.oneof=d,f.push(e.id);this.tn.omit(";"),a.oneofs[d]=f;},g._parseFieldOptions=function(a){this.tn.skip("[");for(var b,c=!0;"]"!==(b=this.tn.peek());)c||this.tn.skip(","),this._parseOption(a,!0),c=!1;this.tn.next();},g._parseEnum=function(a){var e,c={name:"",values:[],options:{}},d=this.tn.next();if(!b.NAME.test(d))throw Error("illegal name: "+d);for(c.name=d,this.tn.skip("{");"}"!==(d=this.tn.next());)if("option"===d)this._parseOption(c);else{if(!b.NAME.test(d))throw Error("illegal name: "+d);this.tn.skip("="),e={name:d,id:h(this.tn.next(),!0)},d=this.tn.peek(),"["===d&&this._parseFieldOptions({options:{}}),this.tn.skip(";"),c.values.push(e);}this.tn.omit(";"),a.enums.push(c);},g._parseExtensionRanges=function(){var c,d,e,b=[];do{for(d=[];;){switch(c=this.tn.next()){case"min":e=a.ID_MIN;break;case"max":e=a.ID_MAX;break;default:e=i(c);}if(d.push(e),2===d.length)break;if("to"!==this.tn.peek()){d.push(e);break}this.tn.next();}b.push(d);}while(this.tn.omit(","));return this.tn.skip(";"),b},g._parseExtend=function(a){var d,c=this.tn.next();if(!b.TYPEREF.test(c))throw Error("illegal extend reference: "+c);for(d={ref:c,fields:[]},this.tn.skip("{");"}"!==(c=this.tn.next());)if(b.RULE.test(c))this._parseMessageField(d,c);else{if(!b.TYPEREF.test(c))throw Error("illegal extend token: "+c);if(!this.proto3)throw Error("illegal field rule: "+c);this._parseMessageField(d,"optional",c);}return this.tn.omit(";"),a.messages.push(d),d},g.toString=function(){return "Parser at line "+this.tn.line},c.Parser=f,c}(e,e.Lang),e.Reflect=function(a){function k(b){if("string"==typeof b&&(b=a.TYPES[b]),"undefined"==typeof b.defaultValue)throw Error("default value for type "+b.name+" is not supported");return b==a.TYPES.bytes?new f(0):b.defaultValue}function l(b,c){if(b&&"number"==typeof b.low&&"number"==typeof b.high&&"boolean"==typeof b.unsigned&&b.low===b.low&&b.high===b.high)return new a.Long(b.low,b.high,"undefined"==typeof c?b.unsigned:c);if("string"==typeof b)return a.Long.fromString(b,c||!1,10);if("number"==typeof b)return a.Long.fromNumber(b,c||!1);throw Error("not convertible to Long")}function o(b,c){var d=c.readVarint32(),e=7&d,f=d>>>3;switch(e){case a.WIRE_TYPES.VARINT:do d=c.readUint8();while(128===(128&d));break;case a.WIRE_TYPES.BITS64:c.offset+=8;break;case a.WIRE_TYPES.LDELIM:d=c.readVarint32(),c.offset+=d;break;case a.WIRE_TYPES.STARTGROUP:o(f,c);break;case a.WIRE_TYPES.ENDGROUP:if(f===b)return !1;throw Error("Illegal GROUPEND after unknown group: "+f+" ("+b+" expected)");case a.WIRE_TYPES.BITS32:c.offset+=4;break;default:throw Error("Illegal wire type in unknown group "+b+": "+e)}return !0}var g,h,i,j,m,n,p,q,r,s,t,u,v,w,x,y,z,A,B,c={},d=function(a,b,c){this.builder=a,this.parent=b,this.name=c,this.className;},e=d.prototype;return e.fqn=function(){for(var a=this.name,b=this;;){if(b=b.parent,null==b)break;a=b.name+"."+a;}return a},e.toString=function(a){return (a?this.className+" ":"")+this.fqn()},e.build=function(){throw Error(this.toString(!0)+" cannot be built directly")},c.T=d,g=function(a,b,c,e,f){d.call(this,a,b,c),this.className="Namespace",this.children=[],this.options=e||{},this.syntax=f||"proto2";},h=g.prototype=Object.create(d.prototype),h.getChildren=function(a){var b,c,d;if(a=a||null,null==a)return this.children.slice();for(b=[],c=0,d=this.children.length;d>c;++c)this.children[c]instanceof a&&b.push(this.children[c]);return b},h.addChild=function(a){var b;if(b=this.getChild(a.name))if(b instanceof m.Field&&b.name!==b.originalName&&null===this.getChild(b.originalName))b.name=b.originalName;else{if(!(a instanceof m.Field&&a.name!==a.originalName&&null===this.getChild(a.originalName)))throw Error("Duplicate name in namespace "+this.toString(!0)+": "+a.name);a.name=a.originalName;}this.children.push(a);},h.getChild=function(a){var c,d,b="number"==typeof a?"id":"name";for(c=0,d=this.children.length;d>c;++c)if(this.children[c][b]===a)return this.children[c];return null},h.resolve=function(a,b){var g,d="string"==typeof a?a.split("."):a,e=this,f=0;if(""===d[f]){for(;null!==e.parent;)e=e.parent;f++;}do{do{if(!(e instanceof c.Namespace)){e=null;break}if(g=e.getChild(d[f]),!(g&&g instanceof c.T&&(!b||g instanceof c.Namespace))){e=null;break}e=g,f++;}while(f<d.length);if(null!=e)break;if(null!==this.parent)return this.parent.resolve(a,b)}while(null!=e);return e},h.qn=function(a){var e,f,b=[],d=a;do b.unshift(d.name),d=d.parent;while(null!==d);for(e=1;e<=b.length;e++)if(f=b.slice(b.length-e),a===this.resolve(f,a instanceof c.Namespace))return f.join(".");return a.fqn()},h.build=function(){var e,c,d,a={},b=this.children;for(c=0,d=b.length;d>c;++c)e=b[c],e instanceof g&&(a[e.name]=e.build());return Object.defineProperty&&Object.defineProperty(a,"$options",{value:this.buildOpt()}),a},h.buildOpt=function(){var c,d,e,f,a={},b=Object.keys(this.options);for(c=0,d=b.length;d>c;++c)e=b[c],f=this.options[b[c]],a[e]=f;return a},h.getOption=function(a){return "undefined"==typeof a?this.options:"undefined"!=typeof this.options[a]?this.options[a]:null},c.Namespace=g,i=function(b,c,d,e){if(this.type=b,this.resolvedType=c,this.isMapKey=d,this.syntax=e,d&&a.MAP_KEY_TYPES.indexOf(b)<0)throw Error("Invalid map key type: "+b.name)},j=i.prototype,i.defaultFieldValue=k,j.verifyValue=function(c){var f,g,h,d=function(a,b){throw Error("Illegal value for "+this.toString(!0)+" of type "+this.type.name+": "+a+" ("+b+")")}.bind(this);switch(this.type){case a.TYPES.int32:case a.TYPES.sint32:case a.TYPES.sfixed32:return ("number"!=typeof c||c===c&&0!==c%1)&&d(typeof c,"not an integer"),c>4294967295?0|c:c;case a.TYPES.uint32:case a.TYPES.fixed32:return ("number"!=typeof c||c===c&&0!==c%1)&&d(typeof c,"not an integer"),0>c?c>>>0:c;case a.TYPES.int64:case a.TYPES.sint64:case a.TYPES.sfixed64:if(a.Long)try{return l(c,!1)}catch(e){d(typeof c,e.message);}else d(typeof c,"requires Long.js");case a.TYPES.uint64:case a.TYPES.fixed64:if(a.Long)try{return l(c,!0)}catch(e){d(typeof c,e.message);}else d(typeof c,"requires Long.js");case a.TYPES.bool:return "boolean"!=typeof c&&d(typeof c,"not a boolean"),c;case a.TYPES["float"]:case a.TYPES["double"]:return "number"!=typeof c&&d(typeof c,"not a number"),c;case a.TYPES.string:return "string"==typeof c||c&&c instanceof String||d(typeof c,"not a string"),""+c;case a.TYPES.bytes:return b.isByteBuffer(c)?c:b.wrap(c);case a.TYPES["enum"]:for(f=this.resolvedType.getChildren(a.Reflect.Enum.Value),h=0;h<f.length;h++){if(f[h].name==c)return f[h].id;if(f[h].id==c)return f[h].id}if("proto3"===this.syntax)return ("number"!=typeof c||c===c&&0!==c%1)&&d(typeof c,"not an integer"),(c>4294967295||0>c)&&d(typeof c,"not in range for uint32"),c;d(c,"not a valid enum value");case a.TYPES.group:case a.TYPES.message:if(c&&"object"==typeof c||d(typeof c,"object expected"),c instanceof this.resolvedType.clazz)return c;if(c instanceof a.Builder.Message){g={};for(h in c)c.hasOwnProperty(h)&&(g[h]=c[h]);c=g;}return new this.resolvedType.clazz(c)}throw Error("[INTERNAL] Illegal value for "+this.toString(!0)+": "+c+" (undefined type "+this.type+")")},j.calculateLength=function(b,c){if(null===c)return 0;var d;switch(this.type){case a.TYPES.int32:return 0>c?f.calculateVarint64(c):f.calculateVarint32(c);case a.TYPES.uint32:return f.calculateVarint32(c);case a.TYPES.sint32:return f.calculateVarint32(f.zigZagEncode32(c));case a.TYPES.fixed32:case a.TYPES.sfixed32:case a.TYPES["float"]:return 4;case a.TYPES.int64:case a.TYPES.uint64:return f.calculateVarint64(c);case a.TYPES.sint64:return f.calculateVarint64(f.zigZagEncode64(c));case a.TYPES.fixed64:case a.TYPES.sfixed64:return 8;case a.TYPES.bool:return 1;case a.TYPES["enum"]:return f.calculateVarint32(c);case a.TYPES["double"]:return 8;case a.TYPES.string:return d=f.calculateUTF8Bytes(c),f.calculateVarint32(d)+d;case a.TYPES.bytes:if(c.remaining()<0)throw Error("Illegal value for "+this.toString(!0)+": "+c.remaining()+" bytes remaining");return f.calculateVarint32(c.remaining())+c.remaining();case a.TYPES.message:return d=this.resolvedType.calculate(c),f.calculateVarint32(d)+d;case a.TYPES.group:return d=this.resolvedType.calculate(c),d+f.calculateVarint32(b<<3|a.WIRE_TYPES.ENDGROUP)}throw Error("[INTERNAL] Illegal value to encode in "+this.toString(!0)+": "+c+" (unknown type)")},j.encodeValue=function(b,c,d){var e,g;if(null===c)return d;switch(this.type){case a.TYPES.int32:0>c?d.writeVarint64(c):d.writeVarint32(c);break;case a.TYPES.uint32:d.writeVarint32(c);break;case a.TYPES.sint32:d.writeVarint32ZigZag(c);break;case a.TYPES.fixed32:d.writeUint32(c);break;case a.TYPES.sfixed32:d.writeInt32(c);break;case a.TYPES.int64:case a.TYPES.uint64:d.writeVarint64(c);break;case a.TYPES.sint64:d.writeVarint64ZigZag(c);break;case a.TYPES.fixed64:d.writeUint64(c);break;case a.TYPES.sfixed64:d.writeInt64(c);break;case a.TYPES.bool:"string"==typeof c?d.writeVarint32("false"===c.toLowerCase()?0:!!c):d.writeVarint32(c?1:0);break;case a.TYPES["enum"]:d.writeVarint32(c);break;case a.TYPES["float"]:d.writeFloat32(c);break;case a.TYPES["double"]:d.writeFloat64(c);break;case a.TYPES.string:d.writeVString(c);break;case a.TYPES.bytes:if(c.remaining()<0)throw Error("Illegal value for "+this.toString(!0)+": "+c.remaining()+" bytes remaining");e=c.offset,d.writeVarint32(c.remaining()),d.append(c),c.offset=e;break;case a.TYPES.message:g=(new f).LE(),this.resolvedType.encode(c,g),d.writeVarint32(g.offset),d.append(g.flip());break;case a.TYPES.group:this.resolvedType.encode(c,d),d.writeVarint32(b<<3|a.WIRE_TYPES.ENDGROUP);break;default:throw Error("[INTERNAL] Illegal value to encode in "+this.toString(!0)+": "+c+" (unknown type)")}return d},j.decode=function(b,c,d){if(c!=this.type.wireType)throw Error("Unexpected wire type for element");var e,f;switch(this.type){case a.TYPES.int32:return 0|b.readVarint32();case a.TYPES.uint32:return b.readVarint32()>>>0;case a.TYPES.sint32:return 0|b.readVarint32ZigZag();case a.TYPES.fixed32:return b.readUint32()>>>0;case a.TYPES.sfixed32:return 0|b.readInt32();case a.TYPES.int64:return b.readVarint64();case a.TYPES.uint64:return b.readVarint64().toUnsigned();case a.TYPES.sint64:return b.readVarint64ZigZag();case a.TYPES.fixed64:return b.readUint64();case a.TYPES.sfixed64:return b.readInt64();case a.TYPES.bool:return !!b.readVarint32();case a.TYPES["enum"]:return b.readVarint32();case a.TYPES["float"]:return b.readFloat();case a.TYPES["double"]:return b.readDouble();case a.TYPES.string:return b.readVString();case a.TYPES.bytes:if(f=b.readVarint32(),b.remaining()<f)throw Error("Illegal number of bytes for "+this.toString(!0)+": "+f+" required but got only "+b.remaining());return e=b.clone(),e.limit=e.offset+f,b.offset+=f,e;case a.TYPES.message:return f=b.readVarint32(),this.resolvedType.decode(b,f);case a.TYPES.group:return this.resolvedType.decode(b,-1,d)}throw Error("[INTERNAL] Illegal decode type")},j.valueFromString=function(b){if(!this.isMapKey)throw Error("valueFromString() called on non-map-key element");switch(this.type){case a.TYPES.int32:case a.TYPES.sint32:case a.TYPES.sfixed32:case a.TYPES.uint32:case a.TYPES.fixed32:return this.verifyValue(parseInt(b));case a.TYPES.int64:case a.TYPES.sint64:case a.TYPES.sfixed64:case a.TYPES.uint64:case a.TYPES.fixed64:return this.verifyValue(b);case a.TYPES.bool:return "true"===b;case a.TYPES.string:return this.verifyValue(b);case a.TYPES.bytes:return f.fromBinary(b)}},j.valueToString=function(b){if(!this.isMapKey)throw Error("valueToString() called on non-map-key element");return this.type===a.TYPES.bytes?b.toString("binary"):b.toString()},c.Element=i,m=function(a,b,c,d,e,f){g.call(this,a,b,c,d,f),this.className="Message",this.extensions=void 0,this.clazz=null,this.isGroup=!!e,this._fields=null,this._fieldsById=null,this._fieldsByName=null;},n=m.prototype=Object.create(g.prototype),n.build=function(c){var d,h,e,g;if(this.clazz&&!c)return this.clazz;for(d=function(a,c){function k(b,c,d,e){var g,h,i,j,l,m,n;if(null===b||"object"!=typeof b)return e&&e instanceof a.Reflect.Enum&&(g=a.Reflect.Enum.getName(e.object,b),null!==g)?g:b;if(f.isByteBuffer(b))return c?b.toBase64():b.toBuffer();if(a.Long.isLong(b))return d?b.toString():a.Long.fromValue(b);if(Array.isArray(b))return h=[],b.forEach(function(a,b){h[b]=k(a,c,d,e);}),h;if(h={},b instanceof a.Map){for(i=b.entries(),j=i.next();!j.done;j=i.next())h[b.keyElem.valueToString(j.value[0])]=k(j.value[1],c,d,b.valueElem.resolvedType);return h}l=b.$type,m=void 0;for(n in b)b.hasOwnProperty(n)&&(h[n]=l&&(m=l.getChild(n))?k(b[n],c,d,m.resolvedType):k(b[n],c,d));return h}var i,j,d=c.getChildren(a.Reflect.Message.Field),e=c.getChildren(a.Reflect.Message.OneOf),g=function(b){var i,j,k,l;for(a.Builder.Message.call(this),i=0,j=e.length;j>i;++i)this[e[i].name]=null;for(i=0,j=d.length;j>i;++i)k=d[i],this[k.name]=k.repeated?[]:k.map?new a.Map(k):null,!k.required&&"proto3"!==c.syntax||null===k.defaultValue||(this[k.name]=k.defaultValue);if(arguments.length>0)if(1!==arguments.length||null===b||"object"!=typeof b||!("function"!=typeof b.encode||b instanceof g)||Array.isArray(b)||b instanceof a.Map||f.isByteBuffer(b)||b instanceof ArrayBuffer||a.Long&&b instanceof a.Long)for(i=0,j=arguments.length;j>i;++i)"undefined"!=typeof(l=arguments[i])&&this.$set(d[i].name,l);else this.$set(b);},h=g.prototype=Object.create(a.Builder.Message.prototype);for(h.add=function(b,d,e){var f=c._fieldsByName[b];if(!e){if(!f)throw Error(this+"#"+b+" is undefined");if(!(f instanceof a.Reflect.Message.Field))throw Error(this+"#"+b+" is not a field: "+f.toString(!0));if(!f.repeated)throw Error(this+"#"+b+" is not a repeated field");d=f.verifyValue(d,!0);}return null===this[b]&&(this[b]=[]),this[b].push(d),this},h.$add=h.add,h.set=function(b,d,e){var f,g,h;if(b&&"object"==typeof b){e=d;for(f in b)b.hasOwnProperty(f)&&"undefined"!=typeof(d=b[f])&&this.$set(f,d,e);return this}if(g=c._fieldsByName[b],e)this[b]=d;else{if(!g)throw Error(this+"#"+b+" is not a field: undefined");if(!(g instanceof a.Reflect.Message.Field))throw Error(this+"#"+b+" is not a field: "+g.toString(!0));this[g.name]=d=g.verifyValue(d);}return g&&g.oneof&&(h=this[g.oneof.name],null!==d?(null!==h&&h!==g.name&&(this[h]=null),this[g.oneof.name]=g.name):h===b&&(this[g.oneof.name]=null)),this},h.$set=h.set,h.get=function(b,d){if(d)return this[b];var e=c._fieldsByName[b];if(!(e&&e instanceof a.Reflect.Message.Field))throw Error(this+"#"+b+" is not a field: undefined");if(!(e instanceof a.Reflect.Message.Field))throw Error(this+"#"+b+" is not a field: "+e.toString(!0));return this[e.name]},h.$get=h.get,i=0;i<d.length;i++)j=d[i],j instanceof a.Reflect.Message.ExtensionField||c.builder.options.populateAccessors&&function(a){var d,e,f,b=a.originalName.replace(/(_[a-zA-Z])/g,function(a){return a.toUpperCase().replace("_","")});b=b.substring(0,1).toUpperCase()+b.substring(1),d=a.originalName.replace(/([A-Z])/g,function(a){return "_"+a}),e=function(b,c){return this[a.name]=c?b:a.verifyValue(b),this},f=function(){return this[a.name]},null===c.getChild("set"+b)&&(h["set"+b]=e),null===c.getChild("set_"+d)&&(h["set_"+d]=e),null===c.getChild("get"+b)&&(h["get"+b]=f),null===c.getChild("get_"+d)&&(h["get_"+d]=f);}(j);return h.encode=function(a,d){var e,f;"boolean"==typeof a&&(d=a,a=void 0),e=!1,a||(a=new b,e=!0),f=a.littleEndian;try{return c.encode(this,a.LE(),d),(e?a.flip():a).LE(f)}catch(g){throw a.LE(f),g}},g.encode=function(a,b,c){return new g(a).encode(b,c)},h.calculate=function(){return c.calculate(this)},h.encodeDelimited=function(a){var d,b=!1;return a||(a=new f,b=!0),d=(new f).LE(),c.encode(this,d).flip(),a.writeVarint32(d.remaining()),a.append(d),b?a.flip():a},h.encodeAB=function(){try{return this.encode().toArrayBuffer()}catch(a){throw a.encoded&&(a.encoded=a.encoded.toArrayBuffer()),a}},h.toArrayBuffer=h.encodeAB,h.encodeNB=function(){try{return this.encode().toBuffer()}catch(a){throw a.encoded&&(a.encoded=a.encoded.toBuffer()),a}},h.toBuffer=h.encodeNB,h.encode64=function(){try{return this.encode().toBase64()}catch(a){throw a.encoded&&(a.encoded=a.encoded.toBase64()),a}},h.toBase64=h.encode64,h.encodeHex=function(){try{return this.encode().toHex()}catch(a){throw a.encoded&&(a.encoded=a.encoded.toHex()),a}},h.toHex=h.encodeHex,h.toRaw=function(a,b){return k(this,!!a,!!b,this.$type)},h.encodeJSON=function(){return JSON.stringify(k(this,!0,!0,this.$type))},g.decode=function(a,b){var d,e;"string"==typeof a&&(a=f.wrap(a,b?b:"base64")),a=f.isByteBuffer(a)?a:f.wrap(a),d=a.littleEndian;try{return e=c.decode(a.LE()),a.LE(d),e}catch(g){throw a.LE(d),g}},g.decodeDelimited=function(a,b){var d,e,g;if("string"==typeof a&&(a=f.wrap(a,b?b:"base64")),a=f.isByteBuffer(a)?a:f.wrap(a),a.remaining()<1)return null;if(d=a.offset,e=a.readVarint32(),a.remaining()<e)return a.offset=d,null;try{return g=c.decode(a.slice(a.offset,a.offset+e).LE()),a.offset+=e,g}catch(h){throw a.offset+=e,h}},g.decode64=function(a){return g.decode(a,"base64")},g.decodeHex=function(a){return g.decode(a,"hex")},g.decodeJSON=function(a){return new g(JSON.parse(a))},h.toString=function(){return c.toString()},Object.defineProperty&&(Object.defineProperty(g,"$options",{value:c.buildOpt()}),Object.defineProperty(h,"$options",{value:g["$options"]}),Object.defineProperty(g,"$type",{value:c}),Object.defineProperty(h,"$type",{value:c})),g}(a,this),this._fields=[],this._fieldsById={},this._fieldsByName={},e=0,g=this.children.length;g>e;e++)if(h=this.children[e],h instanceof t||h instanceof m||h instanceof x){if(d.hasOwnProperty(h.name))throw Error("Illegal reflect child of "+this.toString(!0)+": "+h.toString(!0)+" cannot override static property '"+h.name+"'");d[h.name]=h.build();}else if(h instanceof m.Field)h.build(),this._fields.push(h),this._fieldsById[h.id]=h,this._fieldsByName[h.name]=h;else if(!(h instanceof m.OneOf||h instanceof w))throw Error("Illegal reflect child of "+this.toString(!0)+": "+this.children[e].toString(!0));return this.clazz=d},n.encode=function(a,b,c){var e,h,f,g,i,d=null;for(f=0,g=this._fields.length;g>f;++f)e=this._fields[f],h=a[e.name],e.required&&null===h?null===d&&(d=e):e.encode(c?h:e.verifyValue(h),b,a);if(null!==d)throw i=Error("Missing at least one required field for "+this.toString(!0)+": "+d),i.encoded=b,i;return b},n.calculate=function(a){for(var e,f,b=0,c=0,d=this._fields.length;d>c;++c){if(e=this._fields[c],f=a[e.name],e.required&&null===f)throw Error("Missing at least one required field for "+this.toString(!0)+": "+e);b+=e.calculate(f,a);}return b},n.decode=function(b,c,d){var g,h,i,j,e,f,k,l,m,n,p,q;for(c="number"==typeof c?c:-1,e=b.offset,f=new this.clazz;b.offset<e+c||-1===c&&b.remaining()>0;){if(g=b.readVarint32(),h=7&g,i=g>>>3,h===a.WIRE_TYPES.ENDGROUP){if(i!==d)throw Error("Illegal group end indicator for "+this.toString(!0)+": "+i+" ("+(d?d+" expected":"not a group")+")");break}if(j=this._fieldsById[i])j.repeated&&!j.options.packed?f[j.name].push(j.decode(h,b)):j.map?(l=j.decode(h,b),f[j.name].set(l[0],l[1])):(f[j.name]=j.decode(h,b),j.oneof&&(m=f[j.oneof.name],null!==m&&m!==j.name&&(f[m]=null),f[j.oneof.name]=j.name));else switch(h){case a.WIRE_TYPES.VARINT:b.readVarint32();break;case a.WIRE_TYPES.BITS32:b.offset+=4;break;case a.WIRE_TYPES.BITS64:b.offset+=8;break;case a.WIRE_TYPES.LDELIM:k=b.readVarint32(),b.offset+=k;break;case a.WIRE_TYPES.STARTGROUP:for(;o(i,b););break;default:throw Error("Illegal wire type for unknown field "+i+" in "+this.toString(!0)+"#decode: "+h)}}for(n=0,p=this._fields.length;p>n;++n)if(j=this._fields[n],null===f[j.name])if("proto3"===this.syntax)f[j.name]=j.defaultValue;else{if(j.required)throw q=Error("Missing at least one required field for "+this.toString(!0)+": "+j.name),q.decoded=f,q;a.populateDefaults&&null!==j.defaultValue&&(f[j.name]=j.defaultValue);}return f},c.Message=m,p=function(b,c,e,f,g,h,i,j,k,l){d.call(this,b,c,h),this.className="Message.Field",this.required="required"===e,this.repeated="repeated"===e,this.map="map"===e,this.keyType=f||null,this.type=g,this.resolvedType=null,this.id=i,this.options=j||{},this.defaultValue=null,this.oneof=k||null,this.syntax=l||"proto2",this.originalName=this.name,this.element=null,this.keyElement=null,!this.builder.options.convertFieldsToCamelCase||this instanceof m.ExtensionField||(this.name=a.Util.toCamelCase(this.name));},q=p.prototype=Object.create(d.prototype),q.build=function(){this.element=new i(this.type,this.resolvedType,!1,this.syntax),this.map&&(this.keyElement=new i(this.keyType,void 0,!0,this.syntax)),"proto3"!==this.syntax||this.repeated||this.map?"undefined"!=typeof this.options["default"]&&(this.defaultValue=this.verifyValue(this.options["default"])):this.defaultValue=i.defaultFieldValue(this.type);},q.verifyValue=function(b,c){var d,e,f;if(c=c||!1,d=function(a,b){throw Error("Illegal value for "+this.toString(!0)+" of type "+this.type.name+": "+a+" ("+b+")")}.bind(this),null===b)return this.required&&d(typeof b,"required"),"proto3"===this.syntax&&this.type!==a.TYPES.message&&d(typeof b,"proto3 field without field presence cannot be null"),null;if(this.repeated&&!c){for(Array.isArray(b)||(b=[b]),f=[],e=0;e<b.length;e++)f.push(this.element.verifyValue(b[e]));return f}return this.map&&!c?b instanceof a.Map?b:(b instanceof Object||d(typeof b,"expected ProtoBuf.Map or raw object for map field"),new a.Map(this,b)):(!this.repeated&&Array.isArray(b)&&d(typeof b,"no array expected"),this.element.verifyValue(b))},q.hasWirePresence=function(b,c){if("proto3"!==this.syntax)return null!==b;if(this.oneof&&c[this.oneof.name]===this.name)return !0;switch(this.type){case a.TYPES.int32:case a.TYPES.sint32:case a.TYPES.sfixed32:case a.TYPES.uint32:case a.TYPES.fixed32:return 0!==b;case a.TYPES.int64:case a.TYPES.sint64:case a.TYPES.sfixed64:case a.TYPES.uint64:case a.TYPES.fixed64:return 0!==b.low||0!==b.high;case a.TYPES.bool:return b;case a.TYPES["float"]:case a.TYPES["double"]:return 0!==b;case a.TYPES.string:return b.length>0;case a.TYPES.bytes:return b.remaining()>0;case a.TYPES["enum"]:return 0!==b;case a.TYPES.message:return null!==b;default:return !0}},q.encode=function(b,c,d){var e,g,h,i,j;if(null===this.type||"object"!=typeof this.type)throw Error("[INTERNAL] Unresolved type in "+this.toString(!0)+": "+this.type);if(null===b||this.repeated&&0==b.length)return c;try{if(this.repeated)if(this.options.packed&&a.PACKABLE_WIRE_TYPES.indexOf(this.type.wireType)>=0){for(c.writeVarint32(this.id<<3|a.WIRE_TYPES.LDELIM),c.ensureCapacity(c.offset+=1),g=c.offset,e=0;e<b.length;e++)this.element.encodeValue(this.id,b[e],c);h=c.offset-g,i=f.calculateVarint32(h),i>1&&(j=c.slice(g,c.offset),g+=i-1,c.offset=g,c.append(j)),c.writeVarint32(h,g-i);}else for(e=0;e<b.length;e++)c.writeVarint32(this.id<<3|this.type.wireType),this.element.encodeValue(this.id,b[e],c);else this.map?b.forEach(function(b,d){var g=f.calculateVarint32(8|this.keyType.wireType)+this.keyElement.calculateLength(1,d)+f.calculateVarint32(16|this.type.wireType)+this.element.calculateLength(2,b);c.writeVarint32(this.id<<3|a.WIRE_TYPES.LDELIM),c.writeVarint32(g),c.writeVarint32(8|this.keyType.wireType),this.keyElement.encodeValue(1,d,c),c.writeVarint32(16|this.type.wireType),this.element.encodeValue(2,b,c);},this):this.hasWirePresence(b,d)&&(c.writeVarint32(this.id<<3|this.type.wireType),this.element.encodeValue(this.id,b,c));}catch(k){throw Error("Illegal value for "+this.toString(!0)+": "+b+" ("+k+")")}return c},q.calculate=function(b,c){var d,e,g;if(b=this.verifyValue(b),null===this.type||"object"!=typeof this.type)throw Error("[INTERNAL] Unresolved type in "+this.toString(!0)+": "+this.type);if(null===b||this.repeated&&0==b.length)return 0;d=0;try{if(this.repeated)if(this.options.packed&&a.PACKABLE_WIRE_TYPES.indexOf(this.type.wireType)>=0){for(d+=f.calculateVarint32(this.id<<3|a.WIRE_TYPES.LDELIM),g=0,e=0;e<b.length;e++)g+=this.element.calculateLength(this.id,b[e]);d+=f.calculateVarint32(g),d+=g;}else for(e=0;e<b.length;e++)d+=f.calculateVarint32(this.id<<3|this.type.wireType),d+=this.element.calculateLength(this.id,b[e]);else this.map?b.forEach(function(b,c){var g=f.calculateVarint32(8|this.keyType.wireType)+this.keyElement.calculateLength(1,c)+f.calculateVarint32(16|this.type.wireType)+this.element.calculateLength(2,b);d+=f.calculateVarint32(this.id<<3|a.WIRE_TYPES.LDELIM),d+=f.calculateVarint32(g),d+=g;},this):this.hasWirePresence(b,c)&&(d+=f.calculateVarint32(this.id<<3|this.type.wireType),d+=this.element.calculateLength(this.id,b));}catch(h){throw Error("Illegal value for "+this.toString(!0)+": "+b+" ("+h+")")}return d},q.decode=function(b,c,d){var e,f,h,j,k,l,m,g=!this.map&&b==this.type.wireType||!d&&this.repeated&&this.options.packed&&b==a.WIRE_TYPES.LDELIM||this.map&&b==a.WIRE_TYPES.LDELIM;if(!g)throw Error("Illegal wire type for field "+this.toString(!0)+": "+b+" ("+this.type.wireType+" expected)");if(b==a.WIRE_TYPES.LDELIM&&this.repeated&&this.options.packed&&a.PACKABLE_WIRE_TYPES.indexOf(this.type.wireType)>=0&&!d){for(f=c.readVarint32(),f=c.offset+f,h=[];c.offset<f;)h.push(this.decode(this.type.wireType,c,!0));return h}if(this.map){if(j=i.defaultFieldValue(this.keyType),e=i.defaultFieldValue(this.type),f=c.readVarint32(),c.remaining()<f)throw Error("Illegal number of bytes for "+this.toString(!0)+": "+f+" required but got only "+c.remaining());for(k=c.clone(),k.limit=k.offset+f,c.offset+=f;k.remaining()>0;)if(l=k.readVarint32(),b=7&l,m=l>>>3,1===m)j=this.keyElement.decode(k,b,m);else{if(2!==m)throw Error("Unexpected tag in map field key/value submessage");e=this.element.decode(k,b,m);}return [j,e]}return this.element.decode(c,b,this.id)},c.Message.Field=p,r=function(a,b,c,d,e,f,g){p.call(this,a,b,c,null,d,e,f,g),this.extension;},r.prototype=Object.create(p.prototype),c.Message.ExtensionField=r,s=function(a,b,c){d.call(this,a,b,c),this.fields=[];},c.Message.OneOf=s,t=function(a,b,c,d,e){g.call(this,a,b,c,d,e),this.className="Enum",this.object=null;},t.getName=function(a,b){var e,d,c=Object.keys(a);for(d=0;d<c.length;++d)if(a[e=c[d]]===b)return e;return null},u=t.prototype=Object.create(g.prototype),u.build=function(b){var c,d,e,f;if(this.object&&!b)return this.object;for(c=new a.Builder.Enum,d=this.getChildren(t.Value),e=0,f=d.length;f>e;++e)c[d[e]["name"]]=d[e]["id"];return Object.defineProperty&&Object.defineProperty(c,"$options",{value:this.buildOpt(),enumerable:!1}),this.object=c},c.Enum=t,v=function(a,b,c,e){d.call(this,a,b,c),this.className="Enum.Value",this.id=e;},v.prototype=Object.create(d.prototype),c.Enum.Value=v,w=function(a,b,c,e){d.call(this,a,b,c),this.field=e;},w.prototype=Object.create(d.prototype),c.Extension=w,x=function(a,b,c,d){g.call(this,a,b,c,d),this.className="Service",this.clazz=null;},y=x.prototype=Object.create(g.prototype),y.build=function(b){return this.clazz&&!b?this.clazz:this.clazz=function(a,b){var g,c=function(b){a.Builder.Service.call(this),this.rpcImpl=b||function(a,b,c){setTimeout(c.bind(this,Error("Not implemented, see: https://github.com/dcodeIO/ProtoBuf.js/wiki/Services")),0);};},d=c.prototype=Object.create(a.Builder.Service.prototype),e=b.getChildren(a.Reflect.Service.RPCMethod);for(g=0;g<e.length;g++)!function(a){d[a.name]=function(c,d){try{try{c=a.resolvedRequestType.clazz.decode(f.wrap(c));}catch(e){if(!(e instanceof TypeError))throw e}if(null===c||"object"!=typeof c)throw Error("Illegal arguments");c instanceof a.resolvedRequestType.clazz||(c=new a.resolvedRequestType.clazz(c)),this.rpcImpl(a.fqn(),c,function(c,e){if(c)return d(c),void 0;try{e=a.resolvedResponseType.clazz.decode(e);}catch(f){}return e&&e instanceof a.resolvedResponseType.clazz?(d(null,e),void 0):(d(Error("Illegal response type received in service method "+b.name+"#"+a.name)),void 0)});}catch(e){setTimeout(d.bind(this,e),0);}},c[a.name]=function(b,d,e){new c(b)[a.name](d,e);},Object.defineProperty&&(Object.defineProperty(c[a.name],"$options",{value:a.buildOpt()}),Object.defineProperty(d[a.name],"$options",{value:c[a.name]["$options"]}));}(e[g]);return Object.defineProperty&&(Object.defineProperty(c,"$options",{value:b.buildOpt()}),Object.defineProperty(d,"$options",{value:c["$options"]}),Object.defineProperty(c,"$type",{value:b}),Object.defineProperty(d,"$type",{value:b})),c}(a,this)},c.Service=x,z=function(a,b,c,e){d.call(this,a,b,c),this.className="Service.Method",this.options=e||{};},A=z.prototype=Object.create(d.prototype),A.buildOpt=h.buildOpt,c.Service.Method=z,B=function(a,b,c,d,e,f,g,h){z.call(this,a,b,c,h),this.className="Service.RPCMethod",this.requestName=d,this.responseName=e,this.requestStream=f,this.responseStream=g,this.resolvedRequestType=null,this.resolvedResponseType=null;},B.prototype=Object.create(z.prototype),c.Service.RPCMethod=B,c}(e),e.Builder=function(a,b,c){function f(a){a.messages&&a.messages.forEach(function(b){b.syntax=a.syntax,f(b);}),a.enums&&a.enums.forEach(function(b){b.syntax=a.syntax;});}var d=function(a){this.ns=new c.Namespace(this,null,""),this.ptr=this.ns,this.resolved=!1,this.result=null,this.files={},this.importRoot=null,this.options=a||{};},e=d.prototype;return d.isMessage=function(a){return "string"!=typeof a.name?!1:"undefined"!=typeof a.values||"undefined"!=typeof a.rpc?!1:!0},d.isMessageField=function(a){return "string"!=typeof a.rule||"string"!=typeof a.name||"string"!=typeof a.type||"undefined"==typeof a.id?!1:!0},d.isEnum=function(a){return "string"!=typeof a.name?!1:"undefined"!=typeof a.values&&Array.isArray(a.values)&&0!==a.values.length?!0:!1},d.isService=function(a){return "string"==typeof a.name&&"object"==typeof a.rpc&&a.rpc?!0:!1},d.isExtend=function(a){return "string"!=typeof a.ref?!1:!0},e.reset=function(){return this.ptr=this.ns,this},e.define=function(a){if("string"!=typeof a||!b.TYPEREF.test(a))throw Error("illegal namespace: "+a);return a.split(".").forEach(function(a){var b=this.ptr.getChild(a);null===b&&this.ptr.addChild(b=new c.Namespace(this,this.ptr,a)),this.ptr=b;},this),this},e.create=function(b){var e,f,g,h,i;if(!b)return this;if(Array.isArray(b)){if(0===b.length)return this;b=b.slice();}else b=[b];for(e=[b];e.length>0;){if(b=e.pop(),!Array.isArray(b))throw Error("not a valid namespace: "+JSON.stringify(b));for(;b.length>0;){if(f=b.shift(),d.isMessage(f)){if(g=new c.Message(this,this.ptr,f.name,f.options,f.isGroup,f.syntax),h={},f.oneofs&&Object.keys(f.oneofs).forEach(function(a){g.addChild(h[a]=new c.Message.OneOf(this,g,a));},this),f.fields&&f.fields.forEach(function(a){if(null!==g.getChild(0|a.id))throw Error("duplicate or invalid field id in "+g.name+": "+a.id);if(a.options&&"object"!=typeof a.options)throw Error("illegal field options in "+g.name+"#"+a.name);var b=null;if("string"==typeof a.oneof&&!(b=h[a.oneof]))throw Error("illegal oneof in "+g.name+"#"+a.name+": "+a.oneof);a=new c.Message.Field(this,g,a.rule,a.keytype,a.type,a.name,a.id,a.options,b,f.syntax),b&&b.fields.push(a),g.addChild(a);},this),i=[],f.enums&&f.enums.forEach(function(a){i.push(a);}),f.messages&&f.messages.forEach(function(a){i.push(a);}),f.services&&f.services.forEach(function(a){i.push(a);}),f.extensions&&(g.extensions="number"==typeof f.extensions[0]?[f.extensions]:f.extensions),this.ptr.addChild(g),i.length>0){e.push(b),b=i,i=null,this.ptr=g,g=null;continue}i=null;}else if(d.isEnum(f))g=new c.Enum(this,this.ptr,f.name,f.options,f.syntax),f.values.forEach(function(a){g.addChild(new c.Enum.Value(this,g,a.name,a.id));},this),this.ptr.addChild(g);else if(d.isService(f))g=new c.Service(this,this.ptr,f.name,f.options),Object.keys(f.rpc).forEach(function(a){var b=f.rpc[a];g.addChild(new c.Service.RPCMethod(this,g,a,b.request,b.response,!!b.request_stream,!!b.response_stream,b.options));},this),this.ptr.addChild(g);else{if(!d.isExtend(f))throw Error("not a valid definition: "+JSON.stringify(f));if(g=this.ptr.resolve(f.ref,!0))f.fields.forEach(function(b){var d,e,f,h;if(null!==g.getChild(0|b.id))throw Error("duplicate extended field id in "+g.name+": "+b.id);
   if(g.extensions&&(d=!1,g.extensions.forEach(function(a){b.id>=a[0]&&b.id<=a[1]&&(d=!0);}),!d))throw Error("illegal extended field id in "+g.name+": "+b.id+" (not within valid ranges)");e=b.name,this.options.convertFieldsToCamelCase&&(e=a.Util.toCamelCase(e)),f=new c.Message.ExtensionField(this,g,b.rule,b.type,this.ptr.fqn()+"."+e,b.id,b.options),h=new c.Extension(this,this.ptr,b.name,f),f.extension=h,this.ptr.addChild(h),g.addChild(f);},this);else if(!/\.?google\.protobuf\./.test(f.ref))throw Error("extended message "+f.ref+" is not defined")}f=null,g=null;}b=null,this.ptr=this.ptr.parent;}return this.resolved=!1,this.result=null,this},e["import"]=function(b,c){var e,g,h,i,j,k,l,m,d="/";if("string"==typeof c){if(a.Util.IS_NODE,this.files[c]===!0)return this.reset();this.files[c]=!0;}else if("object"==typeof c){if(e=c.root,a.Util.IS_NODE,(e.indexOf("\\")>=0||c.file.indexOf("\\")>=0)&&(d="\\"),g=e+d+c.file,this.files[g]===!0)return this.reset();this.files[g]=!0;}if(b.imports&&b.imports.length>0){for(i=!1,"object"==typeof c?(this.importRoot=c.root,i=!0,h=this.importRoot,c=c.file,(h.indexOf("\\")>=0||c.indexOf("\\")>=0)&&(d="\\")):"string"==typeof c?this.importRoot?h=this.importRoot:c.indexOf("/")>=0?(h=c.replace(/\/[^\/]*$/,""),""===h&&(h="/")):c.indexOf("\\")>=0?(h=c.replace(/\\[^\\]*$/,""),d="\\"):h=".":h=null,j=0;j<b.imports.length;j++)if("string"==typeof b.imports[j]){if(!h)throw Error("cannot determine import root");if(k=b.imports[j],"google/protobuf/descriptor.proto"===k)continue;if(k=h+d+k,this.files[k]===!0)continue;if(/\.proto$/i.test(k)&&!a.DotProto&&(k=k.replace(/\.proto$/,".json")),l=a.Util.fetch(k),null===l)throw Error("failed to import '"+k+"' in '"+c+"': file not found");/\.json$/i.test(k)?this["import"](JSON.parse(l+""),k):this["import"](a.DotProto.Parser.parse(l),k);}else c?/\.(\w+)$/.test(c)?this["import"](b.imports[j],c.replace(/^(.+)\.(\w+)$/,function(a,b,c){return b+"_import"+j+"."+c})):this["import"](b.imports[j],c+"_import"+j):this["import"](b.imports[j]);i&&(this.importRoot=null);}return b["package"]&&this.define(b["package"]),b.syntax&&f(b),m=this.ptr,b.options&&Object.keys(b.options).forEach(function(a){m.options[a]=b.options[a];}),b.messages&&(this.create(b.messages),this.ptr=m),b.enums&&(this.create(b.enums),this.ptr=m),b.services&&(this.create(b.services),this.ptr=m),b["extends"]&&this.create(b["extends"]),this.reset()},e.resolveAll=function(){var d;if(null==this.ptr||"object"==typeof this.ptr.type)return this;if(this.ptr instanceof c.Namespace)this.ptr.children.forEach(function(a){this.ptr=a,this.resolveAll();},this);else if(this.ptr instanceof c.Message.Field){if(b.TYPE.test(this.ptr.type))this.ptr.type=a.TYPES[this.ptr.type];else{if(!b.TYPEREF.test(this.ptr.type))throw Error("illegal type reference in "+this.ptr.toString(!0)+": "+this.ptr.type);if(d=(this.ptr instanceof c.Message.ExtensionField?this.ptr.extension.parent:this.ptr.parent).resolve(this.ptr.type,!0),!d)throw Error("unresolvable type reference in "+this.ptr.toString(!0)+": "+this.ptr.type);if(this.ptr.resolvedType=d,d instanceof c.Enum){if(this.ptr.type=a.TYPES["enum"],"proto3"===this.ptr.syntax&&"proto3"!==d.syntax)throw Error("proto3 message cannot reference proto2 enum")}else{if(!(d instanceof c.Message))throw Error("illegal type reference in "+this.ptr.toString(!0)+": "+this.ptr.type);this.ptr.type=d.isGroup?a.TYPES.group:a.TYPES.message;}}if(this.ptr.map){if(!b.TYPE.test(this.ptr.keyType))throw Error("illegal key type for map field in "+this.ptr.toString(!0)+": "+this.ptr.keyType);this.ptr.keyType=a.TYPES[this.ptr.keyType];}}else if(this.ptr instanceof a.Reflect.Service.Method){if(!(this.ptr instanceof a.Reflect.Service.RPCMethod))throw Error("illegal service type in "+this.ptr.toString(!0));if(d=this.ptr.parent.resolve(this.ptr.requestName,!0),!(d&&d instanceof a.Reflect.Message))throw Error("Illegal type reference in "+this.ptr.toString(!0)+": "+this.ptr.requestName);if(this.ptr.resolvedRequestType=d,d=this.ptr.parent.resolve(this.ptr.responseName,!0),!(d&&d instanceof a.Reflect.Message))throw Error("Illegal type reference in "+this.ptr.toString(!0)+": "+this.ptr.responseName);this.ptr.resolvedResponseType=d;}else if(!(this.ptr instanceof a.Reflect.Message.OneOf||this.ptr instanceof a.Reflect.Extension||this.ptr instanceof a.Reflect.Enum.Value))throw Error("illegal object in namespace: "+typeof this.ptr+": "+this.ptr);return this.reset()},e.build=function(a){var b,c,d;if(this.reset(),this.resolved||(this.resolveAll(),this.resolved=!0,this.result=null),null===this.result&&(this.result=this.ns.build()),!a)return this.result;for(b="string"==typeof a?a.split("."):a,c=this.result,d=0;d<b.length;d++){if(!c[b[d]]){c=null;break}c=c[b[d]];}return c},e.lookup=function(a,b){return a?this.ns.resolve(a,b):this.ns},e.toString=function(){return "Builder"},d.Message=function(){},d.Enum=function(){},d.Service=function(){},d}(e,e.Lang,e.Reflect),e.Map=function(a,b){function e(a){var b=0;return {next:function(){return b<a.length?{done:!1,value:a[b++]}:{done:!0}}}}var c=function(a,c){var d,e,f,g;if(!a.map)throw Error("field is not a map");if(this.field=a,this.keyElem=new b.Element(a.keyType,null,!0,a.syntax),this.valueElem=new b.Element(a.type,a.resolvedType,!1,a.syntax),this.map={},Object.defineProperty(this,"size",{get:function(){return Object.keys(this.map).length}}),c)for(d=Object.keys(c),e=0;e<d.length;e++)f=this.keyElem.valueFromString(d[e]),g=this.valueElem.verifyValue(c[d[e]]),this.map[this.keyElem.valueToString(f)]={key:f,value:g};},d=c.prototype;return d.clear=function(){this.map={};},d["delete"]=function(a){var b=this.keyElem.valueToString(this.keyElem.verifyValue(a)),c=b in this.map;return delete this.map[b],c},d.entries=function(){var d,c,a=[],b=Object.keys(this.map);for(c=0;c<b.length;c++)a.push([(d=this.map[b[c]]).key,d.value]);return e(a)},d.keys=function(){var c,a=[],b=Object.keys(this.map);for(c=0;c<b.length;c++)a.push(this.map[b[c]].key);return e(a)},d.values=function(){var c,a=[],b=Object.keys(this.map);for(c=0;c<b.length;c++)a.push(this.map[b[c]].value);return e(a)},d.forEach=function(a,b){var e,d,c=Object.keys(this.map);for(d=0;d<c.length;d++)a.call(b,(e=this.map[c[d]]).value,e.key,this);},d.set=function(a,b){var c=this.keyElem.verifyValue(a),d=this.valueElem.verifyValue(b);return this.map[this.keyElem.valueToString(c)]={key:c,value:d},this},d.get=function(a){var b=this.keyElem.valueToString(this.keyElem.verifyValue(a));return b in this.map?this.map[b].value:void 0},d.has=function(a){var b=this.keyElem.valueToString(this.keyElem.verifyValue(a));return b in this.map},c}(e,e.Reflect),e.loadProto=function(a,b,c){return ("string"==typeof b||b&&"string"==typeof b.file&&"string"==typeof b.root)&&(c=b,b=void 0),e.loadJson(e.DotProto.Parser.parse(a),b,c)},e.protoFromString=e.loadProto,e.loadProtoFile=function(a,b,c){if(b&&"object"==typeof b?(c=b,b=null):b&&"function"==typeof b||(b=null),b)return e.Util.fetch("string"==typeof a?a:a.root+"/"+a.file,function(d){if(null===d)return b(Error("Failed to fetch file")),void 0;try{b(null,e.loadProto(d,c,a));}catch(f){b(f);}});var d=e.Util.fetch("object"==typeof a?a.root+"/"+a.file:a);return null===d?null:e.loadProto(d,c,a)},e.protoFromFile=e.loadProtoFile,e.newBuilder=function(a){return a=a||{},"undefined"==typeof a.convertFieldsToCamelCase&&(a.convertFieldsToCamelCase=e.convertFieldsToCamelCase),"undefined"==typeof a.populateAccessors&&(a.populateAccessors=e.populateAccessors),new e.Builder(a)},e.loadJson=function(a,b,c){return ("string"==typeof b||b&&"string"==typeof b.file&&"string"==typeof b.root)&&(c=b,b=null),b&&"object"==typeof b||(b=e.newBuilder()),"string"==typeof a&&(a=JSON.parse(a)),b["import"](a,c),b.resolveAll(),b},e.loadJsonFile=function(a,b,c){if(b&&"object"==typeof b?(c=b,b=null):b&&"function"==typeof b||(b=null),b)return e.Util.fetch("string"==typeof a?a:a.root+"/"+a.file,function(d){if(null===d)return b(Error("Failed to fetch file")),void 0;try{b(null,e.loadJson(JSON.parse(d),c,a));}catch(f){b(f);}});var d=e.Util.fetch("object"==typeof a?a.root+"/"+a.file:a);return null===d?null:e.loadJson(JSON.parse(d),c,a)},h=a,i=e.loadProto(h,void 0,"").build("Modules").probuf}(d,c,b);return e}
 
-  var SSMsg$1 = "\npackage Modules;\nmessage probuf {\n  message SetUserStatusInput\n  {\n    optional int32 status=1;\n  }\n\n  message SetUserStatusOutput\n  {\n    optional int32 nothing=1;\n  }\n\n  message GetUserStatusInput\n  {\n    optional int32 nothing=1;\n  }\n\n  message GetUserStatusOutput\n  {\n    optional string status=1;\n    optional string subUserId=2;\n  }\n\n  message SubUserStatusInput\n  {\n    repeated string userid =1;\n  }\n\n  message SubUserStatusOutput\n  {\n    optional int32 nothing=1; \n  }\n  message VoipDynamicInput\n  {\n    required int32  engineType = 1;\n    required string channelName = 2;\n    optional string channelExtra = 3;\n  }\n\n  message VoipDynamicOutput\n  {\n      required string dynamicKey=1;\n  }\n  message " + PBName.NotifyMsg + " {\n    required int32 type = 1;\n    optional int64 time = 2;\n    optional string chrmId=3;\n  }\n  message " + PBName.SyncRequestMsg + " {\n    required int64 syncTime = 1;\n    required bool ispolling = 2;\n    optional bool isweb=3;\n    optional bool isPullSend=4;\n    optional bool isKeeping=5;\n    optional int64 sendBoxSyncTime=6;\n  }\n  message " + PBName.UpStreamMessage + " {\n    required int32 sessionId = 1;\n    required string classname = 2;\n    required bytes content = 3;\n    optional string pushText = 4;\n    optional string appData = 5;\n    repeated string userId = 6;\n    optional int64 delMsgTime = 7;\n    optional string delMsgId = 8;\n    optional int32 configFlag = 9;\n  }\n  message " + PBName.DownStreamMessages + " {\n    repeated DownStreamMessage list = 1;\n    required int64 syncTime = 2;\n    optional bool finished = 3;\n  }\n  message " + PBName.DownStreamMessage + " {\n    required string fromUserId = 1;\n    required ChannelType type = 2;\n    optional string groupId = 3;\n    required string classname = 4;\n    required bytes content = 5;\n    required int64 dataTime = 6;\n    required int64 status = 7;\n    optional int64 extra = 8;\n    optional string msgId = 9;\n    optional int32 direction = 10;\n  }\n  enum ChannelType {\n    PERSON = 1;\n    PERSONS = 2;\n    GROUP = 3;\n    TEMPGROUP = 4;\n    CUSTOMERSERVICE = 5;\n    NOTIFY = 6;\n    MC=7;\n    MP=8;\n  }\n  message CreateDiscussionInput {\n    optional string name = 1;\n  }\n  message CreateDiscussionOutput {\n    required string id = 1;\n  }\n  message ChannelInvitationInput {\n    repeated string users = 1;\n  }\n  message LeaveChannelInput {\n    required int32 nothing = 1;\n  }\n  message ChannelEvictionInput {\n    required string user = 1;\n  }\n  message RenameChannelInput {\n    required string name = 1;\n  }\n  message ChannelInfoInput {\n    required int32 nothing = 1;\n  }\n  message ChannelInfoOutput {\n    required ChannelType type = 1;\n    required string channelId = 2;\n    required string channelName = 3;\n    required string adminUserId = 4;\n    repeated string firstTenUserIds = 5;\n    required int32 openStatus = 6;\n  }\n  message ChannelInfosInput {\n    required int32 page = 1;\n    optional int32 number = 2;\n  }\n  message ChannelInfosOutput {\n    repeated ChannelInfoOutput channels = 1;\n    required int32 total = 2;\n  }\n  message MemberInfo {\n    required string userId = 1;\n    required string userName = 2;\n    required string userPortrait = 3;\n    required string extension = 4;\n  }\n  message GroupMembersInput {\n    required int32 page = 1;\n    optional int32 number = 2;\n  }\n  message GroupMembersOutput {\n    repeated MemberInfo members = 1;\n    required int32 total = 2;\n  }\n  message GetUserInfoInput {\n    required int32 nothing = 1;\n  }\n  message GetUserInfoOutput {\n    required string userId = 1;\n    required string userName = 2;\n    required string userPortrait = 3;\n  }\n  message GetSessionIdInput {\n    required int32 nothing = 1;\n  }\n  message GetSessionIdOutput {\n    required int32 sessionId = 1;\n  }\n  enum FileType {\n    image = 1;\n    audio = 2;\n    video = 3;\n    file = 4;\n  }\n  message GetQNupTokenInput {\n    required FileType type = 1;\n  }\n  message GetQNdownloadUrlInput {\n    required FileType type = 1;\n    required string key = 2;\n    optional string  fileName = 3;\n  }\n  message GetQNupTokenOutput {\n    required int64 deadline = 1;\n    required string token = 2;\n  }\n  message GetQNdownloadUrlOutput {\n    required string downloadUrl = 1;\n  }\n  message Add2BlackListInput {\n    required string userId = 1;\n  }\n  message RemoveFromBlackListInput {\n    required string userId = 1;\n  }\n  message QueryBlackListInput {\n    required int32 nothing = 1;\n  }\n  message QueryBlackListOutput {\n    repeated string userIds = 1;\n  }\n  message BlackListStatusInput {\n    required string userId = 1;\n  }\n  message BlockPushInput {\n    required string blockeeId = 1;\n  }\n  message ModifyPermissionInput {\n    required int32 openStatus = 1;\n  }\n  message GroupInput {\n    repeated GroupInfo groupInfo = 1;\n  }\n  message GroupOutput {\n    required int32 nothing = 1;\n  }\n  message GroupInfo {\n    required string id = 1;\n    required string name = 2;\n  }\n  message GroupHashInput {\n    required string userId = 1;\n    required string groupHashCode = 2;\n  }\n  message GroupHashOutput {\n    required GroupHashType result = 1;\n  }\n  enum GroupHashType {\n    group_success = 0x00;\n    group_failure = 0x01;\n  }\n  message " + PBName.ChrmInput + " {\n    required int32 nothing = 1;\n  }\n  message ChrmOutput {\n    required int32 nothing = 1;\n  }\n  message " + PBName.ChrmPullMsg + " {\n    required int64 syncTime = 1;\n    required int32 count = 2;\n  }\n  \n  message ChrmPullMsgNew \n  {\n    required int32 count = 1;\n    required int64 syncTime = 2;\n    optional string chrmId=3;\n  }\n  message " + PBName.RelationQryInput + "\n  {\n    optional ChannelType type = 1;\n    optional int32 count = 2;\n    optional int64 startTime = 3;\n    optional int32 order = 4;\n  }\n  message " + PBName.RelationsInput + "\n  {\n    required ChannelType type = 1;\n    optional DownStreamMessage msg =2;\n    optional int32 count = 3;\n    optional int32 offset = 4;\n    optional int64 startTime = 5;\n    optional int64 endTime = 6;\n  }\n  message " + PBName.RelationsOutput + "\n  {\n    repeated RelationInfo info = 1;\n  }\n  message RelationInfo\n  {\n    required ChannelType type = 1;\n    required string userId = 2;\n    optional DownStreamMessage msg =3;\n    optional int64 readMsgTime= 4;\n    optional int64 unreadCount= 5;\n  }\n  message RelationInfoReadTime\n  {\n    required ChannelType type = 1;\n    required int64 readMsgTime= 2;\n    required string targetId = 3;\n  }\n  message " + PBName.CleanHisMsgInput + "\n  {\n      required string targetId = 1;\n      required int64 dataTime = 2;\n      optional int32 conversationType= 3;\n  }\n  message HistoryMessageInput\n  {\n    required string targetId = 1;\n    required int64 dataTime =2;\n    required int32 size  = 3;\n  }\n\n  message HistoryMessagesOuput\n  {\n    repeated DownStreamMessage list = 1;\n    required int64 syncTime = 2;\n    required int32 hasMsg = 3;\n  }\n  message " + PBName.QueryChatRoomInfoInput + "\n  {\n    required int32 count= 1;\n    optional int32 order= 2;\n  }\n\n  message " + PBName.QueryChatRoomInfoOutput + "\n  {\n    optional int32 userTotalNums = 1;\n    repeated ChrmMember userInfos = 2;\n  }\n  message ChrmMember\n  {\n    required int64 time = 1;\n    required string id = 2;\n  }\n  message MPFollowInput\n  {\n    required string id = 1;\n  }\n\n  message MPFollowOutput\n  {\n    required int32 nothing = 1;\n    optional MpInfo info =2;\n  }\n\n  message MCFollowInput\n  {\n    required string id = 1;\n  }\n\n  message MCFollowOutput\n  {\n    required int32 nothing = 1;\n    optional MpInfo info =2;\n  }\n\n  message MpInfo  \n  {\n    required string mpid=1;\n    required string name = 2;\n    required string type = 3;\n    required int64 time=4;\n    optional string portraitUrl=5;\n    optional string extra =6;\n  }\n\n  message SearchMpInput\n  {\n    required int32 type=1;\n    required string id=2;\n  }\n\n  message SearchMpOutput\n  {\n    required int32 nothing=1;\n    repeated MpInfo info = 2;\n  }\n\n  message PullMpInput\n  {\n    required int64 time=1;\n    required string mpid=2;\n  }\n\n  message PullMpOutput\n  {\n    required int32 status=1;\n    repeated MpInfo info = 2;\n  }\n  message " + PBName.HistoryMsgInput + "\n  {\n    optional string targetId = 1;\n    optional int64 time = 2;\n    optional int32 count  = 3;\n    optional int32 order = 4;\n  }\n\n  message " + PBName.HistoryMsgOuput + "\n  {\n    repeated DownStreamMessage list=1;\n    required int64 syncTime=2;\n    required int32 hasMsg=3;\n  }\n  message RtcQueryListInput{\n    optional int32 order=1;\n  }\n\n  message RtcKeyDeleteInput{\n    repeated string key=1;\n  }\n\n  message RtcValueInfo{\n    required string key=1;\n    required string value=2;\n  }\n\n  message RtcUserInfo{\n    required string userId=1;\n    repeated RtcValueInfo userData=2;\n  }\n\n  message RtcUserListOutput{\n    repeated RtcUserInfo list=1;\n    optional string token=2;\n  }\n  message RtcRoomInfoOutput{\n    optional string roomId = 1;\n    repeated RtcValueInfo roomData = 2;\n    optional int32 userCount = 3;\n    repeated RtcUserInfo list=4;\n  }\n  message RtcInput{\n    required int32 roomType=1;\n    optional int32 broadcastType=2;\n  }\n  message RtcQryInput{ \n    required bool isInterior=1;\n    required targetType target=2;\n    repeated string key=3;\n  }\n  message RtcQryOutput{\n    repeated RtcValueInfo outInfo=1;\n  }\n  message RtcDelDataInput{\n    repeated string key=1;\n    required bool isInterior=2;\n    required targetType target=3;\n  }\n  message RtcDataInput{ \n    required bool interior=1;\n    required targetType target=2;\n    repeated string key=3;\n    optional string objectName=4;\n    optional string content=5;\n  }\n  message RtcSetDataInput{\n    required bool interior=1;\n    required targetType target=2;\n    required string key=3;\n    required string value=4;\n    optional string objectName=5;\n    optional string content=6;\n  }\n  message RtcOutput\n  {\n    optional int32 nothing=1; \n  }\n  message RtcTokenOutput{\n    required string rtcToken=1;\n  }\n  enum targetType {\n    ROOM =1 ;\n    PERSON = 2;\n  }\n  message RtcSetOutDataInput{\n    required targetType target=1;\n    repeated RtcValueInfo valueInfo=2;\n    optional string objectName=3;\n    optional string content=4;\n  }\n  message RtcQryUserOutDataInput{\n    repeated string userId = 1;\n  }\n  message RtcUserOutDataOutput{\n    repeated RtcUserInfo user = 1;\n  }\n  message " + PBName.SessionsAttQryInput + "{\n    required int32 nothing = 1;\n  }\n  message " + PBName.SessionsAttOutput + "{\n    required int64 inboxTime = 1;\n    required int64 sendboxTime = 2;\n    required int64 totalUnreadCount = 3;\n  }\n  message " + PBName.SessionMsgReadInput + "\n  {\n    required ChannelType type = 1;\n    required int64 msgTime = 2;\n    required string channelId = 3;\n  }\n  message SessionMsgReadOutput\n  {\n    optional int32 nothing=1; \n  }\n  message " + PBName.DeleteSessionsInput + "\n  {\n    repeated SessionInfo sessions = 1;\n  }\n  message " + PBName.SessionInfo + "\n  {\n    required ChannelType type = 1;\n    required string channelId = 2;\n  }\n  message " + PBName.DeleteSessionsOutput + "\n  {\n    optional int32 nothing=1; \n  }\n  message " + PBName.DeleteMsgInput + "\n  {\n    optional ChannelType type = 1;\n    optional string conversationId = 2;\n    repeated DeleteMsg msgs = 3;\n  }\n  message DeleteMsg\n  {\n    optional string msgId = 1;\n    optional int64 msgDataTime = 2;\n    optional int32 direct = 3;\n  }\n\n}\n";
+  var SSMsg$1 = "\npackage Modules;\nmessage probuf {\n  message " + PBName.SetUserStatusInput + "\n  {\n    optional int32 status=1;\n  }\n\n  message SetUserStatusOutput\n  {\n    optional int32 nothing=1;\n  }\n\n  message GetUserStatusInput\n  {\n    optional int32 nothing=1;\n  }\n\n  message GetUserStatusOutput\n  {\n    optional string status=1;\n    optional string subUserId=2;\n  }\n\n  message SubUserStatusInput\n  {\n    repeated string userid =1;\n  }\n\n  message SubUserStatusOutput\n  {\n    optional int32 nothing=1; \n  }\n  message VoipDynamicInput\n  {\n    required int32  engineType = 1;\n    required string channelName = 2;\n    optional string channelExtra = 3;\n  }\n\n  message VoipDynamicOutput\n  {\n      required string dynamicKey=1;\n  }\n  message " + PBName.NotifyMsg + " {\n    required int32 type = 1;\n    optional int64 time = 2;\n    optional string chrmId=3;\n  }\n  message " + PBName.SyncRequestMsg + " {\n    required int64 syncTime = 1;\n    required bool ispolling = 2;\n    optional bool isweb=3;\n    optional bool isPullSend=4;\n    optional bool isKeeping=5;\n    optional int64 sendBoxSyncTime=6;\n  }\n  message " + PBName.UpStreamMessage + " {\n    required int32 sessionId = 1;\n    required string classname = 2;\n    required bytes content = 3;\n    optional string pushText = 4;\n    optional string appData = 5;\n    repeated string userId = 6;\n    optional int64 delMsgTime = 7;\n    optional string delMsgId = 8;\n    optional int32 configFlag = 9;\n  }\n  message " + PBName.DownStreamMessages + " {\n    repeated DownStreamMessage list = 1;\n    required int64 syncTime = 2;\n    optional bool finished = 3;\n  }\n  message " + PBName.DownStreamMessage + " {\n    required string fromUserId = 1;\n    required ChannelType type = 2;\n    optional string groupId = 3;\n    required string classname = 4;\n    required bytes content = 5;\n    required int64 dataTime = 6;\n    required int64 status = 7;\n    optional int64 extra = 8;\n    optional string msgId = 9;\n    optional int32 direction = 10;\n  }\n  enum ChannelType {\n    PERSON = 1;\n    PERSONS = 2;\n    GROUP = 3;\n    TEMPGROUP = 4;\n    CUSTOMERSERVICE = 5;\n    NOTIFY = 6;\n    MC=7;\n    MP=8;\n  }\n  message CreateDiscussionInput {\n    optional string name = 1;\n  }\n  message CreateDiscussionOutput {\n    required string id = 1;\n  }\n  message ChannelInvitationInput {\n    repeated string users = 1;\n  }\n  message LeaveChannelInput {\n    required int32 nothing = 1;\n  }\n  message ChannelEvictionInput {\n    required string user = 1;\n  }\n  message RenameChannelInput {\n    required string name = 1;\n  }\n  message ChannelInfoInput {\n    required int32 nothing = 1;\n  }\n  message ChannelInfoOutput {\n    required ChannelType type = 1;\n    required string channelId = 2;\n    required string channelName = 3;\n    required string adminUserId = 4;\n    repeated string firstTenUserIds = 5;\n    required int32 openStatus = 6;\n  }\n  message ChannelInfosInput {\n    required int32 page = 1;\n    optional int32 number = 2;\n  }\n  message ChannelInfosOutput {\n    repeated ChannelInfoOutput channels = 1;\n    required int32 total = 2;\n  }\n  message MemberInfo {\n    required string userId = 1;\n    required string userName = 2;\n    required string userPortrait = 3;\n    required string extension = 4;\n  }\n  message GroupMembersInput {\n    required int32 page = 1;\n    optional int32 number = 2;\n  }\n  message GroupMembersOutput {\n    repeated MemberInfo members = 1;\n    required int32 total = 2;\n  }\n  message GetUserInfoInput {\n    required int32 nothing = 1;\n  }\n  message GetUserInfoOutput {\n    required string userId = 1;\n    required string userName = 2;\n    required string userPortrait = 3;\n  }\n  message GetSessionIdInput {\n    required int32 nothing = 1;\n  }\n  message GetSessionIdOutput {\n    required int32 sessionId = 1;\n  }\n  enum FileType {\n    image = " + FILE_TYPE.IMAGE + ";\n    audio = " + FILE_TYPE.AUDIO + ";\n    video = " + FILE_TYPE.VIDEO + ";\n    file = " + FILE_TYPE.FILE + ";\n  }\n  message " + PBName.GetQNupTokenInput + " {\n    required FileType type = 1;\n  }\n  message " + PBName.GetQNdownloadUrlInput + " {\n    required FileType type = 1;\n    required string key = 2;\n    optional string  fileName = 3;\n  }\n  message " + PBName.GetQNupTokenOutput + " {\n    required int64 deadline = 1;\n    required string token = 2;\n  }\n  message " + PBName.GetQNdownloadUrlOutput + " {\n    required string downloadUrl = 1;\n  }\n  message Add2BlackListInput {\n    required string userId = 1;\n  }\n  message RemoveFromBlackListInput {\n    required string userId = 1;\n  }\n  message QueryBlackListInput {\n    required int32 nothing = 1;\n  }\n  message QueryBlackListOutput {\n    repeated string userIds = 1;\n  }\n  message BlackListStatusInput {\n    required string userId = 1;\n  }\n  message BlockPushInput {\n    required string blockeeId = 1;\n  }\n  message ModifyPermissionInput {\n    required int32 openStatus = 1;\n  }\n  message GroupInput {\n    repeated GroupInfo groupInfo = 1;\n  }\n  message GroupOutput {\n    required int32 nothing = 1;\n  }\n  message GroupInfo {\n    required string id = 1;\n    required string name = 2;\n  }\n  message GroupHashInput {\n    required string userId = 1;\n    required string groupHashCode = 2;\n  }\n  message GroupHashOutput {\n    required GroupHashType result = 1;\n  }\n  enum GroupHashType {\n    group_success = 0x00;\n    group_failure = 0x01;\n  }\n  message " + PBName.ChrmInput + " {\n    required int32 nothing = 1;\n  }\n  message ChrmOutput {\n    required int32 nothing = 1;\n  }\n  message " + PBName.ChrmPullMsg + " {\n    required int64 syncTime = 1;\n    required int32 count = 2;\n  }\n  \n  message ChrmPullMsgNew \n  {\n    required int32 count = 1;\n    required int64 syncTime = 2;\n    optional string chrmId=3;\n  }\n  message " + PBName.RelationQryInput + "\n  {\n    optional ChannelType type = 1;\n    optional int32 count = 2;\n    optional int64 startTime = 3;\n    optional int32 order = 4;\n  }\n  message " + PBName.RelationsInput + "\n  {\n    required ChannelType type = 1;\n    optional DownStreamMessage msg =2;\n    optional int32 count = 3;\n    optional int32 offset = 4;\n    optional int64 startTime = 5;\n    optional int64 endTime = 6;\n  }\n  message " + PBName.RelationsOutput + "\n  {\n    repeated RelationInfo info = 1;\n  }\n  message RelationInfo\n  {\n    required ChannelType type = 1;\n    required string userId = 2;\n    optional DownStreamMessage msg =3;\n    optional int64 readMsgTime= 4;\n    optional int64 unreadCount= 5;\n  }\n  message RelationInfoReadTime\n  {\n    required ChannelType type = 1;\n    required int64 readMsgTime= 2;\n    required string targetId = 3;\n  }\n  message " + PBName.CleanHisMsgInput + "\n  {\n      required string targetId = 1;\n      required int64 dataTime = 2;\n      optional int32 conversationType= 3;\n  }\n  message HistoryMessageInput\n  {\n    required string targetId = 1;\n    required int64 dataTime =2;\n    required int32 size  = 3;\n  }\n\n  message HistoryMessagesOuput\n  {\n    repeated DownStreamMessage list = 1;\n    required int64 syncTime = 2;\n    required int32 hasMsg = 3;\n  }\n  message " + PBName.QueryChatRoomInfoInput + "\n  {\n    required int32 count= 1;\n    optional int32 order= 2;\n  }\n\n  message " + PBName.QueryChatRoomInfoOutput + "\n  {\n    optional int32 userTotalNums = 1;\n    repeated ChrmMember userInfos = 2;\n  }\n  message ChrmMember\n  {\n    required int64 time = 1;\n    required string id = 2;\n  }\n  message MPFollowInput\n  {\n    required string id = 1;\n  }\n\n  message MPFollowOutput\n  {\n    required int32 nothing = 1;\n    optional MpInfo info =2;\n  }\n\n  message " + PBName.MCFollowInput + "\n  {\n    required string id = 1;\n  }\n\n  message MCFollowOutput\n  {\n    required int32 nothing = 1;\n    optional MpInfo info =2;\n  }\n\n  message MpInfo  \n  {\n    required string mpid=1;\n    required string name = 2;\n    required string type = 3;\n    required int64 time=4;\n    optional string portraitUrl=5;\n    optional string extra =6;\n  }\n\n  message SearchMpInput\n  {\n    required int32 type=1;\n    required string id=2;\n  }\n\n  message SearchMpOutput\n  {\n    required int32 nothing=1;\n    repeated MpInfo info = 2;\n  }\n\n  message PullMpInput\n  {\n    required int64 time=1;\n    required string mpid=2;\n  }\n\n  message PullMpOutput\n  {\n    required int32 status=1;\n    repeated MpInfo info = 2;\n  }\n  message " + PBName.HistoryMsgInput + "\n  {\n    optional string targetId = 1;\n    optional int64 time = 2;\n    optional int32 count  = 3;\n    optional int32 order = 4;\n  }\n\n  message " + PBName.HistoryMsgOuput + "\n  {\n    repeated DownStreamMessage list=1;\n    required int64 syncTime=2;\n    required int32 hasMsg=3;\n  }\n  message " + PBName.RtcQueryListInput + "{\n    optional int32 order=1;\n  }\n\n  message " + PBName.RtcKeyDeleteInput + "{\n    repeated string key=1;\n  }\n\n  message " + PBName.RtcValueInfo + "{\n    required string key=1;\n    required string value=2;\n  }\n\n  message RtcUserInfo{\n    required string userId=1;\n    repeated " + PBName.RtcValueInfo + " userData=2;\n  }\n\n  message " + PBName.RtcUserListOutput + "{\n    repeated RtcUserInfo list=1;\n    optional string token=2;\n  }\n  message RtcRoomInfoOutput{\n    optional string roomId = 1;\n    repeated " + PBName.RtcValueInfo + " roomData = 2;\n    optional int32 userCount = 3;\n    repeated RtcUserInfo list=4;\n  }\n  message " + PBName.RtcInput + "{\n    required int32 roomType=1;\n    optional int32 broadcastType=2;\n  }\n  message RtcQryInput{ \n    required bool isInterior=1;\n    required targetType target=2;\n    repeated string key=3;\n  }\n  message " + PBName.RtcQryOutput + "{\n    repeated " + PBName.RtcValueInfo + " outInfo=1;\n  }\n  message RtcDelDataInput{\n    repeated string key=1;\n    required bool isInterior=2;\n    required targetType target=3;\n  }\n  message " + PBName.RtcDataInput + "{ \n    required bool interior=1;\n    required targetType target=2;\n    repeated string key=3;\n    optional string objectName=4;\n    optional string content=5;\n  }\n  message " + PBName.RtcSetDataInput + "{\n    required bool interior=1;\n    required targetType target=2;\n    required string key=3;\n    required string value=4;\n    optional string objectName=5;\n    optional string content=6;\n  }\n  message RtcOutput\n  {\n    optional int32 nothing=1; \n  }\n  message " + PBName.RtcTokenOutput + "{\n    required string rtcToken=1;\n  }\n  enum targetType {\n    ROOM =1 ;\n    PERSON = 2;\n  }\n  message " + PBName.RtcSetOutDataInput + "{\n    required targetType target=1;\n    repeated " + PBName.RtcValueInfo + " valueInfo=2;\n    optional string objectName=3;\n    optional string content=4;\n  }\n  message " + PBName.RtcQryUserOutDataInput + "{\n    repeated string userId = 1;\n  }\n  message " + PBName.RtcUserOutDataOutput + "{\n    repeated RtcUserInfo user = 1;\n  }\n  message " + PBName.SessionsAttQryInput + "{\n    required int32 nothing = 1;\n  }\n  message " + PBName.SessionsAttOutput + "{\n    required int64 inboxTime = 1;\n    required int64 sendboxTime = 2;\n    required int64 totalUnreadCount = 3;\n  }\n  message " + PBName.SessionMsgReadInput + "\n  {\n    required ChannelType type = 1;\n    required int64 msgTime = 2;\n    required string channelId = 3;\n  }\n  message SessionMsgReadOutput\n  {\n    optional int32 nothing=1; \n  }\n  message " + PBName.DeleteSessionsInput + "\n  {\n    repeated SessionInfo sessions = 1;\n  }\n  message " + PBName.SessionInfo + "\n  {\n    required ChannelType type = 1;\n    required string channelId = 2;\n  }\n  message " + PBName.DeleteSessionsOutput + "\n  {\n    optional int32 nothing=1; \n  }\n  message " + PBName.DeleteMsgInput + "\n  {\n    optional ChannelType type = 1;\n    optional string conversationId = 2;\n    repeated DeleteMsg msgs = 3;\n  }\n  message DeleteMsg\n  {\n    optional string msgId = 1;\n    optional int64 msgDataTime = 2;\n    optional int32 direct = 3;\n  }\n\n}\n";
 
   var Codec$1 = {};
 
@@ -4312,6 +4388,49 @@
       userInfos: userInfos
     };
   };
+  var formatRTCUserList = function formatRTCUserList(rtcInfos) {
+    var list = rtcInfos.list,
+        token = rtcInfos.token,
+        sessionId = rtcInfos.sessionId;
+    var users = {};
+    utils.forEach(list, function (item) {
+      var userId = item.userId,
+          userData = item.userData;
+      var tmpData = {};
+      utils.forEach(userData, function (data) {
+        var key = data.key,
+            value = data.value;
+        tmpData[key] = value;
+      });
+      users[userId] = tmpData;
+    });
+    return {
+      users: users,
+      token: token,
+      sessionId: sessionId
+    };
+  };
+  var formatRTCData = function formatRTCData(data) {
+    var list = data.outInfo;
+    var props = {};
+    utils.forEach(list, function (item) {
+      props[item.key] = item.value;
+    });
+    return props;
+  };
+  var formatRTCRoomInfo = function formatRTCRoomInfo(data) {
+    var id = data.roomId,
+        total = data.userCount,
+        roomData = data.roomData;
+    var room = {
+      id: id,
+      total: total
+    };
+    utils.forEach(roomData, function (data) {
+      room[data.key] = data.value;
+    });
+    return room;
+  };
   var formatServerConfig = function formatServerConfig(data) {
     return utils.batchInt64ToTimestamp(data);
   };
@@ -4336,7 +4455,14 @@
     _proto.decodeByPBName = function decodeByPBName(data, pbName, option) {
       var _PBName$SessionsAttOu;
 
-      var decodeEvent = (_PBName$SessionsAttOu = {}, _PBName$SessionsAttOu[PBName.SessionsAttOutput] = this.decodeServerConf, _PBName$SessionsAttOu[PBName.DownStreamMessages] = this.decodeSyncMessages, _PBName$SessionsAttOu[PBName.DownStreamMessage] = this.decodeReceiveMessage, _PBName$SessionsAttOu[PBName.UpStreamMessage] = this.decodeSentMessage, _PBName$SessionsAttOu[PBName.NotifyMsg] = this.decodeNotifyPullConfig, _PBName$SessionsAttOu[PBName.HistoryMsgOuput] = this.decodeHistoryMessages, _PBName$SessionsAttOu[PBName.RelationsOutput] = this.decodeConversationList, _PBName$SessionsAttOu[PBName.QueryChatRoomInfoOutput] = this.decodeChatRoomInfos, _PBName$SessionsAttOu)[pbName] || utils.noop;
+      var decodeEvent = (_PBName$SessionsAttOu = {}, _PBName$SessionsAttOu[PBName.SessionsAttOutput] = this.decodeServerConf, _PBName$SessionsAttOu[PBName.DownStreamMessages] = this.decodeSyncMessages, _PBName$SessionsAttOu[PBName.DownStreamMessage] = this.decodeReceiveMessage, _PBName$SessionsAttOu[PBName.UpStreamMessage] = this.decodeSentMessage, _PBName$SessionsAttOu[PBName.NotifyMsg] = this.decodeNotifyPullConfig, _PBName$SessionsAttOu[PBName.HistoryMsgOuput] = this.decodeHistoryMessages, _PBName$SessionsAttOu[PBName.RelationsOutput] = this.decodeConversationList, _PBName$SessionsAttOu[PBName.QueryChatRoomInfoOutput] = this.decodeChatRoomInfos, _PBName$SessionsAttOu[PBName.RtcUserListOutput] = this.decodeRTCUserList, _PBName$SessionsAttOu[PBName.RtcQryOutput] = this.decodeRTCData, _PBName$SessionsAttOu)[pbName] || function () {
+        try {
+          return this.codec[pbName].decode(data);
+        } catch (e) {
+          return data;
+        }
+      };
+
       return decodeEvent.call(this, data, option);
     };
 
@@ -4378,6 +4504,21 @@
     _proto.decodeChatRoomInfos = function decodeChatRoomInfos(data) {
       var chrmInfos = this.codec[PBName.QueryChatRoomInfoOutput].decode(data);
       return formatChatRoomInfos(chrmInfos);
+    };
+
+    _proto.decodeRTCUserList = function decodeRTCUserList(data) {
+      var rtcInfos = this.codec[PBName.RtcUserListOutput].decode(data);
+      return formatRTCUserList(rtcInfos);
+    };
+
+    _proto.decodeRTCData = function decodeRTCData(data) {
+      var rtcData = this.codec[PBName.RtcQryOutput].decode(data);
+      return formatRTCData(rtcData);
+    };
+
+    _proto.decodeRTCRoomInfo = function decodeRTCRoomInfo(data) {
+      var rtcRoomInfo = this.codec[PBName.RtcRoomInfoOutput].decode(data);
+      return formatRTCRoomInfo(rtcRoomInfo);
     };
 
     _proto.encodeServerConfParams = function encodeServerConfParams() {
@@ -4553,6 +4694,162 @@
       var modules = this.codec.getModule(PBName.QueryChatRoomInfoInput);
       modules.setCount(count);
       modules.setOrder(order);
+      return modules.getArrayData();
+    };
+
+    _proto.encodeJoinRTCRoom = function encodeJoinRTCRoom(room) {
+      var mode = room.mode,
+          broadcastType = room.broadcastType;
+      var modules = this.codec.getModule(PBName.RtcInput);
+      mode = mode || 0;
+      modules.setRoomType(mode);
+      !utils.isUndefined(broadcastType) && modules.setBroadcastType(broadcastType);
+      return modules.getArrayData();
+    };
+
+    _proto.encodeQuitRTCRoom = function encodeQuitRTCRoom() {
+      return this.codec.getModule(PBName.SetUserStatusInput).getArrayData();
+    };
+
+    _proto.encodeSetRTCData = function encodeSetRTCData(key, value, isInner, apiType, message) {
+      var modules = this.codec.getModule(PBName.RtcSetDataInput);
+      modules.setInterior(isInner);
+      modules.setTarget(apiType);
+      modules.setKey(key);
+      modules.setValue(value);
+      message = message || {};
+      var _message = message,
+          name = _message.name,
+          content = _message.content;
+      !utils.isUndefined(name) && modules.setObjectName(name);
+
+      if (!utils.isUndefined(content)) {
+        if (utils.isObject(content)) {
+          content = utils.toJSON(content);
+        }
+
+        modules.setContent(content);
+      }
+
+      return modules.getArrayData();
+    };
+
+    _proto.encodeGetRTCData = function encodeGetRTCData(keys, isInner, apiType) {
+      var modules = this.codec.getModule(PBName.RtcDataInput);
+      modules.setInterior(isInner);
+      modules.setTarget(apiType);
+      modules.setKey(keys);
+      return modules.getArrayData();
+    };
+
+    _proto.encodeRemoveRTCData = function encodeRemoveRTCData(keys, isInner, apiType, message) {
+      var modules = this.codec.getModule(PBName.RtcDataInput);
+      modules.setInterior(isInner);
+      modules.setTarget(apiType);
+      modules.setKey(keys);
+      message = message || {};
+      var _message2 = message,
+          name = _message2.name,
+          content = _message2.content;
+      !utils.isUndefined(name) && modules.setObjectName(name);
+
+      if (!utils.isUndefined(content)) {
+        if (utils.isObject(content)) {
+          content = utils.toJSON(content);
+        }
+
+        modules.setContent(content);
+      }
+
+      return modules.getArrayData();
+    };
+
+    _proto.encodeSetRTCOutData = function encodeSetRTCOutData(data, type, message) {
+      var modules = this.codec.getModule(PBName.RtcSetOutDataInput);
+      modules.setTarget(type);
+
+      if (!utils.isArray(data)) {
+        data = [data];
+      }
+
+      utils.forEach(data, function (item, index) {
+        item.key = item.key ? item.key.toString() : item.key;
+        item.value = item.value ? item.value.toString() : item.value;
+        data[index] = item;
+      });
+      modules.setValueInfo(data);
+      message = message || {};
+      var _message3 = message,
+          name = _message3.name,
+          content = _message3.content;
+      !utils.isUndefined(name) && modules.setObjectName(name);
+
+      if (!utils.isUndefined(content)) {
+        if (utils.isObject(content)) {
+          content = utils.toJSON(content);
+        }
+
+        modules.setContent(content);
+      }
+
+      return modules.getArrayData();
+    };
+
+    _proto.ecnodeGetRTCOutData = function ecnodeGetRTCOutData(userIds) {
+      var modules = this.codec.getModule(PBName.RtcQryUserOutDataInput);
+      modules.setUserId(userIds);
+      return modules.getArrayData();
+    };
+
+    _proto.encodeSetRTCState = function encodeSetRTCState(content) {
+      var modules = this.codec.getModule(PBName.MCFollowInput);
+      var report = content.report;
+      modules.setId(report);
+      return modules.getArrayData();
+    };
+
+    _proto.encodeGetRTCRoomInfo = function encodeGetRTCRoomInfo() {
+      var modules = this.codec.getModule(PBName.RtcQueryListInput);
+      modules.setOrder(2);
+      return modules.getArrayData();
+    };
+
+    _proto.encodeSetRTCUserInfo = function encodeSetRTCUserInfo(info) {
+      var modules = this.codec.getModule(PBName.RtcValueInfo);
+      var key = info.key,
+          value = info.value;
+      modules.setKey(key);
+      modules.setValue(value);
+      return modules.getArrayData();
+    };
+
+    _proto.encodeRemoveRTCUserInfo = function encodeRemoveRTCUserInfo(info) {
+      var modules = this.codec.getModule(PBName.RtcKeyDeleteInput);
+      var keys = info.keys || [];
+
+      if (!utils.isArray(keys)) {
+        keys = [keys];
+      }
+
+      modules.setKey(keys);
+      return modules.getArrayData();
+    };
+
+    _proto.encodeGetFileToken = function encodeGetFileToken(fileType) {
+      var modules = this.codec.getModule(PBName.GetQNupTokenInput);
+      modules.setType(fileType);
+      return modules.getArrayData();
+    };
+
+    _proto.encodeGetFileUrl = function encodeGetFileUrl(fileType, fileName, originName) {
+      var modules = this.codec.getModule(PBName.GetQNdownloadUrlInput);
+      modules.setType(fileType);
+      modules.setKey(fileName);
+
+      if (originName) {
+        modules.setFileName(originName);
+      }
+
       return modules.getArrayData();
     };
 
@@ -5172,6 +5469,20 @@
       }, upMsgArgs, PUBLISH_TOPIC.RECALL);
     };
 
+    _proto.getFileToken = function getFileToken(fileType) {
+      var data = this._serverDataCodec.encodeGetFileToken(fileType);
+
+      var writer = new QueryWriter(QUERY_TOPIC.GET_UPLOAD_FILE_TOKEN, data, this._selfUserId);
+      return this._sendSignalForData(writer, PBName.GetQNupTokenOutput);
+    };
+
+    _proto.getFileUrl = function getFileUrl(fileType, fileName, originName) {
+      var data = this._serverDataCodec.encodeGetFileUrl(fileType, fileName, originName);
+
+      var writer = new QueryWriter(QUERY_TOPIC.GET_UPLOAD_FILE_URL, data, this._selfUserId);
+      return this._sendSignalForData(writer, PBName.GetQNdownloadUrlOutput);
+    };
+
     _proto.getConversationList = function getConversationList(option) {
       var _selfUserId = this._selfUserId,
           _serverDataCodec = this._serverDataCodec;
@@ -5305,6 +5616,111 @@
       });
     };
 
+    _proto.joinRTCRoom = function joinRTCRoom(room) {
+      var data = this._serverDataCodec.encodeJoinRTCRoom(room);
+
+      var writer = new QueryWriter(QUERY_TOPIC.JOIN_RTC_ROOM, data, room.id);
+      return this._sendSignalForData(writer, PBName.RtcUserListOutput);
+    };
+
+    _proto.quitRTCRoom = function quitRTCRoom(room) {
+      var data = this._serverDataCodec.encodeQuitRTCRoom();
+
+      var writer = new QueryWriter(QUERY_TOPIC.QUIT_RTC_ROOM, data, room.id);
+      return this._sendSignalForData(writer);
+    };
+
+    _proto.RTCPing = function RTCPing(room) {
+      var data = this._serverDataCodec.encodeJoinRTCRoom(room);
+
+      var writer = new PublishWriter(QUERY_TOPIC.PING_RTC, data, room.id);
+      return this._sendSignalForData(writer);
+    };
+
+    _proto.getRTCRoomInfo = function getRTCRoomInfo(room) {
+      var data = this._serverDataCodec.encodeGetRTCRoomInfo();
+
+      var writer = new QueryWriter(QUERY_TOPIC.GET_RTC_ROOM_INFO, data, room.id);
+      return this._sendSignalForData(writer, PBName.RtcRoomInfoOutput);
+    };
+
+    _proto.getRTCUserInfoList = function getRTCUserInfoList(room) {
+      var data = this._serverDataCodec.encodeGetRTCRoomInfo();
+
+      var writer = new QueryWriter(QUERY_TOPIC.GET_RTC_USER_INFO_LIST, data, room.id);
+      return this._sendSignalForData(writer, PBName.RtcUserListOutput);
+    };
+
+    _proto.setRTCUserInfo = function setRTCUserInfo(room, info) {
+      var data = this._serverDataCodec.encodeSetRTCUserInfo(info);
+
+      var writer = new QueryWriter(QUERY_TOPIC.SET_RTC_USER_INFO, data, room.id);
+      return this._sendSignalForData(writer);
+    };
+
+    _proto.removeRTCUserInfo = function removeRTCUserInfo(room, info) {
+      var data = this._serverDataCodec.encodeRemoveRTCUserInfo(info);
+
+      var writer = new PublishWriter(QUERY_TOPIC.DEL_RTC_USER_INFO, data, room.id);
+      return this._sendSignalForData(writer);
+    };
+
+    _proto.setRTCData = function setRTCData(roomId, key, value, isInner, apiType, message) {
+      var data = this._serverDataCodec.encodeSetRTCData(key, value, isInner, apiType, message);
+
+      var writer = new PublishWriter(QUERY_TOPIC.SET_RTC_DATA, data, roomId);
+      return this._sendSignalForData(writer);
+    };
+
+    _proto.getRTCData = function getRTCData(roomId, keys, isInner, apiType) {
+      var data = this._serverDataCodec.encodeGetRTCData(keys, isInner, apiType);
+
+      var writer = new QueryWriter(QUERY_TOPIC.GET_RTC_DATA, data, roomId);
+      return this._sendSignalForData(writer, PBName.RtcQryOutput);
+    };
+
+    _proto.removeRTCData = function removeRTCData(roomId, keys, isInner, apiType, message) {
+      var data = this._serverDataCodec.encodeRemoveRTCData(keys, isInner, apiType, message);
+
+      var writer = new PublishWriter(QUERY_TOPIC.DEL_RTC_DATA, data, roomId);
+      return this._sendSignalForData(writer);
+    };
+
+    _proto.setRTCOutData = function setRTCOutData(roomId, rtcData, type, message) {
+      var data = this._serverDataCodec.encodeSetRTCOutData(rtcData, type, message);
+
+      var writer = new PublishWriter(QUERY_TOPIC.SET_RTC_OUT_DATA, data, roomId);
+      return this._sendSignalForData(writer);
+    };
+
+    _proto.getRTCOutData = function getRTCOutData(roomId, userIds) {
+      var data = this._serverDataCodec.ecnodeGetRTCOutData(userIds);
+
+      var writer = new QueryWriter(QUERY_TOPIC.GET_RTC_OUT_DATA, data, roomId);
+      return this._sendSignalForData(writer, PBName.RtcUserOutDataOutput);
+    };
+
+    _proto.getRTCToken = function getRTCToken(room) {
+      var data = this._serverDataCodec.encodeJoinRTCRoom(room);
+
+      var writer = new QueryWriter(QUERY_TOPIC.GET_RTC_TOKEN, data, room.id);
+      return this._sendSignalForData(writer, PBName.RtcTokenOutput);
+    };
+
+    _proto.setRTCState = function setRTCState(room, content) {
+      var data = this._serverDataCodec.encodeSetRTCState(content);
+
+      var writer = new QueryWriter(QUERY_TOPIC.SET_RTC_STATE, data, room.id);
+      return this._sendSignalForData(writer);
+    };
+
+    _proto.getRTCUserList = function getRTCUserList(room) {
+      var data = this._serverDataCodec.encodeGetRTCRoomInfo();
+
+      var writer = new QueryWriter(QUERY_TOPIC.GET_RTC_USER_LIST, data, room.id);
+      return this._sendSignalForData(writer, PBName.RtcUserListOutput);
+    };
+
     _proto.getOldServerConfig = function getOldServerConfig(userId) {
       var appkey = this.option.appkey;
       var syncTime = new common.MessageTimeSyner({
@@ -5338,6 +5754,212 @@
 
     return ServerEngine;
   }();
+
+  var NAVIGATORS = ['nav.cn.ronghub.com', 'nav2-cn.ronghub.com'];
+  var MINI_SOCKET_DOMAIN_LIST = ['wsproxy.cn.ronghub.com'];
+  var MINI_COMET_DOMAIN_LIST = ['cometproxy-cn.ronghub.com', 'mini-cn.ronghub.com'];
+  var NETWORK_DETECT_OPTION = {
+    url: 'https://cdn.ronghub.com/im_detecting',
+    intervalTime: 1500
+  };
+  var IM_OPTION = {
+    connectType: CONNECT_TYPE.WEBSOCKET,
+    navigators: NAVIGATORS,
+    detect: NETWORK_DETECT_OPTION,
+    isOldServer: true,
+    debug: false
+  };
+  var GET_MESSAGES_OPTION = {
+    count: 20,
+    order: MESSAGS_TIME_ORDER.DESC,
+    timestrap: 0
+  };
+  var SEND_MESSAGE_OPTION = {
+    isMentiond: false,
+    isCounted: true,
+    isPersited: true
+  };
+  var GET_CHATROOM_INFO_OPTION = {
+    count: 20,
+    order: CHATROOM_ORDER.DESC
+  };
+  var JOIN_CHATROOM_OPTION = {
+    count: -1
+  };
+  var GET_CHATROOM_MESSAGES = {
+    count: 20,
+    order: MESSAGS_TIME_ORDER.DESC
+  };
+  var SEND_MESSAGE_TYPE_OPTION = {
+    'RC:TxtMsg': {
+      isCounted: true,
+      isPersited: true
+    },
+    'RC:ImgMsg': {
+      isCounted: true,
+      isPersited: true
+    },
+    'RC:VcMsg': {
+      isCounted: true,
+      isPersited: true
+    },
+    'RC:ImgTextMsg': {
+      isCounted: true,
+      isPersited: true
+    },
+    'RC:FileMsg': {
+      isCounted: true,
+      isPersited: true
+    },
+    'RC:HQVCMsg': {
+      isCounted: true,
+      isPersited: true
+    },
+    'RC:LBSMsg': {
+      isCounted: true,
+      isPersited: true
+    },
+    'RC:PSImgTxtMsg': {
+      isCounted: true,
+      isPersited: true
+    },
+    'RC:PSMultiImgTxtMsg': {
+      isCounted: true,
+      isPersited: true
+    },
+    'RCJrmf:RpMsg': {
+      isCounted: true,
+      isPersited: true
+    },
+    'RCJrmf:RpOpendMsg': {
+      isCounted: true,
+      isPersited: true
+    },
+    'RC:CombineMsg': {
+      isCounted: true,
+      isPersited: true
+    },
+    'RC:InfoNtf': {
+      isCounted: false,
+      isPersited: true
+    },
+    'RC:ContactNtf': {
+      isCounted: false,
+      isPersited: true
+    },
+    'RC:ProfileNtf': {
+      isCounted: false,
+      isPersited: true
+    },
+    'RC:CmdNtf': {
+      isCounted: false,
+      isPersited: true
+    },
+    'RC:GrpNtf': {
+      isCounted: false,
+      isPersited: true
+    },
+    'RC:RcCmd': {
+      isCounted: false,
+      isPersited: true
+    },
+    'RC:CmdMsg': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:TypSts': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:PSCmd': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:SRSMsg': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:RRReqMsg': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:RRRspMsg': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:CsChaR': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:CSCha': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:CsEva': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:CsContact': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:CsHs': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:CsHsR': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:CsSp': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:CsEnd': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:CsUpdate': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:ReadNtf': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:chrmKVNotiMsg': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:VCAccept': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:VCRinging': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:VCSummary': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:VCHangup': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:VCInvite': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:VCModifyMedia': {
+      isCounted: false,
+      isPersited: false
+    },
+    'RC:VCModifyMem': {
+      isCounted: false,
+      isPersited: false
+    }
+  };
 
   var RCStorage$1 = common.RCStorage;
 
@@ -5431,6 +6053,16 @@
     }
   };
 
+  var getMiniNavi = function getMiniNavi(option) {
+    var connectType = option.connectType;
+    var isComet = utils.isEqual(connectType, CONNECT_TYPE.COMET);
+    var CmpDomainList = isComet ? MINI_COMET_DOMAIN_LIST : MINI_SOCKET_DOMAIN_LIST;
+    var naviResp = {
+      backupServer: CmpDomainList.join(DOMAIN_SEPARATOR_IN_CMPLIST)
+    };
+    return utils.Defer.resolve(naviResp);
+  };
+
   var NaviManager = function () {
     function NaviManager(option) {
       this.option = void 0;
@@ -5447,6 +6079,11 @@
           localNaviHandler = self.localNaviHandler;
       var navigators = option.navigators,
           token = option.token;
+
+      if (env.isMini) {
+        return getMiniNavi(option);
+      }
+
       Logger.write({
         content: {
           navigators: navigators,
@@ -5618,12 +6255,18 @@
     };
 
     _proto.update = function update() {
-      var updatedConversationList = this._getUpdatedConversationList();
+      var self = this;
+
+      var updatedConversationList = self._getUpdatedConversationList();
 
       if (!utils.isEmpty(updatedConversationList)) {
-        this._onChanged(updatedConversationList);
+        (function (list) {
+          utils.setTimeout(function () {
+            self._onChanged(list);
 
-        this.updatedConversations = {};
+            self.updatedConversations = {};
+          }, 0);
+        })(updatedConversationList);
       }
     };
 
@@ -5784,6 +6427,22 @@
       this._serverEngine = serverEngine;
       this._option = option;
       this._networkDetecter = new utils.NetworkDetecter(detect);
+      utils.forEach(ServerEngine.prototype, function (event, eventName) {
+        var server = serverEngine,
+            web = self;
+        var selfEvent = web[eventName],
+            serverEvent = server[eventName];
+
+        if (!selfEvent && serverEvent && utils.isFunction(serverEvent)) {
+          web[eventName] = function () {
+            for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+              args[_key] = arguments[_key];
+            }
+
+            return serverEvent.call.apply(serverEvent, [server].concat(args));
+          };
+        }
+      });
     }
 
     var _proto = WebIMEngine.prototype;
@@ -5851,8 +6510,36 @@
       });
     };
 
+    _proto.unwatch = function unwatch(watchers) {
+      var _imEventEmitter = this._imEventEmitter;
+
+      if (watchers) {
+        var statusWatcher = watchers.status,
+            messageWatcher = watchers.message,
+            conversationWatcher = watchers.conversation;
+        statusWatcher && _imEventEmitter.off(IM_EVENT.STATUS, statusWatcher);
+        messageWatcher && _imEventEmitter.off(IM_EVENT.MESSAGE, messageWatcher);
+        conversationWatcher && _imEventEmitter.off(IM_EVENT.CONVERSATION, conversationWatcher);
+      } else {
+        _imEventEmitter.clear();
+      }
+    };
+
     _proto.getConnectionStatus = function getConnectionStatus() {
       return this._connectionStatus;
+    };
+
+    _proto.getConnectionUserId = function getConnectionUserId() {
+      var user = this._user || {};
+      return user.id;
+    };
+
+    _proto.getAppInfo = function getAppInfo() {
+      var _option = this._option,
+          _naviManager = this._naviManager;
+      return utils.extend({
+        navi: _naviManager.getLocalConfig()
+      }, _option);
     };
 
     _proto.connect = function connect(user) {
@@ -5880,15 +6567,17 @@
           domain: domain
         });
       }).then(function (connectUser) {
+        var id = connectUser.id;
         self._conversationManager = new ConversationManager({
           appkey: _option.appkey,
-          userId: connectUser.id,
+          userId: id,
           onChanged: function onChanged(updatedConversationList) {
             _imEventEmitter.emit(IM_EVENT.CONVERSATION, {
               updatedConversationList: updatedConversationList
             });
           }
         });
+        self._user.id = id;
         return connectUser;
       }, function (error) {
         return self._handleConnectError(error);
@@ -5973,22 +6662,6 @@
       return func.call(_serverEngine, conversation);
     };
 
-    _proto.removeConversationList = function removeConversationList(conversationList) {
-      return this._serverEngine.removeConversationList(conversationList);
-    };
-
-    _proto.getHistoryMessages = function getHistoryMessages(conversation, option) {
-      return this._serverEngine.getHistoryMessages(conversation, option);
-    };
-
-    _proto.deleteHistoryMessages = function deleteHistoryMessages(conversation, messages) {
-      return this._serverEngine.deleteHistoryMessages(conversation, messages);
-    };
-
-    _proto.clearHistoryMessages = function clearHistoryMessages(conversation, option) {
-      return this._serverEngine.clearHistoryMessages(conversation, option);
-    };
-
     _proto.getTotalUnreadCount = function getTotalUnreadCount() {
       var isOldServer = this._option.isOldServer,
           _serverEngine = this._serverEngine;
@@ -6015,22 +6688,6 @@
       }
     };
 
-    _proto.joinChatRoom = function joinChatRoom(chrm, option) {
-      return this._serverEngine.joinChatRoom(chrm, option);
-    };
-
-    _proto.quitChatRoom = function quitChatRoom(chrm) {
-      return this._serverEngine.quitChatRoom(chrm);
-    };
-
-    _proto.getChatRoomInfo = function getChatRoomInfo(chrm, option) {
-      return this._serverEngine.getChatRoomInfo(chrm, option);
-    };
-
-    _proto.getChatRoomHistoryMessages = function getChatRoomHistoryMessages(chrm, option) {
-      return this._serverEngine.getChatRoomHistoryMessages(chrm, option);
-    };
-
     return WebIMEngine;
   }();
 
@@ -6039,13 +6696,11 @@
   });
 
   var execEngineByEvent = function execEngineByEvent(params, engine) {
-    var _ENGINE_EVENT$WATCH$E;
-
-    var event = params.event,
+    var eventName = params.event,
         args = params.args;
     args = args || [];
 
-    var engineEvent = (_ENGINE_EVENT$WATCH$E = {}, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.WATCH] = engine.watch, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.CONNECT] = engine.connect, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.DISCONNECT] = engine.disconnect, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.RECONNECT] = engine.reconnect, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.CHANGE_USER] = engine.changeUser, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.GET_CONVERSATION_LIST] = engine.getConversationList, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.GET_LOCAL_CONVERSATION] = engine.getLocalConversation, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.REMOVE_CONVERSATION] = engine.removeConversation, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.REMOVE_CONVERSATION_LIST] = engine.removeConversationList, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.GET_TOTAL_UNREAD_COUNT] = engine.getTotalUnreadCount, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.CLEAR_UNREAD_COUNT] = engine.clearUnreadCount, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.SEND_MESSAGE] = engine.sendMessage, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.RECALL_MESSAGE] = engine.recallMessage, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.GET_HISTORY_MSGS] = engine.getHistoryMessages, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.DELETE_MESSAGES] = engine.deleteHistoryMessages, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.CLEAR_MESSAGES] = engine.clearHistoryMessages, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.JOIN_CHATROOM] = engine.joinChatRoom, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.QUIT_CHATROOM] = engine.quitChatRoom, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.GET_CHATROOM_INFO] = engine.getChatRoomInfo, _ENGINE_EVENT$WATCH$E[ENGINE_EVENT.GET_CHATROOM_MSGS] = engine.getChatRoomHistoryMessages, _ENGINE_EVENT$WATCH$E)[event] || function () {
+    var engineEvent = engine[eventName] || function () {
       return utils.Defer.reject(ERROR_INFO.SDK_INTERNAL_ERROR);
     };
 
@@ -6079,32 +6734,26 @@
       }
 
       var execResult = execEngineByEvent(params, engine);
-      return utils.isPromise(execResult) ? utils.deferred(function (resolve, reject) {
-        execResult.then(function (result) {
-          setTimeout(function () {
-            resolve(result);
-          }, 0);
-        }, function (error) {
-          Logger.write({
-            content: {
-              info: 'SDK Errir',
-              error: error
-            }
-          });
-          var errorCode = error.status || error.code || error;
-          var errorInfo = ERROR_CODE_TO_INFO[errorCode] || {
-            code: errorCode
-          };
-          var isValidErrorCode = utils.isNumberData(errorCode);
-
-          if (!isValidErrorCode) {
-            errorInfo = utils.extendInShallow(ERROR_INFO.SDK_INTERNAL_ERROR, {
-              error: error
-            });
+      return utils.isPromise(execResult) ? execResult["catch"](function (error) {
+        Logger.write({
+          content: {
+            info: 'SDK Error',
+            error: error
           }
-
-          return reject(errorInfo);
         });
+        var errorCode = error.status || error.code || error;
+        var errorInfo = ERROR_CODE_TO_INFO[errorCode] || {
+          code: errorCode
+        };
+        var isValidErrorCode = utils.isNumberData(errorCode);
+
+        if (!isValidErrorCode) {
+          errorInfo = utils.extendInShallow(ERROR_INFO.SDK_INTERNAL_ERROR, {
+            error: error
+          });
+        }
+
+        return utils.Defer.reject(errorInfo);
       }) : execResult;
     };
 
@@ -6374,210 +7023,6 @@
       };
     }
   });
-
-  var NAVIGATORS = ['nav.cn.ronghub.com', 'nav2-cn.ronghub.com'];
-  var NETWORK_DETECT_OPTION = {
-    url: 'https://cdn.ronghub.com/im_detecting',
-    intervalTime: 1500
-  };
-  var IM_OPTION = {
-    connectType: CONNECT_TYPE.WEBSOCKET,
-    navigators: NAVIGATORS,
-    detect: NETWORK_DETECT_OPTION,
-    isOldServer: true,
-    debug: false
-  };
-  var GET_MESSAGES_OPTION = {
-    count: 20,
-    order: MESSAGS_TIME_ORDER.DESC,
-    timestrap: 0
-  };
-  var SEND_MESSAGE_OPTION = {
-    isMentiond: false,
-    isCounted: true,
-    isPersited: true
-  };
-  var GET_CHATROOM_INFO_OPTION = {
-    count: 20,
-    order: CHATROOM_ORDER.DESC
-  };
-  var JOIN_CHATROOM_OPTION = {
-    count: -1
-  };
-  var GET_CHATROOM_MESSAGES = {
-    count: 20,
-    order: MESSAGS_TIME_ORDER.DESC
-  };
-  var SEND_MESSAGE_TYPE_OPTION = {
-    'RC:TxtMsg': {
-      isCounted: true,
-      isPersited: true
-    },
-    'RC:ImgMsg': {
-      isCounted: true,
-      isPersited: true
-    },
-    'RC:VcMsg': {
-      isCounted: true,
-      isPersited: true
-    },
-    'RC:ImgTextMsg': {
-      isCounted: true,
-      isPersited: true
-    },
-    'RC:FileMsg': {
-      isCounted: true,
-      isPersited: true
-    },
-    'RC:HQVCMsg': {
-      isCounted: true,
-      isPersited: true
-    },
-    'RC:LBSMsg': {
-      isCounted: true,
-      isPersited: true
-    },
-    'RC:PSImgTxtMsg': {
-      isCounted: true,
-      isPersited: true
-    },
-    'RC:PSMultiImgTxtMsg': {
-      isCounted: true,
-      isPersited: true
-    },
-    'RCJrmf:RpMsg': {
-      isCounted: true,
-      isPersited: true
-    },
-    'RCJrmf:RpOpendMsg': {
-      isCounted: true,
-      isPersited: true
-    },
-    'RC:CombineMsg': {
-      isCounted: true,
-      isPersited: true
-    },
-    'RC:InfoNtf': {
-      isCounted: false,
-      isPersited: true
-    },
-    'RC:ContactNtf': {
-      isCounted: false,
-      isPersited: true
-    },
-    'RC:ProfileNtf': {
-      isCounted: false,
-      isPersited: true
-    },
-    'RC:CmdNtf': {
-      isCounted: false,
-      isPersited: true
-    },
-    'RC:GrpNtf': {
-      isCounted: false,
-      isPersited: true
-    },
-    'RC:RcCmd': {
-      isCounted: false,
-      isPersited: true
-    },
-    'RC:CmdMsg': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:TypSts': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:PSCmd': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:SRSMsg': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:RRReqMsg': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:RRRspMsg': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:CsChaR': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:CSCha': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:CsEva': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:CsContact': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:CsHs': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:CsHsR': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:CsSp': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:CsEnd': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:CsUpdate': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:ReadNtf': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:chrmKVNotiMsg': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:VCAccept': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:VCRinging': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:VCSummary': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:VCHangup': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:VCInvite': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:VCModifyMedia': {
-      isCounted: false,
-      isPersited: false
-    },
-    'RC:VCModifyMem': {
-      isCounted: false,
-      isPersited: false
-    }
-  };
 
   var Conversation = (function (_engineDispatcher) {
     var _temp;
@@ -6955,6 +7400,168 @@
     }(), _temp;
   });
 
+  var RTC = (function (_engineDispatcher) {
+    var _temp;
+
+    return _temp = function () {
+      RTC.get = function get(option) {
+        return new RTC(option);
+      };
+
+      function RTC(option) {
+        this.roomId = void 0;
+        this.option = void 0;
+        this.roomId = option.id;
+        this.option = option;
+      }
+
+      var _proto = RTC.prototype;
+
+      _proto.join = function join() {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.JOIN_RTC,
+          args: [this.option]
+        });
+      };
+
+      _proto.quit = function quit() {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.QUIT_RTC,
+          args: [this.option]
+        });
+      };
+
+      _proto.ping = function ping() {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.PING_RTC,
+          args: [this.option]
+        });
+      };
+
+      _proto.getRoomInfo = function getRoomInfo() {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.GET_RTC_ROOM_INFO,
+          args: [this.option]
+        });
+      };
+
+      _proto.getUserInfoList = function getUserInfoList() {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.GET_RTC_USER_INFO_LIST,
+          args: [this.option]
+        });
+      };
+
+      _proto.setUserInfo = function setUserInfo(info) {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.SET_RTC_USER_INFO,
+          args: [this.option, info]
+        });
+      };
+
+      _proto.removeUserInfo = function removeUserInfo(info) {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.DEL_RTC_USER_INFO,
+          args: [this.option, info]
+        });
+      };
+
+      _proto.setData = function setData(key, value, isInner, apiType, message) {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.SET_RTC_DATA,
+          args: [this.roomId, key, value, isInner, apiType, message]
+        });
+      };
+
+      _proto.getData = function getData(keys, isInner, apiType) {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.GET_RTC_DATA,
+          args: [this.roomId, keys, isInner, apiType]
+        });
+      };
+
+      _proto.removeData = function removeData(keys, isInner, apiType, message) {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.DEL_RTC_DATA,
+          args: [this.roomId, keys, isInner, apiType, message]
+        });
+      };
+
+      _proto.setUserData = function setUserData(key, value, isInner, message) {
+        return this.setData(key, value, isInner, RTC_API_TYPE.PERSON, message);
+      };
+
+      _proto.getUserData = function getUserData(keys, isInner) {
+        return this.getData(keys, isInner, RTC_API_TYPE.PERSON);
+      };
+
+      _proto.removeUserData = function removeUserData(keys, isInner, message) {
+        return this.removeData(keys, isInner, RTC_API_TYPE.PERSON, message);
+      };
+
+      _proto.setRoomData = function setRoomData(key, value, isInner, message) {
+        return this.setData(key, value, isInner, RTC_API_TYPE.ROOM, message);
+      };
+
+      _proto.getRoomData = function getRoomData(keys, isInner) {
+        return this.getData(keys, isInner, RTC_API_TYPE.ROOM);
+      };
+
+      _proto.removeRoomData = function removeRoomData(keys, isInner, message) {
+        return this.removeData(keys, isInner, RTC_API_TYPE.ROOM, message);
+      };
+
+      _proto.getUserList = function getUserList() {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.GET_RTC_USER_LIST,
+          args: [this.option]
+        });
+      };
+
+      _proto.setOutData = function setOutData(rtcData, type, message) {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.SET_RTC_OUT_DATA,
+          args: [this.roomId, rtcData, type, message]
+        });
+      };
+
+      _proto.getOutData = function getOutData(userIds) {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.GET_RTC_OUT_DATA,
+          args: [this.roomId, userIds]
+        });
+      };
+
+      _proto.getToken = function getToken() {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.GET_RTC_TOKEN,
+          args: [this.option]
+        });
+      };
+
+      _proto.setState = function setState(content) {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.SET_RTC_STATE,
+          args: [this.option, content]
+        });
+      };
+
+      _proto.send = function send(option) {
+        var id = this.roomId;
+        var conversation = {
+          type: CONVERSATION_TYPE.RTC_ROOM,
+          targetId: id
+        };
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.SEND_MESSAGE,
+          args: [conversation, option]
+        });
+      };
+
+      return RTC;
+    }(), _temp;
+  });
+
   var IM = function () {
     function IM(option) {
       this._engineDispatcher = void 0;
@@ -6973,12 +7580,31 @@
       this._engineDispatcher = engineHandler;
       var Modules = {
         Conversation: Conversation(engineHandler),
-        ChatRoom: ChatRoom(engineHandler)
+        ChatRoom: ChatRoom(engineHandler),
+        RTC: RTC(engineHandler)
       };
       utils.extend(this, Modules);
     }
 
     var _proto = IM.prototype;
+
+    _proto.getConnectionStatus = function getConnectionStatus() {
+      return this._engineDispatcher.exec({
+        event: ENGINE_EVENT.GET_CONNECTION_STATUS
+      });
+    };
+
+    _proto.getConnectionUserId = function getConnectionUserId() {
+      return this._engineDispatcher.exec({
+        event: ENGINE_EVENT.GET_CONNECTION_USER_ID
+      });
+    };
+
+    _proto.getAppInfo = function getAppInfo() {
+      return this._engineDispatcher.exec({
+        event: ENGINE_EVENT.GET_APP_INFO
+      });
+    };
 
     _proto.watch = function watch(watchers) {
       var _validate2 = validate({
@@ -6996,6 +7622,13 @@
 
       return this._engineDispatcher.exec({
         event: ENGINE_EVENT.WATCH,
+        args: [watchers]
+      });
+    };
+
+    _proto.unwatch = function unwatch(watchers) {
+      return this._engineDispatcher.exec({
+        event: ENGINE_EVENT.UN_WATCH,
         args: [watchers]
       });
     };
@@ -7046,6 +7679,20 @@
       });
     };
 
+    _proto.getFileToken = function getFileToken(fileType) {
+      return this._engineDispatcher.exec({
+        event: ENGINE_EVENT.GET_UPLOAD_TOKEN,
+        args: [fileType]
+      });
+    };
+
+    _proto.getFileUrl = function getFileUrl(fileType, fileName, originName) {
+      return this._engineDispatcher.exec({
+        event: ENGINE_EVENT.GET_UPLOAD_URL,
+        args: [fileType, fileName, originName]
+      });
+    };
+
     return IM;
   }();
 
@@ -7069,13 +7716,18 @@
     return imInstance;
   };
 
+  var getInstance = function getInstance() {
+    return imInstance;
+  };
+
   var index = utils.extend({
     init: init,
+    getInstance: getInstance,
     env: env,
     common: common,
     ERROR_CODE: ERROR_CODE,
     Logger: Logger
-  }, CONST);
+  }, product);
 
   return index;
 
