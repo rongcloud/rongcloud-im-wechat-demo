@@ -17,6 +17,9 @@ const toUnicode = (str) => {
 }
 
 let utils = {
+  copy: (val) => {
+    return JSON.parse(JSON.stringify(val));
+  },
   tplEngine: (temp, data, regexp) => {
     if (!(Object.prototype.toString.call(data) === "[object Array]")) data = [data];
     var ret = [];

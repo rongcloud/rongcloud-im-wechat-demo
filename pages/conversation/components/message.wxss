@@ -10,6 +10,11 @@
   border-radius:10rpx;
 }
 
+.rong-message-name {
+  font-size: 20rpx;
+  color: #8e969f;
+}
+
 .rong-message-avatar-receiver{
   float: left;
 }

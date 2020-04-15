@@ -127,19 +127,11 @@ let getUser = (user) => {
   user = utils.rename(user, {avatarUrl: 'avatar', nickName: 'name'});
   let maxIndex = UserList.length - 1;
   let index = getUserIndex(user.name,  maxIndex);
-  let _user = UserList[index];
+  let _user = utils.extend(UserList[index], {
+    token: user.token
+  });
   // utils.extend(_user, user);
   return _user
-};
-
-let getUserById = (id) => {
-  let { name, avatar} = utils.find(UserList, (user) => {
-    return (id == user.id);
-  });
-  return {
-    name,
-    avatar
-  };
 };
 
 User.getToken = (user) => {
@@ -153,14 +145,18 @@ let bindSender = (message, position) => {
   }
   let getSender = {
     1: (msg) => {
-      msg.sender = utils.find(UserList, (user) => {
-        return (user.id == msg.senderUserId);
-      });
+      msg.sender = {
+        name: msg.senderUserId,
+        type: msg.type,
+        avatar: 'http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-user-unkown.png'
+      };
     },
     3: (msg) => {
-      msg.sender = utils.find(UserList, (user) => {
-        return (user.id == msg.senderUserId);
-      });
+      msg.sender = {
+        name: msg.senderUserId,
+        type: msg.type,
+        avatar: 'http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-group-unkown.png'
+      };
     }
   };
   utils.map(message, (msg) => {
@@ -327,12 +323,13 @@ let Conversation = {
 
 Conversation.getList = () => {
   return imInstance.Conversation.getList().then((list) => {
-    bindUserInfo(list);
+    console.log('会话列表:', list);
     conversationList = imInstance.Conversation.merge({
       conversationList,
       updatedConversationList: list
     });
-    return list;
+    bindUserInfo(conversationList);
+    return conversationList;
   });
 };
 
@@ -353,18 +350,18 @@ let bindUserInfo = (list) => {
       1: (conversation) => {
         conversation.target = utils.find(UserList, (user) => {
           return user.id == conversation.targetId
-        }) || unknowUser;
+        }) || utils.copy(unknowUser);
       },
       2: (conversation) => {
-        conversation.target = unknowUser;
+        conversation.target = utils.copy(unknowUser);
       },
       3: (conversation) => {
         conversation.target = utils.find(GroupList, (group) => {
           return group.id == conversation.targetId
-        }) || unknowGroup;
+        }) || utils.copy(unknowGroup);;
       },
       10: (conversation) => {
-        conversation.target = unknowUser;
+        conversation.target = utils.copy(unknowUser);
       }
   };
   let formatMsg = (msg) => {
@@ -387,16 +384,17 @@ let bindUserInfo = (list) => {
     }
     return content;
   };
-  utils.map(list, (conversation) => {
-    const { latestMessage, unreadMessageCount, type } = conversation;
+  list.forEach((conversation, index) => {
+    const { latestMessage, unreadMessageCount, type, targetId } = conversation;
     const { sentTime } = latestMessage;
     conversation._sentTime = utils.getTime(sentTime);
     conversation.unReadCount = unreadMessageCount;
     conversation.content = formatMsg(latestMessage);
     let _type = type > 3 ? 10 : type;
     infoMap[_type](conversation);
+    conversation.target.name = targetId;
+    list[index] = conversation;
   });
-
 };
 
 Conversation.clearUnreadCount = (conversation) => {
@@ -406,12 +404,13 @@ Conversation.clearUnreadCount = (conversation) => {
 Conversation.watch = (watcher) => {
   imInstance.watch({
     conversation: function (event) {
+      console.log('conversation updated');
       const { updatedConversationList } = event;
-      bindUserInfo(updatedConversationList);
       conversationList = imInstance.Conversation.merge({
         conversationList,
         updatedConversationList
       });
+      bindUserInfo(conversationList);
       watcher(conversationList);
     }
   });
@@ -423,7 +422,6 @@ Status.disconnect = () => {
   imInstance.disconnect();
 };
 Status.connect = (user) => {
-  console.log(user);
   imInstance.watch({
     status: function ({ status }) {
       console.log('status changed', status);
@@ -440,6 +438,7 @@ Status.connect = (user) => {
       messageHandler();
     }
   });
+  user.token = config.token;
   return User.getToken(user).then((user) => {
     return imInstance.connect(user);
   });
