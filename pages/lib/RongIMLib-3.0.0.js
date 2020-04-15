@@ -1,6 +1,6 @@
 /*
 * RongIMLib.js v3.0.0
-* Release Date: Tue Apr 14 2020 14:17:41 GMT+0800 (China Standard Time)
+* Release Date: Wed Apr 15 2020 16:52:28 GMT+0800 (China Standard Time)
 * Copyright 2020 RongCloud
 * Released under the MIT License.
 */
@@ -199,6 +199,7 @@
     CONNECTED: CONNECTION_STATUS.CONNECTED,
     KICKED_OFFLINE_BY_OTHER_CLIENT: CONNECTION_STATUS.KICKED_OFFLINE_BY_OTHER_CLIENT,
     BLOCKED: CONNECTION_STATUS.BLOCKED,
+    CLOSE_NORMAL: 1000,
     CLOSE_GOING_AWAY: 1001,
     CLOSE_PROTOCOL_ERROR: 1002,
     CLOSE_UNSUPPORTED: 1003,
@@ -219,7 +220,7 @@
     COMET_REQUEST_ERROR: 2005
   };
   var SERVER_DISCONNECT_STATUS_TO_TRANSPORTER_STATUS = (_SERVER_DISCONNECT_ST = {}, _SERVER_DISCONNECT_ST[SERVER_DISCONNECT_STATUS.KICKED_OFFLINE_BY_OTHER_CLIENT] = TRANSPORTER_STATUS.KICKED_OFFLINE_BY_OTHER_CLIENT, _SERVER_DISCONNECT_ST[SERVER_DISCONNECT_STATUS.BLOCKED] = TRANSPORTER_STATUS.BLOCKED, _SERVER_DISCONNECT_ST);
-  var TRANSPORTER_STATUS_NEED_UPDATE_CMP = [TRANSPORTER_STATUS.CLOSE_GOING_AWAY, TRANSPORTER_STATUS.CLOSE_PROTOCOL_ERROR, TRANSPORTER_STATUS.CLOSE_UNSUPPORTED, TRANSPORTER_STATUS.UNSUPPORTED_DATA, TRANSPORTER_STATUS.POLICY_VIOLATION, TRANSPORTER_STATUS.MISSING_EXTENSION, TRANSPORTER_STATUS.INTERNAL_ERROR, TRANSPORTER_STATUS.SERVICE_RESTART, TRANSPORTER_STATUS.TRY_AGAIN_LATER, TRANSPORTER_STATUS.TSL_HANDSHAKE, TRANSPORTER_STATUS.PING_FIRST_TIMEOUT, TRANSPORTER_STATUS.DISCONNECT_TOO_FAST, TRANSPORTER_STATUS.COMET_REQUEST_ERROR];
+  var TRANSPORTER_STATUS_NEED_UPDATE_CMP = [TRANSPORTER_STATUS.CLOSE_NORMAL, TRANSPORTER_STATUS.CLOSE_GOING_AWAY, TRANSPORTER_STATUS.CLOSE_PROTOCOL_ERROR, TRANSPORTER_STATUS.CLOSE_UNSUPPORTED, TRANSPORTER_STATUS.UNSUPPORTED_DATA, TRANSPORTER_STATUS.POLICY_VIOLATION, TRANSPORTER_STATUS.MISSING_EXTENSION, TRANSPORTER_STATUS.INTERNAL_ERROR, TRANSPORTER_STATUS.SERVICE_RESTART, TRANSPORTER_STATUS.TRY_AGAIN_LATER, TRANSPORTER_STATUS.TSL_HANDSHAKE, TRANSPORTER_STATUS.PING_FIRST_TIMEOUT, TRANSPORTER_STATUS.DISCONNECT_TOO_FAST, TRANSPORTER_STATUS.COMET_REQUEST_ERROR];
   var TRANSPORTER_STATUS_NEED_RECONNECT = TRANSPORTER_STATUS_NEED_UPDATE_CMP.concat([TRANSPORTER_STATUS.PING_TIMEOUT, TRANSPORTER_STATUS.CLOSE_ABNORMAL, TRANSPORTER_STATUS.EXCEED_MESSAGE_ID_LIMIT, TRANSPORTER_STATUS.COMET_REQUEST_ERROR]);
   var TRANSPORTER_STATUS_TO_CONNECTION_STATUS = (_TRANSPORTER_STATUS_T = {}, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.CLOSE_GOING_AWAY] = CONNECTION_STATUS.SOCKET_ERROR, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.CLOSE_PROTOCOL_ERROR] = CONNECTION_STATUS.SOCKET_ERROR, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.CLOSE_UNSUPPORTED] = CONNECTION_STATUS.SOCKET_ERROR, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.CLOSE_NO_STATUS] = CONNECTION_STATUS.DISCONNECTED, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.CLOSE_ABNORMAL] = CONNECTION_STATUS.NETWORK_UNAVAILABLE, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.DISCONNECT_TOO_FAST] = CONNECTION_STATUS.NETWORK_UNAVAILABLE, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.UNSUPPORTED_DATA] = CONNECTION_STATUS.SOCKET_ERROR, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.POLICY_VIOLATION] = CONNECTION_STATUS.SOCKET_ERROR, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.CLOSE_TOO_LARGE] = CONNECTION_STATUS.SOCKET_ERROR, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.MISSING_EXTENSION] = CONNECTION_STATUS.SOCKET_ERROR, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.INTERNAL_ERROR] = CONNECTION_STATUS.SOCKET_ERROR, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.SERVICE_RESTART] = CONNECTION_STATUS.SOCKET_ERROR, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.TRY_AGAIN_LATER] = CONNECTION_STATUS.SOCKET_ERROR, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.TSL_HANDSHAKE] = CONNECTION_STATUS.SOCKET_ERROR, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.PING_FIRST_TIMEOUT] = CONNECTION_STATUS.NETWORK_UNAVAILABLE, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.PING_TIMEOUT] = CONNECTION_STATUS.NETWORK_UNAVAILABLE, _TRANSPORTER_STATUS_T[TRANSPORTER_STATUS.COMET_REQUEST_ERROR] = CONNECTION_STATUS.NETWORK_UNAVAILABLE, _TRANSPORTER_STATUS_T);
 
@@ -531,57 +532,16 @@
     protocol: protocol
   };
 
-  var CacheStorage = function () {
-    function CacheStorage(values) {
-      this.caches = {};
-
-      if (values) {
-        this.caches = values;
-      }
-    }
-
-    var _proto = CacheStorage.prototype;
-
-    _proto.set = function set(key, value) {
-      this.caches[key] = value;
-    };
-
-    _proto.remove = function remove(key) {
-      var val = this.get(key);
-      delete this.caches[key];
-      return val;
-    };
-
-    _proto.get = function get(key) {
-      return this.caches[key];
-    };
-
-    _proto.getKeys = function getKeys() {
-      var keys = [];
-
-      for (var key in this.caches) {
-        keys.push(key);
-      }
-
-      return keys;
-    };
-
-    return CacheStorage;
-  }();
-
   var global$2 = env.global,
       system$1 = env.system;
   var isZFB = system$1.name === PLATFORM.ZFB;
 
   var ZFBStorage = function () {
-    function ZFBStorage() {
-      this.cache = new CacheStorage();
-    }
+    function ZFBStorage() {}
 
     var _proto = ZFBStorage.prototype;
 
     _proto.set = function set(key, value) {
-      this.cache.set(key, value);
       global$2.setStorageSync({
         key: key,
         data: value
@@ -589,46 +549,57 @@
     };
 
     _proto.get = function get(key) {
-      return this.cache.get(key);
+      return global$2.getStorageSync({
+        key: key
+      });
     };
 
     _proto.remove = function remove(key) {
-      global$2.removeStorageSync({
+      return global$2.removeStorageSync({
         key: key
       });
-      return this.cache.remove(key);
     };
 
     _proto.getKeys = function getKeys() {
-      return this.cache.getKeys();
+      var res = my.getStorageInfoSync();
+      return res.keys;
     };
 
     return ZFBStorage;
   }();
 
   var MiniStorage = function () {
-    function MiniStorage() {
-      this.cache = new CacheStorage();
-    }
+    function MiniStorage() {}
 
     var _proto2 = MiniStorage.prototype;
 
     _proto2.set = function set(key, value) {
-      this.cache.set(key, value);
       global$2.setStorageSync(key, value);
     };
 
     _proto2.get = function get(key) {
-      return this.cache.get(key);
+      try {
+        return global$2.getStorageSync(key);
+      } catch (e) {
+        return null;
+      }
     };
 
     _proto2.remove = function remove(key) {
-      global$2.removeStorageSync(key);
-      return this.cache.remove(key);
+      try {
+        return global$2.removeStorageSync(key);
+      } catch (e) {
+        return null;
+      }
     };
 
     _proto2.getKeys = function getKeys() {
-      return this.cache.getKeys();
+      try {
+        var res = global$2.getStorageInfoSync();
+        return res.keys;
+      } catch (e) {
+        return [];
+      }
     };
 
     return MiniStorage;
@@ -720,6 +691,44 @@
       '\\': '\\\\'
     }
   };
+
+  var CacheStorage = function () {
+    function CacheStorage(values) {
+      this.caches = {};
+
+      if (values) {
+        this.caches = values;
+      }
+    }
+
+    var _proto = CacheStorage.prototype;
+
+    _proto.set = function set(key, value) {
+      this.caches[key] = value;
+    };
+
+    _proto.remove = function remove(key) {
+      var val = this.get(key);
+      delete this.caches[key];
+      return val;
+    };
+
+    _proto.get = function get(key) {
+      return this.caches[key];
+    };
+
+    _proto.getKeys = function getKeys() {
+      var keys = [];
+
+      for (var key in this.caches) {
+        keys.push(key);
+      }
+
+      return keys;
+    };
+
+    return CacheStorage;
+  }();
 
   var global$3 = env.global;
   var TEST_KEY = 'RC_TEST_KEY';

@@ -56,11 +56,11 @@ const connect = (context) => {
           conversationList: list
         });
       }).catch((error) => {
-        wx.showToast({
-          title: error.msg,
-          icon: 'none',
-          duration: 3000
-        })
+        // wx.showToast({
+        //   title: error.msg,
+        //   icon: 'none',
+        //   duration: 3000
+        // })
       })
     },
     fail: (error) => {

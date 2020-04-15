@@ -171,6 +171,7 @@ let bindSender = (message, position) => {
 let Message = {
   watcher: new ObserverList(),
   _push: (message) => {
+    console.log('received msg', message);
     //不处理离线消息
     if (message.isOffLineMessage){
       return;
@@ -491,6 +492,7 @@ let modules = {
 module.exports = (_config) => {
   utils.extend(config, _config);
   // config.connectType = 'comet';
+  config.debug = true;
   imInstance = RongIMLib.init(config);
   return modules;
 };
