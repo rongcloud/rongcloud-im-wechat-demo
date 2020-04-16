@@ -400,6 +400,7 @@ let bindUserInfo = (list) => {
 
 Conversation.clearUnreadCount = (conversation) => {
   let { type, targetId } = conversation;
+  conversation.type = +conversation.type;
   imInstance.Conversation.get(conversation).read();
 };
 Conversation.watch = (watcher) => {
@@ -476,7 +477,7 @@ File.upload = (file, uploadType) => {
     var data = res.data
     var result = JSON.parse(data);
     var hash = result.hash;
-    return imInstance.getFileUrl(fileType, hash, 'voice.mp3');
+    return imInstance.getFileUrl(fileType, hash, file.name || 'file');
   });
 };
 

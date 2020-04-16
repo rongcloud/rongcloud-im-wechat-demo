@@ -21,7 +21,7 @@ Component({
   methods: {
     onTab: function(event){
       let { isPlaying, innerAudioContext} = this.data;
-      let { message:{content:{content}} } = this.properties;
+      let content = this.data.message.content.remoteUrl;
       if(isPlaying){
         innerAudioContext.stop();
         this.setData({

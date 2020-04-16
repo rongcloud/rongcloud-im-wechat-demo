@@ -209,7 +209,7 @@ const startRecording = (context) => {
   });
   let record = () => {
     recorderManager.start({
-      format: 'mp3'
+      format: 'aac'
     });
   };
   wx.getSetting({
@@ -234,7 +234,8 @@ const stopRecording = (context) => {
     console.log('recorder stop', res)
     const { tempFilePath, duration } = res
     File.upload({
-      path: tempFilePath
+      path: tempFilePath,
+      name: 'voice.aac'
     }, 2).then(file => {
       console.log(file)
       let content = {
@@ -351,8 +352,9 @@ const sendImage =  (context) => {
           });
 
           File.upload({
-            path: tempFilePath
-          }).then(result => {
+            path: tempFilePath,
+            name: 'image.png'
+          }, 1).then(result => {
             let { downloadUrl: imageUri } = result;
             Message.sendImage({
               type,
