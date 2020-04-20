@@ -141,7 +141,7 @@ User.getToken = (user) => {
 
 User.joinChatroom = (id) => {
   const chatRoom = imInstance.ChatRoom.get({id});
-  return chatRoom.join({ count: 50 });
+  return chatRoom.join({ count: -1 });
 };
 
 let bindSender = (message, position) => {
@@ -292,9 +292,34 @@ Message.getList = (params) => {
     timestrap: timestamp,
     count
   }).then(({ list, hasMore }) => {
-    let messageList = list.filter((message) => {
-      return message.messageType != 'RC:RcCmd';
-    });
+    let messageList = list;
+    // let messageList = list.filter((message) => {
+    //   return message.messageType != 'RC:RcCmd';
+    // });
+    bindSender(messageList, position);
+    hasMore = !!hasMore;
+    return {
+      messageList,
+      hasMore
+    };
+  });
+};
+
+Message.getChatRoomMessageList = (params) => {
+  let { type, targetId, position, count } = params;
+  count = count || 5;
+  let timestamp = position;
+  let chatRoom = imInstance.ChatRoom.get({
+    id: targetId
+  });
+  return chatRoom.getMessages({
+    timestrap: timestamp,
+    count
+  }).then(({ list, hasMore }) => {
+    let messageList = list;
+    // let messageList = list.filter((message) => {
+    //   return message.messageType != 'RC:RcCmd';
+    // });
     bindSender(messageList, position);
     hasMore = !!hasMore;
     return {
@@ -452,7 +477,10 @@ Status.connect = (user) => {
   });
   user.token = config.token;
   return User.getToken(user).then((user) => {
-    return imInstance.connect(user);
+    return imInstance.connect(user).then((result) => {
+      currentUser.id = result.id;
+      return result;
+    });
   });
 };
 

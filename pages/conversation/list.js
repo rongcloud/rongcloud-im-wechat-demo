@@ -1,5 +1,5 @@
 const utils = require('../utils/utils');
-const ChatroomId = 'chatroom001';
+const ChatroomId = 'OIBbeKlkx';
 const {globalData} = getApp();
 const {Service: {Status, Conversation, User}} = globalData;
 

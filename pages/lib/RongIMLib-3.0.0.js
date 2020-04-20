@@ -1,6 +1,6 @@
 /*
 * RongIMLib.js v3.0.0
-* Release Date: Mon Apr 20 2020 09:12:54 GMT+0800 (China Standard Time)
+* Release Date: Mon Apr 20 2020 12:07:50 GMT+0800 (China Standard Time)
 * Copyright 2020 RongCloud
 * Released under the MIT License.
 */
@@ -4347,7 +4347,14 @@
           targetId = isGroup$1(type) || isChatRoom$1(type) ? groupId : fromUserId,
           senderUserId = isSelfSend ? currentUserId : fromUserId,
           sentTime = utils.int64ToTimestamp(dataTime),
-          isOffLineMessage = sentTime < connectedTime;
+          isOffLineMessage = sentTime < connectedTime,
+          isChatRoomMsg = common.isChatRoom(type);
+
+      var messageDirection = isSelfSend ? MESSAGE_DIRECTION.SEND : MESSAGE_DIRECTION.RECEIVE;
+
+      if (isChatRoomMsg && utils.isEqual(fromUserId, currentUserId)) {
+        messageDirection = MESSAGE_DIRECTION.SEND;
+      }
 
       return {
         type: type,
@@ -4360,7 +4367,7 @@
         isMentiond: isMentiond,
         sentTime: sentTime,
         isOffLineMessage: isOffLineMessage,
-        messageDirection: isSelfSend ? MESSAGE_DIRECTION.SEND : MESSAGE_DIRECTION.RECEIVE,
+        messageDirection: messageDirection,
         receivedTime: common.DelayTimer.getTime(),
         content: self.formatMessageContent(content)
       };
@@ -6284,7 +6291,7 @@
       if (isOtherSend && isCounted && isNotAdded && (hasChanged = true)) {
         storageConversation.unreadMessageCount = unreadMessageCount + 1;
         storageConversation.lastUnreadTime = sentTime;
-      } else if (isOtherSend && isRecall && hasContent) {
+      } else if (isOtherSend && isRecall && hasContent && (hasChanged = true)) {
         var isRecallMsgNotRead = lastUnreadTime >= content.sentTime;
 
         if (isRecallMsgNotRead && unreadMessageCount) {

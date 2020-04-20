@@ -66,7 +66,8 @@ const formatEmojis = () => {
 
 const getMessageList = (context, params) => {
   let {position} = params;
-  return Message.getList(params).then((result) => {
+  let event = params.type == 4 ? Message.getChatRoomMessageList : Message.getList;
+  return event(params).then((result) => {
     let messages = result.messageList;
     let hasMore = result.hasMore;
 
@@ -162,13 +163,16 @@ const onLoad = (context, query) => {
   getMessageList(context, { type, targetId, position, count });
 
   Message.watch((message) => {
-    let { messageList } = context.data;
-    messageList.push(message);
-    context.setData({
-      messageList,
-      toView: message.uId
-    });
+    if (message.isOffLineMessage) {
+      return;
+    }
     if (message.type == type && message.targetId === targetId) {
+      let { messageList } = context.data;
+      messageList.push(message);
+      context.setData({
+        messageList,
+        toView: message.uId
+      });
       Conversation.clearUnreadCount({
         type, targetId
       });
