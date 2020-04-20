@@ -1,7 +1,7 @@
 const utils = require('../utils/utils');
-
+const ChatroomId = 'chatroom001';
 const {globalData} = getApp();
-const {Service: {Status, Conversation}} = globalData;
+const {Service: {Status, Conversation, User}} = globalData;
 
 const requestUserAuth = () => {
   return new Promise((resolve, reject) => {
@@ -139,5 +139,50 @@ Page({
       conversationList
     });
     
+  },
+  showConversationHandles: function (event) {
+    let { currentTarget: { dataset: { item } } } = event;
+    let { conversationType: type, targetId } = item;
+    let handlers = [
+      { name: '加入聊天室: ' + ChatroomId, event: this.joinChatroom },
+      // { name: '清除所有未读数', event: Conversation.clearTotalUnreadCount },
+      // { name: '清空缓存', event: this.clearLocal },
+      // { name: '删除会话', event: Conversation.remove }
+    ];
+    let handlerNames = handlers.map((handle) => {
+      return handle.name;
+    });
+    let showToast = (title) => {
+      wx.showToast({
+        title: title,
+        duration: 1000
+      });
+    };
+    wx.showActionSheet({
+      itemList: handlerNames,
+      success: function (res) {
+        let { event, name } = handlers[res.tapIndex];
+        event(type, targetId).then(() => {
+          showToast(name + '成功');
+        }).catch((error) => {
+          showToast(name + '失败' + error);
+        });
+      }
+    });
+  },
+  joinChatroom: function () {
+    return User.joinChatroom(ChatroomId).then(() => {
+      let targetId = ChatroomId;
+      let type = 4;
+      let url = './chat?type={type}&targetId={targetId}&title={title}';
+      url = utils.tplEngine(url, {
+        type,
+        targetId,
+        title: `聊天室 (${targetId})`
+      });
+      return wx.navigateTo({
+        url: url,
+      });
+    });
   }
 })

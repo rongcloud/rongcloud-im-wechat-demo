@@ -139,6 +139,11 @@ User.getToken = (user) => {
   return Promise.resolve(currentUser);
 };
 
+User.joinChatroom = (id) => {
+  const chatRoom = imInstance.ChatRoom.get({id});
+  return chatRoom.join({ count: 50 });
+};
+
 let bindSender = (message, position) => {
   if (!utils.isArray(message)) {
     message = [message];
