@@ -162,7 +162,8 @@ let bindSender = (message, position) => {
   utils.map(message, (msg) => {
     const { type } = msg;
     msg.pos = position;
-    getSender[type](msg);
+    const event = getSender[type] || getSender[1];
+    event(msg);
     utils.formatMessage(msg);
     return msg;
   });
@@ -316,6 +317,10 @@ Message.create = (params) => {
 
 Message.watch = (watch) => {
   Message.watcher.add(watch);
+};
+
+Message.unwatch = () => {
+  Message.watcher.remove();
 };
 
 let Conversation = {

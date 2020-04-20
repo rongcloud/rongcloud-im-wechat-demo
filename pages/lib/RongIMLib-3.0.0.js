@@ -1,6 +1,6 @@
 /*
 * RongIMLib.js v3.0.0
-* Release Date: Wed Apr 15 2020 16:52:28 GMT+0800 (China Standard Time)
+* Release Date: Mon Apr 20 2020 09:12:54 GMT+0800 (China Standard Time)
 * Copyright 2020 RongCloud
 * Released under the MIT License.
 */
@@ -1679,7 +1679,7 @@
   };
 
   var int64ToTimestamp = function int64ToTimestamp(obj) {
-    if (obj.low === undefined) {
+    if (!isObject(obj) || obj.low === undefined || obj.high === undefined) {
       return obj;
     }
 
@@ -2036,11 +2036,9 @@
   };
 
   var consoleError = function consoleError() {
-    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-      args[_key2] = arguments[_key2];
-    }
+    var _console;
 
-    return console.error(args);
+    return (_console = console).error.apply(_console, arguments);
   };
 
   var utils = {
@@ -3571,6 +3569,12 @@
     return !!CONVERSATION_TYPE_TO_PUBLISH_STATUS_TOPIC[type];
   };
 
+  var getConversationKey = function getConversationKey(option) {
+    var type = option.type,
+        targetId = option.targetId;
+    return type + '_' + targetId;
+  };
+
   var common = {
     isConnected: isConnected,
     isConnecting: isConnecting,
@@ -3598,7 +3602,8 @@
     fixConversationData: fixConversationData,
     sortConversationList: sortConversationList,
     DelayTimer: DelayTimer,
-    isSupportStatusMessage: isSupportStatusMessage
+    isSupportStatusMessage: isSupportStatusMessage,
+    getConversationKey: getConversationKey
   };
 
   var EventEmitter$1 = utils.EventEmitter,
@@ -4229,224 +4234,6 @@
   var isGroup$1 = common.isGroup,
       isChatRoom$1 = common.isChatRoom;
 
-  var formatMessageContent = function formatMessageContent(content) {
-    var _content = content,
-        offset = _content.offset,
-        buffer = _content.buffer,
-        limit = _content.limit;
-
-    if (offset) {
-      content = utils.ArrayBufferToUint8Array(buffer).subarray(offset, limit);
-      content = BinaryHelper.readUTF(content);
-    }
-
-    content = utils.parseJSON(content);
-    return content;
-  };
-
-  var formatSentMessage = function formatSentMessage(data, option) {
-    var content = data.content,
-        classname = data.classname,
-        sessionId = data.sessionId;
-    var signal = option.signal,
-        currentUserId = option.currentUserId;
-
-    var _common$getPersitedAn = common.getPersitedAndCountedBySessionId(sessionId),
-        isPersited = _common$getPersitedAn.isPersited,
-        isCounted = _common$getPersitedAn.isCounted;
-
-    var date = signal.date,
-        topic = signal.topic,
-        targetId = signal.targetId;
-    var type = PUBLISH_TOPIC_TO_CONVERSATION_TYPE[topic] || CONVERSATION_TYPE.PRIVATE;
-    return {
-      type: type,
-      targetId: targetId,
-      isPersited: isPersited,
-      isCounted: isCounted,
-      content: formatMessageContent(content),
-      senderUserId: currentUserId,
-      sentTime: utils.secondsToMilliseconds(date),
-      receivedTime: common.DelayTimer.getTime(),
-      messageType: classname,
-      messageUId: data.msgId,
-      messageDirection: MESSAGE_DIRECTION.SEND,
-      isOffLineMessage: false
-    };
-  };
-
-  var formatReceivedMessage = function formatReceivedMessage(data, option) {
-    var currentUserId = option.currentUserId,
-        connectedTime = option.connectedTime;
-    var content = data.content,
-        fromUserId = data.fromUserId,
-        type = data.type,
-        groupId = data.groupId,
-        direction = data.direction,
-        status = data.status,
-        dataTime = data.dataTime;
-    direction = direction || MESSAGE_DIRECTION.RECEIVE;
-    var isSelfSend = direction === MESSAGE_DIRECTION.SEND;
-
-    var _common$getMessageOpt = common.getMessageOptionByStatus(status),
-        isPersited = _common$getMessageOpt.isPersited,
-        isCounted = _common$getMessageOpt.isCounted,
-        isMentiond = _common$getMessageOpt.isMentiond;
-
-    var targetId = isGroup$1(type) || isChatRoom$1(type) ? groupId : fromUserId;
-    var senderUserId = isSelfSend ? currentUserId : fromUserId;
-    var sentTime = utils.int64ToTimestamp(dataTime);
-    var isOffLineMessage = sentTime < connectedTime;
-    direction = isSelfSend ? MESSAGE_DIRECTION.SEND : MESSAGE_DIRECTION.RECEIVE;
-    return {
-      type: type,
-      targetId: targetId,
-      isPersited: isPersited,
-      isCounted: isCounted,
-      isMentiond: isMentiond,
-      sentTime: sentTime,
-      isOffLineMessage: isOffLineMessage,
-      messageDirection: direction,
-      receivedTime: common.DelayTimer.getTime(),
-      content: formatMessageContent(content),
-      senderUserId: senderUserId,
-      messageType: data.classname,
-      messageUId: data.msgId
-    };
-  };
-  var formatSyncMessages = function formatSyncMessages(data, option) {
-    option = option || {};
-    var onMessage = option.onMessage || utils.noop;
-    var list = data.list,
-        syncTime = data.syncTime,
-        finished = data.finished;
-
-    if (utils.isUndefined(finished)) {
-      data.finished = finished = true;
-    }
-
-    data.syncTime = utils.int64ToTimestamp(syncTime);
-    data.list = utils.map(list, function (msgData, index) {
-      var msg = formatReceivedMessage(msgData, option);
-      var isLastInAPull = utils.isEqual(index, list.length - 1);
-      var isFinished = isLastInAPull && finished;
-      onMessage({
-        isLastInAPull: isLastInAPull,
-        message: msg,
-        finished: isFinished
-      });
-      return msg;
-    });
-    return data;
-  };
-  var formatHistoryMessages = function formatHistoryMessages(data, option) {
-    var conversation = option.conversation || {};
-    var msgList = data.list,
-        syncTime = data.syncTime,
-        hasMsg = data.hasMsg;
-    var targetId = conversation.targetId;
-    syncTime = utils.int64ToTimestamp(syncTime);
-    var list = [];
-    utils.forEach(msgList, function (msgData) {
-      var msg = formatReceivedMessage(msgData, option);
-      msg.targetId = targetId;
-      list.push(msg);
-    }, {
-      isReverse: true
-    });
-    return {
-      syncTime: syncTime,
-      list: list,
-      hasMore: !!hasMsg
-    };
-  };
-  var formatConversationList = function formatConversationList(serverData, option) {
-    var conversationList = serverData.info;
-    var afterDecode = option.afterDecode || utils.noop;
-    conversationList = utils.map(conversationList, function (serverConversation) {
-      var msg = serverConversation.msg,
-          userId = serverConversation.userId,
-          type = serverConversation.type,
-          unreadCount = serverConversation.unreadCount;
-      msg = formatReceivedMessage(msg, option);
-      msg.targetId = userId;
-      var conversation = {
-        targetId: userId,
-        type: type,
-        unreadMessageCount: unreadCount,
-        latestMessage: msg
-      };
-      return afterDecode(conversation) || conversation;
-    });
-    return conversationList || [];
-  };
-  var formatChatRoomInfos = function formatChatRoomInfos(data) {
-    var userTotalNums = data.userTotalNums,
-        userInfos = data.userInfos;
-    userInfos = utils.map(userInfos, function (user) {
-      var id = user.id,
-          time = user.time;
-      time = utils.int64ToTimestamp(time);
-      return {
-        id: id,
-        time: time
-      };
-    });
-    return {
-      userCount: userTotalNums,
-      userInfos: userInfos
-    };
-  };
-  var formatRTCUserList = function formatRTCUserList(rtcInfos) {
-    var list = rtcInfos.list,
-        token = rtcInfos.token,
-        sessionId = rtcInfos.sessionId;
-    var users = {};
-    utils.forEach(list, function (item) {
-      var userId = item.userId,
-          userData = item.userData;
-      var tmpData = {};
-      utils.forEach(userData, function (data) {
-        var key = data.key,
-            value = data.value;
-        tmpData[key] = value;
-      });
-      users[userId] = tmpData;
-    });
-    return {
-      users: users,
-      token: token,
-      sessionId: sessionId
-    };
-  };
-  var formatRTCData = function formatRTCData(data) {
-    var list = data.outInfo;
-    var props = {};
-    utils.forEach(list, function (item) {
-      props[item.key] = item.value;
-    });
-    return props;
-  };
-  var formatRTCRoomInfo = function formatRTCRoomInfo(data) {
-    var id = data.roomId,
-        total = data.userCount,
-        roomData = data.roomData;
-    var room = {
-      id: id,
-      total: total
-    };
-    utils.forEach(roomData, function (data) {
-      room[data.key] = data.value;
-    });
-    return room;
-  };
-  var formatServerConfig = function formatServerConfig(data) {
-    return utils.batchInt64ToTimestamp(data);
-  };
-  var formatNotifyPullConfig = function formatNotifyPullConfig(data) {
-    return utils.batchInt64ToTimestamp(data);
-  };
-
   var Codec$2 = function () {
     function Codec$$1(option) {
       this.codec = SocketCodec;
@@ -4462,72 +4249,262 @@
     };
 
     _proto.decodeByPBName = function decodeByPBName(data, pbName, option) {
-      var _PBName$SessionsAttOu;
+      var _formatEventMap;
 
-      var decodeEvent = (_PBName$SessionsAttOu = {}, _PBName$SessionsAttOu[PBName.SessionsAttOutput] = this.decodeServerConf, _PBName$SessionsAttOu[PBName.DownStreamMessages] = this.decodeSyncMessages, _PBName$SessionsAttOu[PBName.DownStreamMessage] = this.decodeReceiveMessage, _PBName$SessionsAttOu[PBName.UpStreamMessage] = this.decodeSentMessage, _PBName$SessionsAttOu[PBName.NotifyMsg] = this.decodeNotifyPullConfig, _PBName$SessionsAttOu[PBName.HistoryMsgOuput] = this.decodeHistoryMessages, _PBName$SessionsAttOu[PBName.RelationsOutput] = this.decodeConversationList, _PBName$SessionsAttOu[PBName.QueryChatRoomInfoOutput] = this.decodeChatRoomInfos, _PBName$SessionsAttOu[PBName.RtcUserListOutput] = this.decodeRTCUserList, _PBName$SessionsAttOu[PBName.RtcQryOutput] = this.decodeRTCData, _PBName$SessionsAttOu)[pbName] || function () {
-        try {
-          return this.codec[pbName].decode(data);
-        } catch (e) {
-          return data;
+      var self = this;
+      var formatEventMap = (_formatEventMap = {}, _formatEventMap[PBName.DownStreamMessages] = self.formatSyncMessages, _formatEventMap[PBName.DownStreamMessage] = self.formatReceivedMessage, _formatEventMap[PBName.UpStreamMessage] = self.formatSentMessage, _formatEventMap[PBName.HistoryMsgOuput] = self.formatHistoryMessages, _formatEventMap[PBName.RelationsOutput] = self.formatConversationList, _formatEventMap[PBName.QueryChatRoomInfoOutput] = self.formatChatRoomInfos, _formatEventMap[PBName.RtcUserListOutput] = self.formatRTCUserList, _formatEventMap[PBName.RtcQryOutput] = self.formatRTCData, _formatEventMap);
+      var decodedData = data;
+      var formatEvent = formatEventMap[pbName];
+
+      try {
+        decodedData = self.codec[pbName].decode(data);
+
+        if (utils.isObject(decodedData)) {
+          decodedData = utils.batchInt64ToTimestamp(decodedData);
         }
+
+        if (utils.isFunction(formatEvent)) {
+          decodedData = formatEvent.call(self, decodedData, option);
+        }
+      } catch (e) {}
+
+      return decodedData;
+    };
+
+    _proto.formatMessageContent = function formatMessageContent(content) {
+      try {
+        var _content = content,
+            offset = _content.offset,
+            buffer = _content.buffer,
+            limit = _content.limit;
+
+        if (offset) {
+          content = utils.ArrayBufferToUint8Array(buffer).subarray(offset, limit);
+          content = BinaryHelper.readUTF(content);
+        }
+
+        content = utils.parseJSON(content);
+      } catch (e) {}
+
+      return content;
+    };
+
+    _proto.formatSyncMessages = function formatSyncMessages(data, option) {
+      option = option || {};
+      var self = this,
+          onMessage = option.onMessage || utils.noop,
+          list = data.list,
+          syncTime = data.syncTime,
+          maxListIndex = list.length - 1;
+      var finished = data.finished;
+
+      if (utils.isUndefined(finished)) {
+        data.finished = finished = true;
+      }
+
+      data.syncTime = utils.int64ToTimestamp(syncTime);
+      data.list = utils.map(list, function (msgData, index) {
+        var message = self.formatReceivedMessage(msgData, option),
+            isLastInAPull = utils.isEqual(index, maxListIndex),
+            isFinished = isLastInAPull && finished;
+
+        try {
+          onMessage({
+            isLastInAPull: isLastInAPull,
+            message: message,
+            finished: isFinished
+          });
+        } catch (e) {
+          utils.consoleError(e);
+        }
+
+        return message;
+      });
+      return data;
+    };
+
+    _proto.formatReceivedMessage = function formatReceivedMessage(data, option) {
+      option = option || {};
+      var self = this;
+
+      var _option = option,
+          currentUserId = _option.currentUserId,
+          connectedTime = _option.connectedTime,
+          content = data.content,
+          fromUserId = data.fromUserId,
+          type = data.type,
+          groupId = data.groupId,
+          status = data.status,
+          dataTime = data.dataTime,
+          messageType = data.classname,
+          messageUId = data.msgId,
+          direction = data.direction || MESSAGE_DIRECTION.RECEIVE,
+          isSelfSend = utils.isEqual(direction, MESSAGE_DIRECTION.SEND),
+          _common$getMessageOpt = common.getMessageOptionByStatus(status),
+          isPersited = _common$getMessageOpt.isPersited,
+          isCounted = _common$getMessageOpt.isCounted,
+          isMentiond = _common$getMessageOpt.isMentiond,
+          targetId = isGroup$1(type) || isChatRoom$1(type) ? groupId : fromUserId,
+          senderUserId = isSelfSend ? currentUserId : fromUserId,
+          sentTime = utils.int64ToTimestamp(dataTime),
+          isOffLineMessage = sentTime < connectedTime;
+
+      return {
+        type: type,
+        targetId: targetId,
+        senderUserId: senderUserId,
+        messageType: messageType,
+        messageUId: messageUId,
+        isPersited: isPersited,
+        isCounted: isCounted,
+        isMentiond: isMentiond,
+        sentTime: sentTime,
+        isOffLineMessage: isOffLineMessage,
+        messageDirection: isSelfSend ? MESSAGE_DIRECTION.SEND : MESSAGE_DIRECTION.RECEIVE,
+        receivedTime: common.DelayTimer.getTime(),
+        content: self.formatMessageContent(content)
       };
-
-      return decodeEvent.call(this, data, option);
     };
 
-    _proto.decodeServerConf = function decodeServerConf(data) {
-      var serverConfig = this.codec[PBName.SessionsAttOutput].decode(data);
-      return formatServerConfig(serverConfig);
+    _proto.formatSentMessage = function formatSentMessage(data, option) {
+      var self = this;
+
+      var content = data.content,
+          messageType = data.classname,
+          sessionId = data.sessionId,
+          messageUId = data.msgId,
+          signal = option.signal,
+          currentUserId = option.currentUserId,
+          date = signal.date,
+          topic = signal.topic,
+          targetId = signal.targetId,
+          _common$getPersitedAn = common.getPersitedAndCountedBySessionId(sessionId),
+          isPersited = _common$getPersitedAn.isPersited,
+          isCounted = _common$getPersitedAn.isCounted,
+          type = PUBLISH_TOPIC_TO_CONVERSATION_TYPE[topic] || CONVERSATION_TYPE.PRIVATE;
+
+      return {
+        type: type,
+        targetId: targetId,
+        messageType: messageType,
+        messageUId: messageUId,
+        isPersited: isPersited,
+        isCounted: isCounted,
+        senderUserId: currentUserId,
+        content: self.formatMessageContent(content),
+        sentTime: utils.secondsToMilliseconds(date),
+        receivedTime: common.DelayTimer.getTime(),
+        messageDirection: MESSAGE_DIRECTION.SEND,
+        isOffLineMessage: false
+      };
     };
 
-    _proto.decodeNotifyPullConfig = function decodeNotifyPullConfig(data) {
-      var notifyPullConfig = this.codec[PBName.NotifyMsg].decode(data);
-      return formatNotifyPullConfig(notifyPullConfig);
+    _proto.formatHistoryMessages = function formatHistoryMessages(data, option) {
+      var self = this;
+      var conversation = option.conversation || {},
+          msgList = data.list,
+          hasMsg = data.hasMsg,
+          targetId = conversation.targetId,
+          syncTime = utils.int64ToTimestamp(data.syncTime);
+      var list = [];
+      utils.forEach(msgList, function (msgData) {
+        var msg = self.formatReceivedMessage(msgData, option);
+        msg.targetId = targetId;
+        list.push(msg);
+      }, {
+        isReverse: true
+      });
+      return {
+        syncTime: syncTime,
+        list: list,
+        hasMore: !!hasMsg
+      };
     };
 
-    _proto.decodeSentMessage = function decodeSentMessage(data, option) {
-      var upMsg = this.codec[PBName.UpStreamMessage].decode(data);
-      return formatSentMessage(upMsg, option);
+    _proto.formatConversationList = function formatConversationList(serverData, option) {
+      var self = this;
+      var conversationList = serverData.info;
+      var afterDecode = option.afterDecode || utils.noop;
+      conversationList = utils.map(conversationList, function (serverConversation) {
+        var msg = serverConversation.msg,
+            userId = serverConversation.userId,
+            type = serverConversation.type,
+            unreadCount = serverConversation.unreadCount;
+        msg = self.formatReceivedMessage(msg, option);
+        msg.targetId = userId;
+        var conversation = {
+          targetId: userId,
+          type: type,
+          unreadMessageCount: unreadCount,
+          latestMessage: msg
+        };
+        return afterDecode(conversation) || conversation;
+      });
+      return conversationList || [];
     };
 
-    _proto.decodeReceiveMessage = function decodeReceiveMessage(data, option) {
-      var serverMsg = this.codec[PBName.DownStreamMessage].decode(data);
-      return formatReceivedMessage(serverMsg, option);
+    _proto.formatChatRoomInfos = function formatChatRoomInfos(data) {
+      var userTotalNums = data.userTotalNums,
+          userInfos = data.userInfos;
+      userInfos = utils.map(userInfos, function (user) {
+        var id = user.id,
+            time = user.time;
+        time = utils.int64ToTimestamp(time);
+        return {
+          id: id,
+          time: time
+        };
+      });
+      return {
+        userCount: userTotalNums,
+        userInfos: userInfos
+      };
     };
 
-    _proto.decodeSyncMessages = function decodeSyncMessages(data, option) {
-      var syncMsgInfo = this.codec[PBName.DownStreamMessages].decode(data);
-      return formatSyncMessages(syncMsgInfo, option);
+    _proto.formatRTCUserList = function formatRTCUserList(rtcInfos) {
+      var list = rtcInfos.list,
+          token = rtcInfos.token,
+          sessionId = rtcInfos.sessionId;
+      var users = {};
+      utils.forEach(list, function (item) {
+        var userId = item.userId,
+            userData = item.userData;
+        var tmpData = {};
+        utils.forEach(userData, function (data) {
+          var key = data.key,
+              value = data.value;
+          tmpData[key] = value;
+        });
+        users[userId] = tmpData;
+      });
+      return {
+        users: users,
+        token: token,
+        sessionId: sessionId
+      };
     };
 
-    _proto.decodeHistoryMessages = function decodeHistoryMessages(data, option) {
-      var historyInfo = this.codec[PBName.HistoryMsgOuput].decode(data);
-      return formatHistoryMessages(historyInfo, option);
+    _proto.formatRTCData = function formatRTCData(data) {
+      var list = data.outInfo;
+      var props = {};
+      utils.forEach(list, function (item) {
+        props[item.key] = item.value;
+      });
+      return props;
     };
 
-    _proto.decodeConversationList = function decodeConversationList(data, option) {
-      var serverData = this.codec[PBName.RelationsOutput].decode(data);
-      return formatConversationList(serverData, option);
-    };
-
-    _proto.decodeChatRoomInfos = function decodeChatRoomInfos(data) {
-      var chrmInfos = this.codec[PBName.QueryChatRoomInfoOutput].decode(data);
-      return formatChatRoomInfos(chrmInfos);
-    };
-
-    _proto.decodeRTCUserList = function decodeRTCUserList(data) {
-      var rtcInfos = this.codec[PBName.RtcUserListOutput].decode(data);
-      return formatRTCUserList(rtcInfos);
-    };
-
-    _proto.decodeRTCData = function decodeRTCData(data) {
-      var rtcData = this.codec[PBName.RtcQryOutput].decode(data);
-      return formatRTCData(rtcData);
-    };
-
-    _proto.decodeRTCRoomInfo = function decodeRTCRoomInfo(data) {
-      var rtcRoomInfo = this.codec[PBName.RtcRoomInfoOutput].decode(data);
-      return formatRTCRoomInfo(rtcRoomInfo);
+    _proto.formatRTCRoomInfo = function formatRTCRoomInfo(data) {
+      var id = data.roomId,
+          total = data.userCount,
+          roomData = data.roomData;
+      var room = {
+        id: id,
+        total: total
+      };
+      utils.forEach(roomData, function (data) {
+        room[data.key] = data.value;
+      });
+      return room;
     };
 
     _proto.encodeServerConfParams = function encodeServerConfParams() {
@@ -4607,9 +4584,9 @@
 
     _proto.encodeGetConversationList = function encodeGetConversationList(option) {
       option = option || {};
-      var _option = option,
-          count = _option.count,
-          startTime = _option.startTime;
+      var _option2 = option,
+          count = _option2.count,
+          startTime = _option2.startTime;
       var modules = this.codec.getModule(PBName.RelationQryInput);
       modules.setType(1);
       modules.setCount(count);
@@ -4619,9 +4596,9 @@
 
     _proto.encodeOldConversationList = function encodeOldConversationList(option) {
       option = option || {};
-      var _option2 = option,
-          count = _option2.count,
-          type = _option2.type;
+      var _option3 = option,
+          count = _option3.count,
+          type = _option3.type;
       var modules = this.codec.getModule(PBName.RelationsInput);
       type = type || CONVERSATION_TYPE.PRIVATE;
       count = count || 0;
@@ -4697,9 +4674,9 @@
 
     _proto.encodeGetChatRoomInfo = function encodeGetChatRoomInfo(option) {
       option = option || {};
-      var _option3 = option,
-          count = _option3.count,
-          order = _option3.order;
+      var _option4 = option,
+          count = _option4.count,
+          order = _option4.order;
       var modules = this.codec.getModule(PBName.QueryChatRoomInfoInput);
       modules.setCount(count);
       modules.setOrder(order);
@@ -5189,7 +5166,7 @@
       });
 
       _serverEventEmitter.on(SERVER_TASK.NOTIFY_PULL, function (signal) {
-        var notifyPullConfig = self._serverDataCodec.decodeNotifyPullConfig(signal.data);
+        var notifyPullConfig = self._serverDataCodec.decodeByPBName(signal.data, PBName.NotifyMsg);
 
         self._messagePullManager.pull(notifyPullConfig);
       });
@@ -5201,7 +5178,7 @@
           return;
         }
 
-        var msg = self._serverDataCodec.decodeReceiveMessage(signal.data, {
+        var msg = self._serverDataCodec.decodeByPBName(signal.data, PBName.DownStreamMessage, {
           currentUserId: currentUserId,
           connectedTime: connectedTime
         });
@@ -5293,7 +5270,7 @@
           _serverDataCodec = self._serverDataCodec;
       var isComet = connectType === CONNECT_TYPE.COMET;
 
-      var msg = _serverDataCodec.decodeSentMessage(signal.data, {
+      var msg = _serverDataCodec.decodeByPBName(signal.data, PBName.UpStreamMessage, {
         currentUserId: currentUserId,
         signal: signal
       });
@@ -5435,7 +5412,7 @@
       var signal = new PublishWriter(publishTopic, data, targetId);
       signal.setHeaderQos(QOS.AT_LEAST_ONCE);
 
-      var msg = _serverDataCodec.decodeSentMessage(data, {
+      var msg = _serverDataCodec.decodeByPBName(data, PBName.UpStreamMessage, {
         signal: signal,
         currentUserId: currentUserId
       });
@@ -6240,19 +6217,13 @@
 
     var _proto = ConversationManager.prototype;
 
-    _proto._getConversationKey = function _getConversationKey(option) {
-      var type = option.type,
-          targetId = option.targetId;
-      return type + '_' + targetId;
-    };
-
     _proto._getUpdatedConversationList = function _getUpdatedConversationList() {
       var self = this;
       var updatedConversations = self.updatedConversations;
       var updatedConversationList = [];
       utils.forEach(updatedConversations, function (conversation) {
         var storageConversation = self.get(conversation);
-        conversation.unreadMessageCount = storageConversation[SUB_KEY.UNREAD_COUNT] || 0, conversation.hasMentiond = storageConversation[SUB_KEY.HAS_MENTIOND] || false, conversation.mentiondInfo = storageConversation[SUB_KEY.MENTIOND_INFO];
+        conversation.unreadMessageCount = storageConversation.unreadMessageCount || 0, conversation.hasMentiond = storageConversation.hasMentiond || false, conversation.mentiondInfo = storageConversation.mentiondInfo;
         updatedConversationList.push(conversation);
       });
 
@@ -6263,7 +6234,7 @@
       return common.sortConversationList(updatedConversationList);
     };
 
-    _proto.update = function update() {
+    _proto._update = function _update() {
       var self = this;
 
       var updatedConversationList = self._getUpdatedConversationList();
@@ -6281,21 +6252,20 @@
 
     _proto.addMessage = function addMessage(message, option) {
       option = option || {};
-      var self = this;
-      var _option = option,
-          isLastInAPull = _option.isLastInAPull;
-      var type = message.type,
+      var self = this,
+          _option = option,
+          isLastInAPull = _option.isLastInAPull,
+          type = message.type,
           sentTime = message.sentTime,
           messageDirection = message.messageDirection,
           targetId = message.targetId,
           content = message.content,
           messageType = message.messageType,
           isMentiond = message.isMentiond,
-          isPersited = message.isPersited,
-          isCounted = message.isCounted;
-      var isTypeNoConversation = !utils.isInclude(TYPE_HAS_CONVERSATION, type);
+          isCounted = message.isCounted,
+          isHasConversationType = utils.isInclude(TYPE_HAS_CONVERSATION, type);
 
-      if (isTypeNoConversation) {
+      if (!isHasConversationType) {
         return;
       }
 
@@ -6307,41 +6277,50 @@
         targetId: targetId
       });
       var hasChanged = false;
-      var lastUnreadTime = storageConversation[SUB_KEY.UNREAD_LAST_TIME] || 0;
+      var lastUnreadTime = storageConversation.lastUnreadTime || 0;
+      var unreadMessageCount = storageConversation.unreadMessageCount || 0;
       var isNotAdded = sentTime > lastUnreadTime;
 
       if (isOtherSend && isCounted && isNotAdded && (hasChanged = true)) {
-        storageConversation[SUB_KEY.UNREAD_COUNT] = storageConversation[SUB_KEY.UNREAD_COUNT] || 0;
-        storageConversation[SUB_KEY.UNREAD_COUNT]++;
-        storageConversation[SUB_KEY.UNREAD_LAST_TIME] = sentTime;
+        storageConversation.unreadMessageCount = unreadMessageCount + 1;
+        storageConversation.lastUnreadTime = sentTime;
       } else if (isOtherSend && isRecall && hasContent) {
         var isRecallMsgNotRead = lastUnreadTime >= content.sentTime;
 
-        if (isRecallMsgNotRead) {
-          storageConversation[SUB_KEY.UNREAD_COUNT] = storageConversation[SUB_KEY.UNREAD_COUNT] || 0;
-          storageConversation[SUB_KEY.UNREAD_COUNT]--;
+        if (isRecallMsgNotRead && unreadMessageCount) {
+          storageConversation.unreadMessageCount = unreadMessageCount - 1;
         }
       }
 
       if (isOtherSend && isMentiond && hasContent && content.mentionedInfo && (hasChanged = true)) {
-        storageConversation[SUB_KEY.HAS_MENTIOND] = true;
-        storageConversation[SUB_KEY.MENTIOND_INFO] = content.mentionedInfo;
+        storageConversation.hasMentiond = true;
+        storageConversation.mentiondInfo = content.mentionedInfo;
       }
 
       if (hasChanged) {
-        var _key = self._getConversationKey({
-          type: type,
-          targetId: targetId
-        });
-
-        self._storage.set(_key, storageConversation);
+        self.set(message, storageConversation);
       }
 
-      var key = self._getConversationKey(message);
+      self._setCache(message);
 
+      var isNeedNotifyUpdate = utils.isUndefined(isLastInAPull) ? true : isLastInAPull;
+
+      if (isNeedNotifyUpdate) {
+        self._update();
+      }
+    };
+
+    _proto._setCache = function _setCache(message) {
+      var self = this;
+      var type = message.type,
+          targetId = message.targetId,
+          isPersited = message.isPersited;
+      var key = common.getConversationKey(message);
       var cacheConversation = self.updatedConversations[key] || {};
       cacheConversation = common.fixConversationData(cacheConversation);
-      var isMsgNotAdded = (cacheConversation.latestMessage.sentTime || 0) <= sentTime;
+      var cacheMsgSentTime = cacheConversation.latestMessage.sentTime || 0;
+      var newMsgSentTime = message.sentTime;
+      var isMsgNotAdded = cacheMsgSentTime <= newMsgSentTime;
 
       if (isPersited && isMsgNotAdded) {
         cacheConversation = {
@@ -6351,18 +6330,67 @@
         };
         self.updatedConversations[key] = cacheConversation;
       }
+    };
 
-      var isNotifyUpdate = utils.isUndefined(isLastInAPull) ? true : isLastInAPull;
+    _proto.set = function set(option, storageConversationOption) {
+      var _setVals;
 
-      if (isNotifyUpdate) {
-        self.update();
-      }
+      var unreadMessageCount = storageConversationOption.unreadMessageCount,
+          lastUnreadTime = storageConversationOption.lastUnreadTime,
+          hasMentiond = storageConversationOption.hasMentiond,
+          mentiondInfo = storageConversationOption.mentiondInfo,
+          key = common.getConversationKey(option),
+          storageConversation = this._storage.get(key) || {},
+          setVals = (_setVals = {}, _setVals[SUB_KEY.UNREAD_COUNT] = {
+        val: unreadMessageCount
+      }, _setVals[SUB_KEY.UNREAD_LAST_TIME] = {
+        val: lastUnreadTime
+      }, _setVals[SUB_KEY.HAS_MENTIOND] = {
+        val: hasMentiond,
+        checkEvent: function checkEvent(val) {
+          return val;
+        }
+      }, _setVals[SUB_KEY.MENTIOND_INFO] = {
+        val: mentiondInfo,
+        checkEvent: utils.isObject
+      }, _setVals);
+      utils.forEach(setVals, function (_ref, key) {
+        var val = _ref.val,
+            checkEvent = _ref.checkEvent;
+
+        checkEvent = checkEvent || function (val) {
+          return !utils.isEmpty(val);
+        };
+
+        if (utils.isUndefined(val)) {
+          return;
+        }
+
+        if (checkEvent(val)) {
+          storageConversation[key] = val;
+        } else {
+          delete storageConversation[key];
+        }
+      });
+
+      this._storage.set(key, storageConversation);
     };
 
     _proto.get = function get(option) {
-      var key = this._getConversationKey(option);
+      var key = common.getConversationKey(option);
+      var storageConversation = this._storage.get(key) || {};
+      return {
+        unreadMessageCount: storageConversation[SUB_KEY.UNREAD_COUNT] || 0,
+        lastUnreadTime: storageConversation[SUB_KEY.UNREAD_LAST_TIME] || 0,
+        hasMentiond: storageConversation[SUB_KEY.HAS_MENTIOND] || false,
+        mentiondInfo: storageConversation[SUB_KEY.MENTIOND_INFO]
+      };
+    };
 
-      return this._storage.get(key) || {};
+    _proto.remove = function remove(option) {
+      var key = common.getConversationKey(option);
+
+      this._storage.remove(key);
     };
 
     _proto.getTotalUnreadCount = function getTotalUnreadCount() {
@@ -6376,28 +6404,25 @@
     };
 
     _proto.read = function read(option) {
-      var key = this._getConversationKey(option);
-
-      var localConversation = this._storage.get(key) || {};
-      var localUnread = localConversation[SUB_KEY.UNREAD_COUNT];
+      var self = this;
+      var key = common.getConversationKey(option);
+      var localConversation = self.get(option) || {};
+      var localUnread = localConversation.unreadMessageCount;
 
       if (localUnread) {
-        this._storage.remove(key);
-
-        var cacheConversation = this.updatedConversations[key];
+        self.remove(option);
+        var cacheConversation = self.updatedConversations[key];
 
         if (cacheConversation) ; else {
-          this.updatedConversations[key] = option;
+          self.updatedConversations[key] = option;
         }
 
-        this.update();
+        self._update();
       }
     };
 
     return ConversationManager;
   }();
-
-  var CONVERSATION_SUB_KEY = STORAGE_CONVERSATION.SUB_KEY;
 
   var WebIMEngine = function () {
     function WebIMEngine(option) {
@@ -6646,9 +6671,9 @@
         afterDecode: function afterDecode(conversation) {
           var localConversation = _conversationManager.get(conversation);
 
-          conversation.unreadMessageCount = localConversation[CONVERSATION_SUB_KEY.UNREAD_COUNT] || 0;
-          conversation.hasMentiond = localConversation[CONVERSATION_SUB_KEY.HAS_MENTIOND] || false;
-          conversation.mentiondInfo = localConversation[CONVERSATION_SUB_KEY.MENTIOND_INFO];
+          conversation.unreadMessageCount = localConversation.unreadMessageCount || 0;
+          conversation.hasMentiond = localConversation.hasMentiond || false;
+          conversation.mentiondInfo = localConversation.mentiondInfo;
           return conversation;
         }
       });
@@ -6658,9 +6683,9 @@
       var local = this._conversationManager.get(conversation);
 
       return {
-        unreadMessageCount: local[CONVERSATION_SUB_KEY.UNREAD_COUNT] || 0,
-        hasMentiond: local[CONVERSATION_SUB_KEY.HAS_MENTIOND] || false,
-        mentiondInfo: local[CONVERSATION_SUB_KEY.MENTIOND_INFO]
+        unreadMessageCount: local.unreadMessageCount || 0,
+        hasMentiond: local.hasMentiond || false,
+        mentiondInfo: local.mentiondInfo
       };
     };
 
@@ -6744,12 +6769,6 @@
 
       var execResult = execEngineByEvent(params, engine);
       return utils.isPromise(execResult) ? execResult["catch"](function (error) {
-        Logger.write({
-          content: {
-            info: 'SDK Error',
-            error: error
-          }
-        });
         var errorCode = error.status || error.code || error;
         var errorInfo = ERROR_CODE_TO_INFO[errorCode] || {
           code: errorCode
@@ -6757,6 +6776,12 @@
         var isValidErrorCode = utils.isNumberData(errorCode);
 
         if (!isValidErrorCode) {
+          Logger.write({
+            content: {
+              info: 'SDK Error',
+              error: error
+            }
+          });
           errorInfo = utils.extendInShallow(ERROR_INFO.SDK_INTERNAL_ERROR, {
             error: error
           });
@@ -7046,44 +7071,48 @@
       };
 
       Conversation.merge = function merge(option) {
-        var conversationList = option.conversationList,
-            updatedConversationList = option.updatedConversationList;
-        conversationList = updatedConversationList.concat(conversationList);
-        conversationList = common.sortConversationList(conversationList);
-        var hashTable = {};
-        var newList = [];
-        utils.forEach(conversationList, function (conversation) {
-          if (!utils.isObject(conversation)) {
-            return;
-          }
+        try {
+          var conversationList = option.conversationList,
+              updatedConversationList = option.updatedConversationList;
+          conversationList = updatedConversationList.concat(conversationList);
+          conversationList = common.sortConversationList(conversationList);
+          var hashTable = {};
+          var newList = [];
+          utils.forEach(conversationList, function (conversation) {
+            if (!utils.isObject(conversation)) {
+              return;
+            }
 
-          var type = conversation.type,
-              targetId = conversation.targetId;
-          var localConversation = _engineDispatcher.exec({
-            event: ENGINE_EVENT.GET_LOCAL_CONVERSATION,
-            args: [conversation]
-          }) || {};
-          localConversation.unreadMessageCount = localConversation.unreadMessageCount || 0;
-          var key = type + '_' + targetId;
-          var hashItem = hashTable[key];
+            var type = conversation.type,
+                targetId = conversation.targetId;
+            var localConversation = _engineDispatcher.exec({
+              event: ENGINE_EVENT.GET_LOCAL_CONVERSATION,
+              args: [conversation]
+            }) || {};
+            localConversation.unreadMessageCount = localConversation.unreadMessageCount || 0;
+            var key = type + '_' + targetId;
+            var hashItem = hashTable[key];
 
-          if (hashItem) {
-            var index = hashItem.index,
-                val = hashItem.val;
-            val = utils.extend(conversation, val);
-            val.unreadMessageCount = localConversation.unreadMessageCount;
-            newList[index] = val;
-            hashTable[key].val = val;
-          } else {
-            conversation.unreadMessageCount = localConversation.unreadMessageCount;
-            newList.push(conversation);
-            hashTable[key] = {
-              index: newList.length - 1,
-              val: conversation
-            };
-          }
-        });
-        return newList;
+            if (hashItem) {
+              var index = hashItem.index,
+                  val = hashItem.val;
+              val = utils.extend(conversation, val);
+              val.unreadMessageCount = localConversation.unreadMessageCount;
+              newList[index] = val;
+              hashTable[key].val = val;
+            } else {
+              conversation.unreadMessageCount = localConversation.unreadMessageCount;
+              newList.push(conversation);
+              hashTable[key] = {
+                index: newList.length - 1,
+                val: conversation
+              };
+            }
+          });
+          return newList;
+        } catch (e) {
+          utils.consoleError(e);
+        }
       };
 
       Conversation.remove = function remove(option) {

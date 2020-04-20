@@ -184,6 +184,7 @@ const onUnload = (context) => {
   if (playingMusicComponent) {
     playingMusicComponent.stop();
   }
+  Message.unwatch();
 };
 
 const showVoice = (context) => {
