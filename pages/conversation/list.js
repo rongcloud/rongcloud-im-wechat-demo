@@ -1,7 +1,7 @@
 const utils = require('../utils/utils');
 const ChatroomId = 'OIBbeKlkx';
 const {globalData} = getApp();
-const {Service: {Status, Conversation, User}} = globalData;
+const { Service: { Status, Conversation, User, CONNECTION_STATUS}} = globalData;
 
 const requestUserAuth = () => {
   return new Promise((resolve, reject) => {
@@ -27,18 +27,26 @@ const watchConversation = (context) => {
 
 const watchStatus = () => {
  Status.watch((status) => {
-   if (status == 3) {
-    //  wx.getUserInfo({
-    //    success: (user) => {
-    //      Status.connect(user.userInfo);
-    //    }
-    //  });
-   }
-   if (status == 6) {
-     wx.showModal({
-      title: '提示',
-      content: '当前用户已在其他端登录'
-     })
+   switch(status) {
+     case CONNECTION_STATUS.CONNECTED:
+       wx.hideLoading();
+       wx.showToast({
+         title: '链接成功',
+         icon: 'success',
+         duration: 1000
+       });
+       break;
+     case CONNECTION_STATUS.NETWORK_UNAVAILABLE:
+       wx.showLoading({
+         title: '重连中 ...',
+       });
+       break;
+     case CONNECTION_STATUS.KICKED_OFFLINE_BY_OTHER_CLIENT:
+       wx.showModal({
+         title: '提示',
+         content: '当前用户已在其他端登录'
+       });
+       break;
    }
  })
 }
@@ -56,11 +64,11 @@ const connect = (context) => {
           conversationList: list
         });
       }).catch((error) => {
-        // wx.showToast({
-        //   title: error.msg,
-        //   icon: 'none',
-        //   duration: 3000
-        // })
+        wx.showToast({
+          title: error.msg,
+          icon: 'none',
+          duration: 3000
+        })
       })
     },
     fail: (error) => {

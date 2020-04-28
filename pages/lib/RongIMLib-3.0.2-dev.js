@@ -1,6 +1,6 @@
 /*
-* RongIMLib.js v3.0.0
-* Release Date: Mon Apr 20 2020 12:07:50 GMT+0800 (China Standard Time)
+* RongIMLib.js v3.0.2-dev
+* Release Date: Tue Apr 28 2020 09:14:56 GMT+0800 (China Standard Time)
 * Copyright 2020 RongCloud
 * Released under the MIT License.
 */
@@ -10,9 +10,9 @@
   (global.RongIMLib = factory());
 }(this, (function () { 'use strict';
 
-  var version = "3.0.0";
+  var versionToServer = "3.0.2";
 
-  var SDK_VERSION = version;
+  var SDK_VERSION = versionToServer;
 
   var ERROR_INFO = {
     TIMEOUT: {
@@ -111,9 +111,9 @@
       code: 31002,
       msg: 'Your appkey is fake'
     },
-    CONN_SERVER_UNAVAILABLE: {
+    CONN_MINI_SERVICE_NOT_OPEN: {
       code: 31003,
-      msg: 'The server is currently unavailable'
+      msg: 'Mini program service is not open, Please go to the developer to open this service'
     },
     CONN_TOKEN_INCORRECT: {
       code: 31004,
@@ -183,7 +183,7 @@
   };
   var CONNECT_SERVER_STATUS = {
     IDENTIFIER_REJECTED: 2,
-    SERVER_UNAVAILABLE: 3,
+    CONN_MINI_SERVICE_NOT_OPEN: 3,
     TOKEN_INCORRECT: 4,
     NOT_AUTHORIZED: 5,
     REDIRECT: 6,
@@ -194,7 +194,7 @@
     DEVICE_ERROR: 11,
     DOMAIN_INCORRECT: 12
   };
-  var CONNECT_SERVER_STATUS_MAP_ERROR_INFO = (_CONNECT_SERVER_STATU = {}, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.IDENTIFIER_REJECTED] = ERROR_INFO.CONN_APPKEY_FAKE, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.SERVER_UNAVAILABLE] = ERROR_INFO.CONN_SERVER_UNAVAILABLE, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.TOKEN_INCORRECT] = ERROR_INFO.CONN_TOKEN_INCORRECT, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.NOT_AUTHORIZED] = ERROR_INFO.CONN_NOT_AUTHRORIZED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.REDIRECT] = ERROR_INFO.CONN_REDIRECTED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.APP_BLOCK_OR_DELETE] = ERROR_INFO.CONN_APP_BLOCKED_OR_DELETED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.BLOCK] = ERROR_INFO.CONN_USER_BLOCKED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.TOKEN_EXPIRE] = ERROR_INFO.CONN_TOKEN_INCORRECT, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.DOMAIN_INCORRECT] = ERROR_INFO.CONN_DOMAIN_INCORRECT, _CONNECT_SERVER_STATU);
+  var CONNECT_SERVER_STATUS_MAP_ERROR_INFO = (_CONNECT_SERVER_STATU = {}, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.IDENTIFIER_REJECTED] = ERROR_INFO.CONN_APPKEY_FAKE, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.CONN_MINI_SERVICE_NOT_OPEN] = ERROR_INFO.CONN_MINI_SERVICE_NOT_OPEN, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.TOKEN_INCORRECT] = ERROR_INFO.CONN_TOKEN_INCORRECT, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.NOT_AUTHORIZED] = ERROR_INFO.CONN_NOT_AUTHRORIZED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.REDIRECT] = ERROR_INFO.CONN_REDIRECTED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.APP_BLOCK_OR_DELETE] = ERROR_INFO.CONN_APP_BLOCKED_OR_DELETED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.BLOCK] = ERROR_INFO.CONN_USER_BLOCKED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.TOKEN_EXPIRE] = ERROR_INFO.CONN_TOKEN_INCORRECT, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.DOMAIN_INCORRECT] = ERROR_INFO.CONN_DOMAIN_INCORRECT, _CONNECT_SERVER_STATU);
   var TRANSPORTER_STATUS = {
     CONNECTED: CONNECTION_STATUS.CONNECTED,
     KICKED_OFFLINE_BY_OTHER_CLIENT: CONNECTION_STATUS.KICKED_OFFLINE_BY_OTHER_CLIENT,
@@ -217,7 +217,11 @@
     PING_TIMEOUT: 2002,
     DISCONNECT_TOO_FAST: 2003,
     EXCEED_MESSAGE_ID_LIMIT: 2004,
-    COMET_REQUEST_ERROR: 2005
+    COMET_REQUEST_ERROR: 2005,
+    MINI_URL_NOT_IN_DOMAIN_LIST: 2006
+  };
+  var MINI_ERROR_MSG_TO_STATUS = {
+    'url not in domain list': TRANSPORTER_STATUS.MINI_URL_NOT_IN_DOMAIN_LIST
   };
   var SERVER_DISCONNECT_STATUS_TO_TRANSPORTER_STATUS = (_SERVER_DISCONNECT_ST = {}, _SERVER_DISCONNECT_ST[SERVER_DISCONNECT_STATUS.KICKED_OFFLINE_BY_OTHER_CLIENT] = TRANSPORTER_STATUS.KICKED_OFFLINE_BY_OTHER_CLIENT, _SERVER_DISCONNECT_ST[SERVER_DISCONNECT_STATUS.BLOCKED] = TRANSPORTER_STATUS.BLOCKED, _SERVER_DISCONNECT_ST);
   var TRANSPORTER_STATUS_NEED_UPDATE_CMP = [TRANSPORTER_STATUS.CLOSE_NORMAL, TRANSPORTER_STATUS.CLOSE_GOING_AWAY, TRANSPORTER_STATUS.CLOSE_PROTOCOL_ERROR, TRANSPORTER_STATUS.CLOSE_UNSUPPORTED, TRANSPORTER_STATUS.UNSUPPORTED_DATA, TRANSPORTER_STATUS.POLICY_VIOLATION, TRANSPORTER_STATUS.MISSING_EXTENSION, TRANSPORTER_STATUS.INTERNAL_ERROR, TRANSPORTER_STATUS.SERVICE_RESTART, TRANSPORTER_STATUS.TRY_AGAIN_LATER, TRANSPORTER_STATUS.TSL_HANDSHAKE, TRANSPORTER_STATUS.PING_FIRST_TIMEOUT, TRANSPORTER_STATUS.DISCONNECT_TOO_FAST, TRANSPORTER_STATUS.COMET_REQUEST_ERROR];
@@ -296,7 +300,7 @@
   var IM_PING_MIN_TIMEOUT = 2000;
   var HTTP_TIMEOUT = 60000;
   var PULL_MSG_TIME = 180000;
-  var NAVI_EXPIRED_TIME = 10800000;
+  var NAVI_EXPIRED_TIME = 7200000;
   var CMP_SNIFF_INTERNAL_TIME = 1000;
   var FIRST_PING_TIMEOUT = 1000;
   var NAVI_REQUEST_SUCCESS_CODE = 200;
@@ -361,7 +365,7 @@
   var CMP_URL_TPL = '{protocol}//{domain}/websocket?appId={appkey}&token={token}&apiVer={apiVer}&sdkVer=' + SDK_VERSION;
   var COMET_REQ_HAS_TOPIC_URL_TPL = '{protocol}//{domain}/websocket?messageid={messageId}&header={headerCode}&sessionid={sessionId}&topic={topic}&targetid={targetId}&pid={pid}';
   var COMET_REQ_NO_TOPIC_URL_TPL = '{protocol}//{domain}/websocket?messageid={messageId}&header={headerCode}&sessionid={sessionId}&pid={pid}';
-  var COMET_PULL_URL_TPL = '{protocol}//{domain}/pullmsg.js?sessionid={sessionId}&timestamp={timestamp}&pid={pid}';
+  var COMET_PULL_URL_TPL = '{protocol}//{domain}/pullmsg.js?sessionid={sessionId}&timestrap={timestamp}&pid={pid}';
   var TIMER_TYPE = {
     INTERVAL: 'interval',
     TIMEOUT: 'timeout'
@@ -378,23 +382,37 @@
     return global !== window;
   };
 
+  var hasMiniBaseEvent = function hasMiniBaseEvent(miniGlobal) {
+    var baseMiniEventNames = ['canIUse', 'getSystemInfo'];
+
+    for (var i = 0, max = baseMiniEventNames.length; i < max; i++) {
+      var baseEventName = baseMiniEventNames[i];
+
+      if (!miniGlobal[baseEventName]) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   var getEnvInfo = function getEnvInfo() {
-    if (typeof wx !== 'undefined') {
+    if (typeof wx !== 'undefined' && hasMiniBaseEvent(wx)) {
       return {
         platform: PLATFORM.WX,
         global: wx
       };
-    } else if (typeof swan !== 'undefined') {
+    } else if (typeof swan !== 'undefined' && hasMiniBaseEvent(swan)) {
       return {
         platform: PLATFORM.BAIDU,
         global: swan
       };
-    } else if (typeof tt !== 'undefined') {
+    } else if (typeof tt !== 'undefined' && hasMiniBaseEvent(tt)) {
       return {
         platform: PLATFORM.TT,
         global: tt
       };
-    } else if (typeof my !== 'undefined') {
+    } else if (typeof my !== 'undefined' && hasMiniBaseEvent(my)) {
       return {
         platform: PLATFORM.ZFB,
         global: my
@@ -3233,15 +3251,28 @@
       });
 
       self._socket.onError(function (data) {
+        data = self._formatCloseData(data);
         self.eventEmitter.emit(KEY.ERROR, data);
       });
 
       self._socket.onClose(function (data) {
+        data = self._formatCloseData(data);
         self.eventEmitter.emit(KEY.CLOSE, data);
       });
     }
 
     var _proto = RCSocket.prototype;
+
+    _proto._formatCloseData = function _formatCloseData(data) {
+      if (env.isMini) {
+        data = data || {};
+        var _data = data,
+            errMsg = _data.errMsg;
+        data.code = MINI_ERROR_MSG_TO_STATUS[errMsg];
+      }
+
+      return data;
+    };
 
     _proto.send = function send(data) {
       return this._socket.send(data);
@@ -3274,13 +3305,13 @@
 
   var RCStorage = function () {
     function RCStorage(suffix) {
-      var _ref;
+      var _utils$Cache;
 
       this._cache = void 0;
       this.STORAGE_KEY = void 0;
       var storageKey = suffix ? STORAGE_ROOT_KEY + suffix : STORAGE_ROOT_KEY;
       var localCache = utils.Storage.get(storageKey) || {};
-      this._cache = new utils.Cache((_ref = {}, _ref[storageKey] = localCache, _ref));
+      this._cache = new utils.Cache((_utils$Cache = {}, _utils$Cache[storageKey] = localCache, _utils$Cache));
       this.STORAGE_KEY = storageKey;
     }
 
@@ -3499,6 +3530,10 @@
   };
 
   var getConnectType = function getConnectType(option) {
+    if (env.isMini) {
+      return CONNECT_TYPE.COMET;
+    }
+
     var connectType = option.connectType;
     var isSpecifiedSocket = connectType === CONNECT_TYPE.WEBSOCKET;
     var isSocket = isSpecifiedSocket && utils.isSupportSocket();
@@ -3866,7 +3901,7 @@
       this._option = void 0;
       this._transporterEventEmiiter = new EventEmitter$2();
       this._deferHandler = new DeferHandler$2();
-      this._pid = utils.getCurrentTimestamp() + Math.random() + '';
+      this._pid = utils.encodeURI(utils.getCurrentTimestamp() + Math.random() + '');
       this._domain = void 0;
       this._sessionid = void 0;
       this._xhrCache = new utils.Cache();
@@ -3897,11 +3932,20 @@
       });
       var xhr = httpRequest({
         url: url,
+        body: {
+          pid: _pid
+        },
+        timeout: IM_COMET_PULLMSG_TIMEOUT,
         success: function success(responseText) {
           _pullSignalTimer.stop();
 
-          self.handleCometResponse(responseText);
-          !self._isDisconnected && self._startPullSignal();
+          var isSuccess = self.handleCometResponse(responseText);
+
+          if (isSuccess) {
+            !self._isDisconnected && self._startPullSignal();
+          } else if (!self._isDisconnected) {
+            _transporterEventEmiiter.emit(TRANSPORT_EVENT.STATUS, TRANSPORTER_STATUS.COMET_REQUEST_ERROR);
+          }
 
           self._xhrCache.remove(url);
         },
@@ -3940,6 +3984,7 @@
     _proto.connect = function connect(user, option) {
       var self = this;
       var _transporterEventEmiiter = self._transporterEventEmiiter,
+          _pid = self._pid,
           _self$_option = self._option,
           appkey = _self$_option.appkey,
           connectType = _self$_option.connectType;
@@ -3971,7 +4016,11 @@
         return isConnectSuccess ? Defer$1.resolve(response) : Defer$1.reject(response);
       };
 
-      return request$4(url).then(success).then(function (response) {
+      return request$4(url, {
+        body: {
+          pid: _pid
+        }
+      }).then(success).then(function (response) {
         _transporterEventEmiiter.emit(TRANSPORT_EVENT.STATUS, CONNECTION_STATUS.CONNECTED);
 
         self._sessionid = response.sessionid;
@@ -4037,7 +4086,7 @@
     _proto.handleCometResponse = function handleCometResponse(responseText) {
       var self = this;
       var _transporterEventEmiiter = self._transporterEventEmiiter;
-      var response = utils.isObject(responseText) ? responseText : utils.parseJSON(responseText);
+      var response = utils.isString(responseText) ? utils.parseJSON(responseText) : responseText;
 
       if (!response) {
         return false;

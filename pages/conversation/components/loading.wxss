@@ -63,7 +63,7 @@
     transform: translateX(-50%);
     animation-delay:0.91s;
 }
- .rong-loading-process span:nth-child(8){
+.rong-loading-process span:nth-child(8){
     bottom: 6.5rpx;
     left: 6.5rpx;
     animation-delay:1.04s;

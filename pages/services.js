@@ -1,4 +1,4 @@
-const RongIMLib = require('./lib/RongIMLib-3.0.0.js');
+const RongIMLib = require('./lib/RongIMLib-3.0.2-dev.js');
 
 const utils = require('./utils/utils.js');
 const { UserList, GroupList, MusicList} = require('./mock.js');
@@ -428,7 +428,7 @@ let bindUserInfo = (list) => {
     conversation.content = formatMsg(latestMessage);
     let _type = type > 3 ? 10 : type;
     infoMap[_type](conversation);
-    conversation.target.name = targetId;
+    conversation.target.name = targetId + ' (' + type + ')';
     list[index] = conversation;
   });
 };
@@ -461,7 +461,6 @@ Status.disconnect = () => {
 Status.connect = (user) => {
   imInstance.watch({
     status: function ({ status }) {
-      console.log('status changed', status);
       Status.watcher.notify(status);
     },
     message: function ({ message  }) {
@@ -526,7 +525,8 @@ let modules = {
   Friend,
   Status,
   File,
-  ConnectionStatus: RongIMLib.CONNECTION_STATUS
+  ConnectionStatus: RongIMLib.CONNECTION_STATUS,
+  CONNECTION_STATUS: RongIMLib.CONNECTION_STATUS
 };
 module.exports = (_config) => {
   utils.extend(config, _config);
