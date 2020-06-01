@@ -16,7 +16,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow:hidden;
-  width: 70%;
+  width: 50%;
 }
 .rong-conversation-title{
   color: #333;
@@ -46,4 +46,26 @@
   position: absolute;
   top: 20rpx;
   right: 20rpx;
+}
+
+.isTop {
+  position: absolute;
+  bottom:0;
+  right: 0;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  font-size: 12px;
+}
+.isTophover {
+  opacity: 0.9;
+  background: #f7f7f7;
+}
+
+.isDisturb {
+  position: absolute;
+  bottom: 0;
+  right: 50px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  font-size: 12px;
 }

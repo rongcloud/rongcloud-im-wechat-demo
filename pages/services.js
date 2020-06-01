@@ -130,7 +130,7 @@ let getUser = (user) => {
   let _user = utils.extend(UserList[index], {
     token: user.token
   });
-  // utils.extend(_user, user);
+  // let _user = UserList[index]
   return _user
 };
 
@@ -447,11 +447,15 @@ Conversation.watch = (watcher) => {
         conversationList,
         updatedConversationList
       });
+      console.log(conversationList);
       bindUserInfo(conversationList);
       watcher(conversationList);
     }
   });
 };
+Conversation.setStatus = (conversation, options) => {
+  return imInstance.Conversation.get(conversation).setStatus(options);
+}
 let Status = {
   watcher: new ObserverList()
 };
