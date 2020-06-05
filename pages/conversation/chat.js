@@ -327,11 +327,12 @@ const getMoreMessages = (context) => {
 const sendImage =  (context) => {
   wx.chooseImage({
     count: 1,
-    sizeType: ['compressed'],
+    sizeType: ['original'],
     sourceType: ['album', 'camera'],
     success: (res) => {
-      let { tempFilePaths } = res;
+      let { tempFilePaths, tempFiles } = res;
       let tempFilePath = tempFilePaths[0];
+      console.log('tempFilePath',tempFilePath)
       wx.getImageInfo({
         src: tempFilePath,
         success: (res) => {
@@ -359,8 +360,9 @@ const sendImage =  (context) => {
           File.upload({
             path: tempFilePath,
             name: 'image.png'
-          }, 1).then(result => {
+          }, 1, tempFiles[0]).then(result => {
             let { downloadUrl: imageUri } = result;
+            console.log('image url:', imageUri)
             Message.sendImage({
               type,
               targetId,

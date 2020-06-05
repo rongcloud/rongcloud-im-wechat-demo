@@ -1,4 +1,13 @@
-const RongIMLib = require('./lib/RongIMLib-3.0.2-dev.js');
+
+/**
+ * RongIMLib-3.0.2-dev.js 该 SDK 为会话状态分支 SDK
+*/
+// const RongIMLib = require('./lib/RongIMLib-3.0.2-dev.js');
+
+/**
+ * RongIMLib-3.0.2-upload.js 该 SDK 为 BOS 上传分支 SDK, 调用 getFileUrl 会返回上传必要的 header 头 Authorization（ bosToken ） 、 x-bce-date （ bosDate ） 
+*/
+const RongIMLib = require('./lib/RongIMLib-3.0.2-upload.js');
 
 const utils = require('./utils/utils.js');
 const { UserList, GroupList, MusicList} = require('./mock.js');
@@ -494,33 +503,67 @@ Status.watch = (watch) => {
 
 let File = {};
 
-const wxUpload = (file, token) => {
+const wxUpload = (file, token, header, uploadUrl, fileInfo) => {
   return new Promise((resolve, reject) => {
-    wx.uploadFile({
-      url: 'https://upload.qiniup.com',
-      filePath: file.path,
+    console.log('upload path:', file.path)
+    const uploadTask =  wx.uploadFile({
+      url: config.qiniuHost || uploadUrl,
+      filePath: fileInfo.path,
       name: 'file',
-      formData: {
-        token: token
-      },
+      // formData: {
+      //   token: token
+      // },
+      header: header || '',
       success: resolve,
-      error: reject
+      fail: reject
+    })
+
+    uploadTask.onProgressUpdate(res => {
+      console.log('上传进度', res.progress)
+      console.log('已经上传的数据长度', res.totalBytesSent)
+      console.log('预期需要上传的数据总长度', res.totalBytesExpectedToSend)
     })
   });
 };
 
-File.upload = (file, uploadType) => {
+// File.upload = (file, uploadType) => {
+//   let fileType = uploadType || RongIMLib.FILE_TYPE.FILE;
+//   return imInstance.getFileToken(fileType).then((result) => {
+//     let { token } = result;
+//     let uploadUrl = 'https://upload.qiniup.com';
+//     return wxUpload(file, token, null, uploadUrl);
+//   }).then((res) => {
+//     var data = res.data
+//     var result = JSON.parse(data);
+//     var hash = result.hash;
+//     return imInstance.getFileUrl(fileType, hash, file.name || 'file');
+//   })
+// };
+
+File.upload = (file, uploadType, fileInfo) => {
   let fileType = uploadType || RongIMLib.FILE_TYPE.FILE;
-  return imInstance.getFileToken(fileType).then((result) => {
-    let { token } = result;
-    return wxUpload(file, token);
-  }).then((res) => {
-    var data = res.data
-    var result = JSON.parse(data);
-    var hash = result.hash;
-    return imInstance.getFileUrl(fileType, hash, file.name || 'file');
+  let fileName = file.name || '';
+  let bosUrl;
+  return imInstance.getFileToken(fileType, fileName).then(result => {
+    let { token, bosToken, bosDate, path } = result;
+    let header = {
+      'authorization': bosToken,
+      'x-bce-date': bosDate,
+      'Content-Length': fileInfo.size.toString(),
+    }
+    bosUrl = 'https://gz.bcebos.com' + path;
+    return wxUpload(file, token, header, bosUrl, fileInfo)
+  }).then(res => {
+    var result = {
+      downloadUrl: bosUrl,
+      isBosRes: true
+    }
+    var hash = null;
+    return imInstance.getFileUrl(fileType, hash, file.name, result);
+  }).catch(err => {
+    console.log('err', err)
   });
-};
+}
 
 let modules = {
   User,
