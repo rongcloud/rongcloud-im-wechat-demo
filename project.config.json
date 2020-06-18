@@ -7,8 +7,8 @@
 		"preloadBackgroundData": false,
 		"minified": false,
 		"newFeature": true,
-		"coverView": true,
 		"autoAudits": false,
+		"coverView": true,
 		"showShadowRootInWxmlPanel": true,
 		"scopeDataCheck": false,
 		"checkInvalidKey": true,
@@ -23,9 +23,9 @@
 		"userConfirmedUseCompilerModuleSwitch": false
 	},
 	"compileType": "miniprogram",
-	"libVersion": "2.1.1",
-	"appid": "wx0b46e2419558c2a1",
-	"projectname": "rongcloud-miniapp",
+	"libVersion": "2.10.4",
+	"appid": "wx97828bacbc4a24f3",
+	"projectname": "mini-app-release-v3",
 	"simulatorType": "wechat",
 	"simulatorPluginLibVersion": {},
 	"condition": {

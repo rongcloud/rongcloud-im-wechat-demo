@@ -156,3 +156,7 @@
   background-image: url('http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-music.png');
   height: 35px;
 }
+
+.rong-editor-module-file{
+  background-image: url('http://gz.bcebos.com/v1/rongcloud-image/1__RC-2020-6-8_801_1591602970942118ba250-962e-466a-ae75-016c23462b45.png');
+}
