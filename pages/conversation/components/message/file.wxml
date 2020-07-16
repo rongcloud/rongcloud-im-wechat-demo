@@ -1,0 +1,6 @@
+<view class='rong-file'>
+  <view class='rong-file-name'>文件名:{{message.content.name}}</view>
+  <view class='rong-file-size'>大小:{{message.content.size}}</view>
+  <view class='rong-file-url'>可下载地址:</view>
+  <text class='rong-file-url' bindtap="downloadFile">{{message.content.fileUrl}}</text>
+</view>

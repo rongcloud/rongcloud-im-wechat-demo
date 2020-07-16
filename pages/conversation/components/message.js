@@ -18,6 +18,9 @@ Component({
     },
     './message/voice': {
       type: 'child'
+    },
+    './message/file': {
+      type: 'child'
     }
   },
   /**

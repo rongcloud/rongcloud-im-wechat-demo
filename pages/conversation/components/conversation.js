@@ -30,7 +30,13 @@ Component({
       }).then(() => {
         console.log('setTop succ');
       }).catch(err => {
-        console.log('setTop err', err)
+        console.log('setTop err', err);
+        var msg = topStatus ? '设置置顶失败' :'取消置顶失败'
+        wx.showToast({
+          title: msg,
+          icon: 'error',
+          duration: 1000
+        });
       })
     },
     setDisturb() {
@@ -43,7 +49,13 @@ Component({
       }).then(() => {
         console.log('setDisturb succ');
       }).catch(err => {
-        console.log('setDisturb err', err)
+        console.log('setDisturb err', err);
+        let msg = conversation.notificationStatus == 1 ? '开启免打扰失败' : '关闭免打扰失败';
+        wx.showToast({
+          title: msg,
+          icon: 'error',
+          duration: 1000
+        });
       })
     }
   }
