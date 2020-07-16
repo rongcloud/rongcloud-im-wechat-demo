@@ -7,7 +7,7 @@
 /**
  * RongIMLib-3.0.2-upload.js 该 SDK 为 BOS 上传分支 SDK, 调用 getFileUrl 会返回上传必要的 header 头 Authorization（ bosToken ） 、 x-bce-date （ bosDate ） 
 */
-const RongIMLib = require('./lib/RongIMLib-3.0.2-upload.js');
+const RongIMLib = require('./lib/RongIMLib-3.0.5-dev.js');
 
 const utils = require('./utils/utils.js');
 const { UserList, GroupList, MusicList} = require('./mock.js');
@@ -492,6 +492,8 @@ Status.connect = (user) => {
     return imInstance.connect(user).then((result) => {
       currentUser.id = result.id;
       return result;
+    }).catch((error) => {
+      console.log(error);
     });
   });
 };
