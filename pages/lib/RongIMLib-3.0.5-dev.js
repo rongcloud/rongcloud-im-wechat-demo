@@ -1,7 +1,7 @@
 /*
 * RongIMLib.js v3.0.5-dev
-* CodeVersion: 84f70483f7407f31c065e53e4331d66b088128f0
-* Release Date: Thu Jul 16 2020 10:24:43 GMT+0800 (GMT+08:00)
+* CodeVersion: 38e13212284015eff208f8969a844cf7c348dc5a
+* Release Date: Thu Jul 30 2020 17:15:28 GMT+0800 (China Standard Time)
 * Copyright 2020 RongCloud
 * Released under the MIT License.
 */
@@ -377,6 +377,12 @@
       INBOX: 'in'
     }
   };
+  var SESSION_SYNC_TIME = {
+    ROOT_KEY_TPL: 'sync-{appkey}-{userId}',
+    SUB_KEY: {
+      TIME: 't'
+    }
+  };
   var STORAGE_CONVERSATION = {
     ROOT_KEY_TPL: 'con-{appkey}-{userId}',
     SUB_KEY: {
@@ -435,6 +441,9 @@
     MINI: 'MiniProgram',
     WEB: 'Web'
   };
+  var SESSION_SYNC_CHATROOM = {
+    ROOT_KEY_TPL: 'sync-chrm-{appkey}-{userId}'
+  };
 
   var UnKown = 'UnKown';
 
@@ -452,8 +461,18 @@
     return true;
   };
 
-  var isAppPlusEnv = function isAppPlusEnv() {
+  var isFromUniappEnv = function isFromUniappEnv() {
     if (typeof uni !== 'undefined' && hasMiniBaseEvent(uni)) {
+      return true;
+    }
+
+    return false;
+  };
+
+  var isFromUniapp = isFromUniappEnv();
+
+  var isAppPlusEnv = function isAppPlusEnv() {
+    if (isFromUniapp) {
       var systemInfo = uni.getSystemInfoSync();
 
       if (['ios', 'android'].includes(systemInfo.platform) && systemInfo.version) {
@@ -631,7 +650,8 @@
     system: system,
     isMini: isMini,
     protocol: protocol,
-    isAppPlus: isAppPlus
+    isAppPlus: isAppPlus,
+    isFromUniapp: isFromUniapp
   };
 
   var global$2 = env.global,
@@ -1567,6 +1587,14 @@
   };
 
   var isInclude = function isInclude(source, searchVal) {
+    if (isObject(source)) {
+      var arr = [];
+      forEach(source, function (val) {
+        arr.push(val);
+      });
+      source = arr;
+    }
+
     var index = indexOf(source, searchVal);
     return index !== -1;
   };
@@ -1966,15 +1994,18 @@
     }
 
     var url = urlList[0];
+    var fixedNaviResp = {
+      'responseText': '{"isFixedNaviResp":true}'
+    };
     return request$2(url, options).then(function (result) {
       result = result || {};
       result.urlList = urlList;
       return result;
-    })["catch"](function (error) {
+    })["catch"](function () {
       urlList.splice(0, 1);
 
       if (isEmpty(urlList)) {
-        return Defer.reject(error);
+        return fixedNaviResp;
       } else {
         return requestByUrlList(urlList, options);
       }
@@ -2454,7 +2485,8 @@
   };
   var PUBLISH_STATUS_TOPIC = {
     PRIVATE: 'ppMsgS',
-    GROUP: 'pgMsgS'
+    GROUP: 'pgMsgS',
+    CHATROOM: 'chatMsgS'
   };
   var QUERY_TOPIC = {
     GET_SYNC_TIME: 'qrySessionsAtt',
@@ -2466,6 +2498,7 @@
     PULL_USER_SETTING: 'pullUS',
     PULL_CHRM_MSG: 'chrmPull',
     JOIN_CHATROOM: 'joinChrm',
+    JOIN_EXIST_CHATROOM: 'joinChrmR',
     QUIT_CHATROOM: 'exitChrm',
     GET_CHATROOM_INFO: 'queryChrmI',
     UPDATE_CHATROOM_KV: 'setKV',
@@ -2487,6 +2520,7 @@
     QUIT_RTC_ROOM: 'rtcRExit',
     PING_RTC: 'rtcPing',
     SET_RTC_DATA: 'rtcSetData',
+    USER_SET_RTC_DATA: 'userSetData',
     GET_RTC_DATA: 'rtcQryData',
     DEL_RTC_DATA: 'rtcDelData',
     SET_RTC_OUT_DATA: 'rtcSetOutData',
@@ -2515,7 +2549,7 @@
     OVERWRITE: 0x0002,
     OPERATE: 0x0004
   };
-  var PUBLISH_TOPIC_TO_CONVERSATION_TYPE = (_PUBLISH_TOPIC_TO_CON = {}, _PUBLISH_TOPIC_TO_CON[PUBLISH_TOPIC.PRIVATE] = CONVERSATION_TYPE.PRIVATE, _PUBLISH_TOPIC_TO_CON[PUBLISH_TOPIC.GROUP] = CONVERSATION_TYPE.GROUP, _PUBLISH_TOPIC_TO_CON[PUBLISH_TOPIC.CHATROOM] = CONVERSATION_TYPE.CHATROOM, _PUBLISH_TOPIC_TO_CON[PUBLISH_TOPIC.CUSTOMER_SERVICE] = CONVERSATION_TYPE.CUSTOMER_SERVICE, _PUBLISH_TOPIC_TO_CON);
+  var PUBLISH_TOPIC_TO_CONVERSATION_TYPE = (_PUBLISH_TOPIC_TO_CON = {}, _PUBLISH_TOPIC_TO_CON[PUBLISH_TOPIC.PRIVATE] = CONVERSATION_TYPE.PRIVATE, _PUBLISH_TOPIC_TO_CON[PUBLISH_TOPIC.GROUP] = CONVERSATION_TYPE.GROUP, _PUBLISH_TOPIC_TO_CON[PUBLISH_TOPIC.CHATROOM] = CONVERSATION_TYPE.CHATROOM, _PUBLISH_TOPIC_TO_CON[PUBLISH_TOPIC.CUSTOMER_SERVICE] = CONVERSATION_TYPE.CUSTOMER_SERVICE, _PUBLISH_TOPIC_TO_CON[PUBLISH_STATUS_TOPIC.PRIVATE] = CONVERSATION_TYPE.PRIVATE, _PUBLISH_TOPIC_TO_CON[PUBLISH_STATUS_TOPIC.GROUP] = CONVERSATION_TYPE.GROUP, _PUBLISH_TOPIC_TO_CON[PUBLISH_STATUS_TOPIC.CHATROOM] = CONVERSATION_TYPE.CHATROOM, _PUBLISH_TOPIC_TO_CON);
   var CONVERSATION_TYPE_TO_PUBLISH_TOPIC = (_CONVERSATION_TYPE_TO = {}, _CONVERSATION_TYPE_TO[CONVERSATION_TYPE.PRIVATE] = PUBLISH_TOPIC.PRIVATE, _CONVERSATION_TYPE_TO[CONVERSATION_TYPE.GROUP] = PUBLISH_TOPIC.GROUP, _CONVERSATION_TYPE_TO[CONVERSATION_TYPE.CHATROOM] = PUBLISH_TOPIC.CHATROOM, _CONVERSATION_TYPE_TO[CONVERSATION_TYPE.CUSTOMER_SERVICE] = PUBLISH_TOPIC.CUSTOMER_SERVICE, _CONVERSATION_TYPE_TO);
   var CONVERSATION_TYPE_TO_PUBLISH_STATUS_TOPIC = (_CONVERSATION_TYPE_TO2 = {}, _CONVERSATION_TYPE_TO2[CONVERSATION_TYPE.PRIVATE] = PUBLISH_STATUS_TOPIC.PRIVATE, _CONVERSATION_TYPE_TO2[CONVERSATION_TYPE.GROUP] = PUBLISH_STATUS_TOPIC.GROUP, _CONVERSATION_TYPE_TO2);
   var CONVERSATION_TYPE_TO_QUERY_HISTORY_TOPIC = (_CONVERSATION_TYPE_TO3 = {}, _CONVERSATION_TYPE_TO3[CONVERSATION_TYPE.PRIVATE] = QUERY_HISTORY_TOPIC.PRIVATE, _CONVERSATION_TYPE_TO3[CONVERSATION_TYPE.GROUP] = QUERY_HISTORY_TOPIC.GROUP, _CONVERSATION_TYPE_TO3[CONVERSATION_TYPE.CHATROOM] = QUERY_HISTORY_TOPIC.CHATROOM, _CONVERSATION_TYPE_TO3[CONVERSATION_TYPE.CUSTOMER_SERVICE] = QUERY_HISTORY_TOPIC.CUSTOMER_SERVICE, _CONVERSATION_TYPE_TO3[CONVERSATION_TYPE.SYSTEM] = QUERY_HISTORY_TOPIC.SYSTEM, _CONVERSATION_TYPE_TO3);
@@ -3339,6 +3373,7 @@
     PING_RTC: 'RTCPing',
     GET_RTC_ROOM_INFO: 'getRTCRoomInfo',
     SET_RTC_DATA: 'setRTCData',
+    SET_RTC_USER_DATA: 'setRTCUserData',
     GET_RTC_DATA: 'getRTCData',
     DEL_RTC_DATA: 'removeRTCData',
     SET_RTC_OUT_DATA: 'setRTCOutData',
@@ -3358,7 +3393,8 @@
     STATUS: 'status',
     MESSAGE: 'message',
     CONVERSATION: 'conversation',
-    SETTING: 'setting'
+    SETTING: 'setting',
+    CHATROOM: 'chatroom'
   };
   var TRANSPORT_EVENT = {
     SIGNAL: 'signal',
@@ -3407,7 +3443,8 @@
     L_PULL_CHRM_KV_T: 'L-pull-chrm-kv-T',
     L_PULL_CHRM_KV_R: 'L-pull-chrm-kv-R',
     L_PING_S: 'L-ping-S',
-    L_CRASH_F: 'L-crash_web-F',
+    L_CRASH_E: 'L-crash-E',
+    L_COMET_SEND_SIGNAL_E: 'L-comet_send_signal-E',
     A_INIT_O: 'A-init-O',
     A_CONNECT_T: 'A-connect-T',
     A_CONNECT_R: 'A-connect-R',
@@ -3462,8 +3499,7 @@
   };
 
   var isEmpty$1 = utils.isEmpty,
-      tplEngine$1 = utils.tplEngine,
-      getRandomNum$1 = utils.getRandomNum;
+      tplEngine$1 = utils.tplEngine;
 
   var getTransporterUrl = function getTransporterUrl(option) {
     var domain = option.domain,
@@ -3482,7 +3518,7 @@
       domain: domain,
       appkey: appkey,
       protocol: protocol,
-      apiVer: getRandomNum$1(1e6),
+      apiVer: env.isFromUniapp ? 'uniapp' : 'normal',
       token: utils.encodeURI(token)
     };
 
@@ -3517,7 +3553,8 @@
     var isStatusMessage = option.isStatusMessage;
     var isPersited = option.isPersited,
         isCounted = option.isCounted,
-        isMentiond = option.isMentiond;
+        isMentiond = option.isMentiond,
+        disableNotification = option.disableNotification;
 
     if (isStatusMessage) {
       isPersited = isCounted = false;
@@ -3535,6 +3572,10 @@
 
     if (isMentiond) {
       sessionId = sessionId | 0x04;
+    }
+
+    if (disableNotification) {
+      sessionId = sessionId | 0x20;
     }
 
     return sessionId;
@@ -3570,17 +3611,36 @@
     };
   };
 
+  var getPersitedAndCountedAndSlientBySessionId = function getPersitedAndCountedAndSlientBySessionId(sessionId) {
+    var binaryNum = Number(sessionId).toString(2);
+    var sessionIdArr = [];
+
+    for (var i = 0; i < binaryNum.length; i++) {
+      var index = binaryNum.length - 1 - i;
+      sessionIdArr.push(Number(binaryNum[index]));
+    }
+
+    return {
+      isPersited: Boolean(sessionIdArr[0]),
+      isCounted: Boolean(sessionIdArr[1]),
+      disableNotification: Boolean(sessionIdArr[5])
+    };
+  };
+
   var getMessageOptionByStatus = function getMessageOptionByStatus(status) {
     var isPersited = true,
         isCounted = true,
-        isMentiond = false;
+        isMentiond = false,
+        disableNotification = false;
     isPersited = !!(status & 0x10);
     isCounted = !!(status & 0x20);
     isMentiond = !!(status & 0x40);
+    disableNotification = !!(status & 0x200);
     return {
       isPersited: isPersited,
       isCounted: isCounted,
-      isMentiond: isMentiond
+      isMentiond: isMentiond,
+      disableNotification: disableNotification
     };
   };
 
@@ -3680,13 +3740,13 @@
 
   var RCStorage = function () {
     function RCStorage(suffix) {
-      var _utils$Cache;
+      var _ref;
 
       this._cache = void 0;
       this.STORAGE_KEY = void 0;
       var storageKey = suffix ? STORAGE_ROOT_KEY + suffix : STORAGE_ROOT_KEY;
       var localCache = utils.Storage.get(storageKey) || {};
-      this._cache = new utils.Cache((_utils$Cache = {}, _utils$Cache[storageKey] = localCache, _utils$Cache));
+      this._cache = new utils.Cache((_ref = {}, _ref[storageKey] = localCache, _ref));
       this.STORAGE_KEY = storageKey;
     }
 
@@ -3822,15 +3882,40 @@
     return MessageTimeSyner;
   }();
 
-  var ChatRoomMessageTimeSyner = {
-    _pullTimes: {},
-    set: function set(chrmId, time) {
+  var ChatRoomMessageTimeSyner = function () {
+    function ChatRoomMessageTimeSyner(option) {
+      this._rootKey = void 0;
+      this._pullTimes = {};
+      option = option || {};
+      var _option2 = option,
+          appkey = _option2.appkey,
+          userId = _option2.userId;
+      this._rootKey = utils.tplEngine(SESSION_SYNC_TIME.ROOT_KEY_TPL, {
+        appkey: appkey,
+        userId: userId
+      });
+    }
+
+    var _proto4 = ChatRoomMessageTimeSyner.prototype;
+
+    _proto4.set = function set(chrmId, time) {
       this._pullTimes[chrmId] = time;
-    },
-    get: function get(chrmId) {
-      return this._pullTimes[chrmId] || 0;
-    },
-    setByMessage: function setByMessage(msg) {
+      utils.Session.set(this._rootKey, this._pullTimes);
+    };
+
+    _proto4.get = function get(chrmId) {
+      var pullTimes;
+
+      if (utils.isEmpty(this._pullTimes)) {
+        pullTimes = utils.Session.get(this._rootKey) || {};
+      } else {
+        pullTimes = this._pullTimes;
+      }
+
+      return pullTimes[chrmId] || 0;
+    };
+
+    _proto4.setByMessage = function setByMessage(msg) {
       var sentTime = msg.sentTime;
       var chrmId = msg.targetId;
       var beforeTime = this.get(chrmId);
@@ -3838,8 +3923,82 @@
       if (beforeTime < sentTime) {
         this.set(chrmId, sentTime);
       }
+    };
+
+    return ChatRoomMessageTimeSyner;
+  }();
+
+  var JoinedChatRoomSyner = function () {
+    function JoinedChatRoomSyner(option) {
+      this._rootKey = void 0;
+      this._joinedChatRoomInfos = [];
+      option = option || {};
+      var _option3 = option,
+          appkey = _option3.appkey,
+          userId = _option3.userId;
+      this._rootKey = utils.tplEngine(SESSION_SYNC_CHATROOM.ROOT_KEY_TPL, {
+        appkey: appkey,
+        userId: userId
+      });
     }
-  };
+
+    var _proto5 = JoinedChatRoomSyner.prototype;
+
+    _proto5.set = function set(option) {
+      var _this = this;
+
+      var chrmId = option.chrmId,
+          count = option.count,
+          isOpenJoinMulitpleChrmService = option.isOpenJoinMulitpleChrmService;
+      var backupJoinedChatRoomInfos = utils.copy(this._joinedChatRoomInfos);
+
+      if (isOpenJoinMulitpleChrmService) {
+        utils.forEach(backupJoinedChatRoomInfos, function (chrmInfo, index) {
+          if (chrmInfo.chrmId === option.chrmId) {
+            _this._joinedChatRoomInfos.splice(index, 1);
+          }
+        });
+
+        this._joinedChatRoomInfos.push({
+          chrmId: chrmId,
+          count: count
+        });
+      } else {
+        this._joinedChatRoomInfos = [{
+          chrmId: chrmId,
+          count: count
+        }];
+      }
+
+      utils.Session.set(this._rootKey, this._joinedChatRoomInfos);
+    };
+
+    _proto5.get = function get() {
+      if (utils.isEmpty(this._joinedChatRoomInfos)) {
+        return utils.Session.get(this._rootKey) || [];
+      } else {
+        return this._joinedChatRoomInfos;
+      }
+    };
+
+    _proto5.remove = function remove(chrmId) {
+      var joinedChatRoom = utils.isEmpty(this._joinedChatRoomInfos) ? this._joinedChatRoomInfos : utils.Session.get(this._rootKey);
+      if (utils.isEmpty(joinedChatRoom)) return;
+      utils.forEach(joinedChatRoom, function (chrmInfo, index) {
+        if (chrmInfo.chrmId === chrmId) {
+          return joinedChatRoom.splice(index, 1);
+        }
+      });
+      utils.Session.set(this._rootKey, joinedChatRoom);
+    };
+
+    _proto5.clear = function clear() {
+      this._joinedChatRoomInfos = [];
+      utils.Session.remove(this._rootKey);
+    };
+
+    return JoinedChatRoomSyner;
+  }();
 
   var getUIDByToken = function getUIDByToken(token) {
     return utils.md5(token).slice(8, 16);
@@ -4485,9 +4644,9 @@
 
   var mergeConversationList = function mergeConversationList(option) {
     option = option || {};
-    var _option2 = option,
-        conversationList = _option2.conversationList,
-        updatedConversationList = _option2.updatedConversationList;
+    var _option4 = option,
+        conversationList = _option4.conversationList,
+        updatedConversationList = _option4.updatedConversationList;
     var allConversationList = updatedConversationList.concat(conversationList);
     var hashTable = {};
     var newList = [];
@@ -4527,7 +4686,10 @@
       newList[invalidIndex] = fixConversationData(conversation);
     });
     newList = sortConList(newList);
-    return newList;
+    return utils.map(newList, function (item) {
+      delete item.updatedItems;
+      return item;
+    });
   };
 
   var common = {
@@ -4547,6 +4709,7 @@
     SignalId: SignalId,
     MessageTimeSyner: MessageTimeSyner,
     ChatRoomMessageTimeSyner: ChatRoomMessageTimeSyner,
+    JoinedChatRoomSyner: JoinedChatRoomSyner,
     getCMPDomainList: getCMPDomainList,
     getNaviListByToken: getNaviListByToken,
     getValidToken: getValidToken,
@@ -4574,7 +4737,8 @@
     genUploadFileName: genUploadFileName,
     getUploadFileDomains: getUploadFileDomains,
     mergeConversationList: mergeConversationList,
-    sortConList: sortConList
+    sortConList: sortConList,
+    getPersitedAndCountedAndSlientBySessionId: getPersitedAndCountedAndSlientBySessionId
   };
 
   var EventEmitter$1 = utils.EventEmitter,
@@ -4767,8 +4931,7 @@
 
     _proto2.handleConnAck = function handleConnAck(signal) {
       var self = this;
-      var _deferHandler = self._deferHandler,
-          _transporterEventEmiiter = self._transporterEventEmiiter;
+      var _deferHandler = self._deferHandler;
       var status = signal.status;
       var isConnected = status === SUCCESS_CODE;
       var event = isConnected ? _deferHandler.resolve : _deferHandler.reject;
@@ -4777,8 +4940,6 @@
       if (isConnected) {
         self._connectedTime = utils.getCurrentTimestamp();
       }
-
-      isConnected && _transporterEventEmiiter.emit(TRANSPORT_EVENT.STATUS, TRANSPORTER_STATUS.CONNECTED);
     };
 
     _proto2.disconnect = function disconnect() {
@@ -5091,7 +5252,7 @@
     },
     write: function write(log) {
       log = log || {};
-      log.tag = log.tag || TAG.L_CRASH_F;
+      log.tag = log.tag || TAG.L_CRASH_E;
       log.time = log.time || common.DelayTimer.getTime();
       log.type = log.type || LOG_TYPE.IM;
       LogStore.add(log);
@@ -5240,8 +5401,7 @@
 
     _proto.connect = function connect(user, option) {
       var self = this;
-      var _transporterEventEmiiter = self._transporterEventEmiiter,
-          _pid = self._pid,
+      var _pid = self._pid,
           _self$_option = self._option,
           appkey = _self$_option.appkey,
           connectType = _self$_option.connectType;
@@ -5278,8 +5438,6 @@
           pid: _pid
         }
       }).then(success).then(function (response) {
-        _transporterEventEmiiter.emit(TRANSPORT_EVENT.STATUS, CONNECTION_STATUS.CONNECTED);
-
         self._sessionid = response.sessionid;
 
         self._startPullSignal();
@@ -5328,7 +5486,7 @@
 
           self._xhrCache.remove(currentTime);
 
-          Logger.error(TAG.L_CRASH_F, {
+          Logger.error(TAG.L_COMET_SEND_SIGNAL_E, {
             content: {
               info: 'comet error',
               error: error
@@ -5436,6 +5594,7 @@
     RtcUserListOutput: 'RtcUserListOutput',
     SetUserStatusInput: 'SetUserStatusInput',
     RtcSetDataInput: 'RtcSetDataInput',
+    RtcUserSetDataInput: 'RtcUserSetDataInput',
     RtcDataInput: 'RtcDataInput',
     RtcSetOutDataInput: 'RtcSetOutDataInput',
     MCFollowInput: 'MCFollowInput',
@@ -5528,7 +5687,7 @@
   e.name=f,this.tn.skip("="),e.id=h(this.tn.next()),f=this.tn.peek(),"["===f&&this._parseFieldOptions(e),this.tn.skip(";");}return a.fields.push(e),e},g._parseMessageOneOf=function(a){var e,d,f,c=this.tn.next();if(!b.NAME.test(c))throw Error("illegal oneof name: "+c);for(d=c,f=[],this.tn.skip("{");"}"!==(c=this.tn.next());)e=this._parseMessageField(a,"optional",c),e.oneof=d,f.push(e.id);this.tn.omit(";"),a.oneofs[d]=f;},g._parseFieldOptions=function(a){this.tn.skip("[");for(var b,c=!0;"]"!==(b=this.tn.peek());)c||this.tn.skip(","),this._parseOption(a,!0),c=!1;this.tn.next();},g._parseEnum=function(a){var e,c={name:"",values:[],options:{}},d=this.tn.next();if(!b.NAME.test(d))throw Error("illegal name: "+d);for(c.name=d,this.tn.skip("{");"}"!==(d=this.tn.next());)if("option"===d)this._parseOption(c);else{if(!b.NAME.test(d))throw Error("illegal name: "+d);this.tn.skip("="),e={name:d,id:h(this.tn.next(),!0)},d=this.tn.peek(),"["===d&&this._parseFieldOptions({options:{}}),this.tn.skip(";"),c.values.push(e);}this.tn.omit(";"),a.enums.push(c);},g._parseExtensionRanges=function(){var c,d,e,b=[];do{for(d=[];;){switch(c=this.tn.next()){case"min":e=a.ID_MIN;break;case"max":e=a.ID_MAX;break;default:e=i(c);}if(d.push(e),2===d.length)break;if("to"!==this.tn.peek()){d.push(e);break}this.tn.next();}b.push(d);}while(this.tn.omit(","));return this.tn.skip(";"),b},g._parseExtend=function(a){var d,c=this.tn.next();if(!b.TYPEREF.test(c))throw Error("illegal extend reference: "+c);for(d={ref:c,fields:[]},this.tn.skip("{");"}"!==(c=this.tn.next());)if(b.RULE.test(c))this._parseMessageField(d,c);else{if(!b.TYPEREF.test(c))throw Error("illegal extend token: "+c);if(!this.proto3)throw Error("illegal field rule: "+c);this._parseMessageField(d,"optional",c);}return this.tn.omit(";"),a.messages.push(d),d},g.toString=function(){return "Parser at line "+this.tn.line},c.Parser=f,c}(e,e.Lang),e.Reflect=function(a){function k(b){if("string"==typeof b&&(b=a.TYPES[b]),"undefined"==typeof b.defaultValue)throw Error("default value for type "+b.name+" is not supported");return b==a.TYPES.bytes?new f(0):b.defaultValue}function l(b,c){if(b&&"number"==typeof b.low&&"number"==typeof b.high&&"boolean"==typeof b.unsigned&&b.low===b.low&&b.high===b.high)return new a.Long(b.low,b.high,"undefined"==typeof c?b.unsigned:c);if("string"==typeof b)return a.Long.fromString(b,c||!1,10);if("number"==typeof b)return a.Long.fromNumber(b,c||!1);throw Error("not convertible to Long")}function o(b,c){var d=c.readVarint32(),e=7&d,f=d>>>3;switch(e){case a.WIRE_TYPES.VARINT:do d=c.readUint8();while(128===(128&d));break;case a.WIRE_TYPES.BITS64:c.offset+=8;break;case a.WIRE_TYPES.LDELIM:d=c.readVarint32(),c.offset+=d;break;case a.WIRE_TYPES.STARTGROUP:o(f,c);break;case a.WIRE_TYPES.ENDGROUP:if(f===b)return !1;throw Error("Illegal GROUPEND after unknown group: "+f+" ("+b+" expected)");case a.WIRE_TYPES.BITS32:c.offset+=4;break;default:throw Error("Illegal wire type in unknown group "+b+": "+e)}return !0}var g,h,i,j,m,n,p,q,r,s,t,u,v,w,x,y,z,A,B,c={},d=function(a,b,c){this.builder=a,this.parent=b,this.name=c,this.className;},e=d.prototype;return e.fqn=function(){for(var a=this.name,b=this;;){if(b=b.parent,null==b)break;a=b.name+"."+a;}return a},e.toString=function(a){return (a?this.className+" ":"")+this.fqn()},e.build=function(){throw Error(this.toString(!0)+" cannot be built directly")},c.T=d,g=function(a,b,c,e,f){d.call(this,a,b,c),this.className="Namespace",this.children=[],this.options=e||{},this.syntax=f||"proto2";},h=g.prototype=Object.create(d.prototype),h.getChildren=function(a){var b,c,d;if(a=a||null,null==a)return this.children.slice();for(b=[],c=0,d=this.children.length;d>c;++c)this.children[c]instanceof a&&b.push(this.children[c]);return b},h.addChild=function(a){var b;if(b=this.getChild(a.name))if(b instanceof m.Field&&b.name!==b.originalName&&null===this.getChild(b.originalName))b.name=b.originalName;else{if(!(a instanceof m.Field&&a.name!==a.originalName&&null===this.getChild(a.originalName)))throw Error("Duplicate name in namespace "+this.toString(!0)+": "+a.name);a.name=a.originalName;}this.children.push(a);},h.getChild=function(a){var c,d,b="number"==typeof a?"id":"name";for(c=0,d=this.children.length;d>c;++c)if(this.children[c][b]===a)return this.children[c];return null},h.resolve=function(a,b){var g,d="string"==typeof a?a.split("."):a,e=this,f=0;if(""===d[f]){for(;null!==e.parent;)e=e.parent;f++;}do{do{if(!(e instanceof c.Namespace)){e=null;break}if(g=e.getChild(d[f]),!(g&&g instanceof c.T&&(!b||g instanceof c.Namespace))){e=null;break}e=g,f++;}while(f<d.length);if(null!=e)break;if(null!==this.parent)return this.parent.resolve(a,b)}while(null!=e);return e},h.qn=function(a){var e,f,b=[],d=a;do b.unshift(d.name),d=d.parent;while(null!==d);for(e=1;e<=b.length;e++)if(f=b.slice(b.length-e),a===this.resolve(f,a instanceof c.Namespace))return f.join(".");return a.fqn()},h.build=function(){var e,c,d,a={},b=this.children;for(c=0,d=b.length;d>c;++c)e=b[c],e instanceof g&&(a[e.name]=e.build());return Object.defineProperty&&Object.defineProperty(a,"$options",{value:this.buildOpt()}),a},h.buildOpt=function(){var c,d,e,f,a={},b=Object.keys(this.options);for(c=0,d=b.length;d>c;++c)e=b[c],f=this.options[b[c]],a[e]=f;return a},h.getOption=function(a){return "undefined"==typeof a?this.options:"undefined"!=typeof this.options[a]?this.options[a]:null},c.Namespace=g,i=function(b,c,d,e){if(this.type=b,this.resolvedType=c,this.isMapKey=d,this.syntax=e,d&&a.MAP_KEY_TYPES.indexOf(b)<0)throw Error("Invalid map key type: "+b.name)},j=i.prototype,i.defaultFieldValue=k,j.verifyValue=function(c){var f,g,h,d=function(a,b){throw Error("Illegal value for "+this.toString(!0)+" of type "+this.type.name+": "+a+" ("+b+")")}.bind(this);switch(this.type){case a.TYPES.int32:case a.TYPES.sint32:case a.TYPES.sfixed32:return ("number"!=typeof c||c===c&&0!==c%1)&&d(typeof c,"not an integer"),c>4294967295?0|c:c;case a.TYPES.uint32:case a.TYPES.fixed32:return ("number"!=typeof c||c===c&&0!==c%1)&&d(typeof c,"not an integer"),0>c?c>>>0:c;case a.TYPES.int64:case a.TYPES.sint64:case a.TYPES.sfixed64:if(a.Long)try{return l(c,!1)}catch(e){d(typeof c,e.message);}else d(typeof c,"requires Long.js");case a.TYPES.uint64:case a.TYPES.fixed64:if(a.Long)try{return l(c,!0)}catch(e){d(typeof c,e.message);}else d(typeof c,"requires Long.js");case a.TYPES.bool:return "boolean"!=typeof c&&d(typeof c,"not a boolean"),c;case a.TYPES["float"]:case a.TYPES["double"]:return "number"!=typeof c&&d(typeof c,"not a number"),c;case a.TYPES.string:return "string"==typeof c||c&&c instanceof String||d(typeof c,"not a string"),""+c;case a.TYPES.bytes:return b.isByteBuffer(c)?c:b.wrap(c);case a.TYPES["enum"]:for(f=this.resolvedType.getChildren(a.Reflect.Enum.Value),h=0;h<f.length;h++){if(f[h].name==c)return f[h].id;if(f[h].id==c)return f[h].id}if("proto3"===this.syntax)return ("number"!=typeof c||c===c&&0!==c%1)&&d(typeof c,"not an integer"),(c>4294967295||0>c)&&d(typeof c,"not in range for uint32"),c;d(c,"not a valid enum value");case a.TYPES.group:case a.TYPES.message:if(c&&"object"==typeof c||d(typeof c,"object expected"),c instanceof this.resolvedType.clazz)return c;if(c instanceof a.Builder.Message){g={};for(h in c)c.hasOwnProperty(h)&&(g[h]=c[h]);c=g;}return new this.resolvedType.clazz(c)}throw Error("[INTERNAL] Illegal value for "+this.toString(!0)+": "+c+" (undefined type "+this.type+")")},j.calculateLength=function(b,c){if(null===c)return 0;var d;switch(this.type){case a.TYPES.int32:return 0>c?f.calculateVarint64(c):f.calculateVarint32(c);case a.TYPES.uint32:return f.calculateVarint32(c);case a.TYPES.sint32:return f.calculateVarint32(f.zigZagEncode32(c));case a.TYPES.fixed32:case a.TYPES.sfixed32:case a.TYPES["float"]:return 4;case a.TYPES.int64:case a.TYPES.uint64:return f.calculateVarint64(c);case a.TYPES.sint64:return f.calculateVarint64(f.zigZagEncode64(c));case a.TYPES.fixed64:case a.TYPES.sfixed64:return 8;case a.TYPES.bool:return 1;case a.TYPES["enum"]:return f.calculateVarint32(c);case a.TYPES["double"]:return 8;case a.TYPES.string:return d=f.calculateUTF8Bytes(c),f.calculateVarint32(d)+d;case a.TYPES.bytes:if(c.remaining()<0)throw Error("Illegal value for "+this.toString(!0)+": "+c.remaining()+" bytes remaining");return f.calculateVarint32(c.remaining())+c.remaining();case a.TYPES.message:return d=this.resolvedType.calculate(c),f.calculateVarint32(d)+d;case a.TYPES.group:return d=this.resolvedType.calculate(c),d+f.calculateVarint32(b<<3|a.WIRE_TYPES.ENDGROUP)}throw Error("[INTERNAL] Illegal value to encode in "+this.toString(!0)+": "+c+" (unknown type)")},j.encodeValue=function(b,c,d){var e,g;if(null===c)return d;switch(this.type){case a.TYPES.int32:0>c?d.writeVarint64(c):d.writeVarint32(c);break;case a.TYPES.uint32:d.writeVarint32(c);break;case a.TYPES.sint32:d.writeVarint32ZigZag(c);break;case a.TYPES.fixed32:d.writeUint32(c);break;case a.TYPES.sfixed32:d.writeInt32(c);break;case a.TYPES.int64:case a.TYPES.uint64:d.writeVarint64(c);break;case a.TYPES.sint64:d.writeVarint64ZigZag(c);break;case a.TYPES.fixed64:d.writeUint64(c);break;case a.TYPES.sfixed64:d.writeInt64(c);break;case a.TYPES.bool:"string"==typeof c?d.writeVarint32("false"===c.toLowerCase()?0:!!c):d.writeVarint32(c?1:0);break;case a.TYPES["enum"]:d.writeVarint32(c);break;case a.TYPES["float"]:d.writeFloat32(c);break;case a.TYPES["double"]:d.writeFloat64(c);break;case a.TYPES.string:d.writeVString(c);break;case a.TYPES.bytes:if(c.remaining()<0)throw Error("Illegal value for "+this.toString(!0)+": "+c.remaining()+" bytes remaining");e=c.offset,d.writeVarint32(c.remaining()),d.append(c),c.offset=e;break;case a.TYPES.message:g=(new f).LE(),this.resolvedType.encode(c,g),d.writeVarint32(g.offset),d.append(g.flip());break;case a.TYPES.group:this.resolvedType.encode(c,d),d.writeVarint32(b<<3|a.WIRE_TYPES.ENDGROUP);break;default:throw Error("[INTERNAL] Illegal value to encode in "+this.toString(!0)+": "+c+" (unknown type)")}return d},j.decode=function(b,c,d){if(c!=this.type.wireType)throw Error("Unexpected wire type for element");var e,f;switch(this.type){case a.TYPES.int32:return 0|b.readVarint32();case a.TYPES.uint32:return b.readVarint32()>>>0;case a.TYPES.sint32:return 0|b.readVarint32ZigZag();case a.TYPES.fixed32:return b.readUint32()>>>0;case a.TYPES.sfixed32:return 0|b.readInt32();case a.TYPES.int64:return b.readVarint64();case a.TYPES.uint64:return b.readVarint64().toUnsigned();case a.TYPES.sint64:return b.readVarint64ZigZag();case a.TYPES.fixed64:return b.readUint64();case a.TYPES.sfixed64:return b.readInt64();case a.TYPES.bool:return !!b.readVarint32();case a.TYPES["enum"]:return b.readVarint32();case a.TYPES["float"]:return b.readFloat();case a.TYPES["double"]:return b.readDouble();case a.TYPES.string:return b.readVString();case a.TYPES.bytes:if(f=b.readVarint32(),b.remaining()<f)throw Error("Illegal number of bytes for "+this.toString(!0)+": "+f+" required but got only "+b.remaining());return e=b.clone(),e.limit=e.offset+f,b.offset+=f,e;case a.TYPES.message:return f=b.readVarint32(),this.resolvedType.decode(b,f);case a.TYPES.group:return this.resolvedType.decode(b,-1,d)}throw Error("[INTERNAL] Illegal decode type")},j.valueFromString=function(b){if(!this.isMapKey)throw Error("valueFromString() called on non-map-key element");switch(this.type){case a.TYPES.int32:case a.TYPES.sint32:case a.TYPES.sfixed32:case a.TYPES.uint32:case a.TYPES.fixed32:return this.verifyValue(parseInt(b));case a.TYPES.int64:case a.TYPES.sint64:case a.TYPES.sfixed64:case a.TYPES.uint64:case a.TYPES.fixed64:return this.verifyValue(b);case a.TYPES.bool:return "true"===b;case a.TYPES.string:return this.verifyValue(b);case a.TYPES.bytes:return f.fromBinary(b)}},j.valueToString=function(b){if(!this.isMapKey)throw Error("valueToString() called on non-map-key element");return this.type===a.TYPES.bytes?b.toString("binary"):b.toString()},c.Element=i,m=function(a,b,c,d,e,f){g.call(this,a,b,c,d,f),this.className="Message",this.extensions=void 0,this.clazz=null,this.isGroup=!!e,this._fields=null,this._fieldsById=null,this._fieldsByName=null;},n=m.prototype=Object.create(g.prototype),n.build=function(c){var d,h,e,g;if(this.clazz&&!c)return this.clazz;for(d=function(a,c){function k(b,c,d,e){var g,h,i,j,l,m,n;if(null===b||"object"!=typeof b)return e&&e instanceof a.Reflect.Enum&&(g=a.Reflect.Enum.getName(e.object,b),null!==g)?g:b;if(f.isByteBuffer(b))return c?b.toBase64():b.toBuffer();if(a.Long.isLong(b))return d?b.toString():a.Long.fromValue(b);if(Array.isArray(b))return h=[],b.forEach(function(a,b){h[b]=k(a,c,d,e);}),h;if(h={},b instanceof a.Map){for(i=b.entries(),j=i.next();!j.done;j=i.next())h[b.keyElem.valueToString(j.value[0])]=k(j.value[1],c,d,b.valueElem.resolvedType);return h}l=b.$type,m=void 0;for(n in b)b.hasOwnProperty(n)&&(h[n]=l&&(m=l.getChild(n))?k(b[n],c,d,m.resolvedType):k(b[n],c,d));return h}var i,j,d=c.getChildren(a.Reflect.Message.Field),e=c.getChildren(a.Reflect.Message.OneOf),g=function(b){var i,j,k,l;for(a.Builder.Message.call(this),i=0,j=e.length;j>i;++i)this[e[i].name]=null;for(i=0,j=d.length;j>i;++i)k=d[i],this[k.name]=k.repeated?[]:k.map?new a.Map(k):null,!k.required&&"proto3"!==c.syntax||null===k.defaultValue||(this[k.name]=k.defaultValue);if(arguments.length>0)if(1!==arguments.length||null===b||"object"!=typeof b||!("function"!=typeof b.encode||b instanceof g)||Array.isArray(b)||b instanceof a.Map||f.isByteBuffer(b)||b instanceof ArrayBuffer||a.Long&&b instanceof a.Long)for(i=0,j=arguments.length;j>i;++i)"undefined"!=typeof(l=arguments[i])&&this.$set(d[i].name,l);else this.$set(b);},h=g.prototype=Object.create(a.Builder.Message.prototype);for(h.add=function(b,d,e){var f=c._fieldsByName[b];if(!e){if(!f)throw Error(this+"#"+b+" is undefined");if(!(f instanceof a.Reflect.Message.Field))throw Error(this+"#"+b+" is not a field: "+f.toString(!0));if(!f.repeated)throw Error(this+"#"+b+" is not a repeated field");d=f.verifyValue(d,!0);}return null===this[b]&&(this[b]=[]),this[b].push(d),this},h.$add=h.add,h.set=function(b,d,e){var f,g,h;if(b&&"object"==typeof b){e=d;for(f in b)b.hasOwnProperty(f)&&"undefined"!=typeof(d=b[f])&&this.$set(f,d,e);return this}if(g=c._fieldsByName[b],e)this[b]=d;else{if(!g)throw Error(this+"#"+b+" is not a field: undefined");if(!(g instanceof a.Reflect.Message.Field))throw Error(this+"#"+b+" is not a field: "+g.toString(!0));this[g.name]=d=g.verifyValue(d);}return g&&g.oneof&&(h=this[g.oneof.name],null!==d?(null!==h&&h!==g.name&&(this[h]=null),this[g.oneof.name]=g.name):h===b&&(this[g.oneof.name]=null)),this},h.$set=h.set,h.get=function(b,d){if(d)return this[b];var e=c._fieldsByName[b];if(!(e&&e instanceof a.Reflect.Message.Field))throw Error(this+"#"+b+" is not a field: undefined");if(!(e instanceof a.Reflect.Message.Field))throw Error(this+"#"+b+" is not a field: "+e.toString(!0));return this[e.name]},h.$get=h.get,i=0;i<d.length;i++)j=d[i],j instanceof a.Reflect.Message.ExtensionField||c.builder.options.populateAccessors&&function(a){var d,e,f,b=a.originalName.replace(/(_[a-zA-Z])/g,function(a){return a.toUpperCase().replace("_","")});b=b.substring(0,1).toUpperCase()+b.substring(1),d=a.originalName.replace(/([A-Z])/g,function(a){return "_"+a}),e=function(b,c){return this[a.name]=c?b:a.verifyValue(b),this},f=function(){return this[a.name]},null===c.getChild("set"+b)&&(h["set"+b]=e),null===c.getChild("set_"+d)&&(h["set_"+d]=e),null===c.getChild("get"+b)&&(h["get"+b]=f),null===c.getChild("get_"+d)&&(h["get_"+d]=f);}(j);return h.encode=function(a,d){var e,f;"boolean"==typeof a&&(d=a,a=void 0),e=!1,a||(a=new b,e=!0),f=a.littleEndian;try{return c.encode(this,a.LE(),d),(e?a.flip():a).LE(f)}catch(g){throw a.LE(f),g}},g.encode=function(a,b,c){return new g(a).encode(b,c)},h.calculate=function(){return c.calculate(this)},h.encodeDelimited=function(a){var d,b=!1;return a||(a=new f,b=!0),d=(new f).LE(),c.encode(this,d).flip(),a.writeVarint32(d.remaining()),a.append(d),b?a.flip():a},h.encodeAB=function(){try{return this.encode().toArrayBuffer()}catch(a){throw a.encoded&&(a.encoded=a.encoded.toArrayBuffer()),a}},h.toArrayBuffer=h.encodeAB,h.encodeNB=function(){try{return this.encode().toBuffer()}catch(a){throw a.encoded&&(a.encoded=a.encoded.toBuffer()),a}},h.toBuffer=h.encodeNB,h.encode64=function(){try{return this.encode().toBase64()}catch(a){throw a.encoded&&(a.encoded=a.encoded.toBase64()),a}},h.toBase64=h.encode64,h.encodeHex=function(){try{return this.encode().toHex()}catch(a){throw a.encoded&&(a.encoded=a.encoded.toHex()),a}},h.toHex=h.encodeHex,h.toRaw=function(a,b){return k(this,!!a,!!b,this.$type)},h.encodeJSON=function(){return JSON.stringify(k(this,!0,!0,this.$type))},g.decode=function(a,b){var d,e;"string"==typeof a&&(a=f.wrap(a,b?b:"base64")),a=f.isByteBuffer(a)?a:f.wrap(a),d=a.littleEndian;try{return e=c.decode(a.LE()),a.LE(d),e}catch(g){throw a.LE(d),g}},g.decodeDelimited=function(a,b){var d,e,g;if("string"==typeof a&&(a=f.wrap(a,b?b:"base64")),a=f.isByteBuffer(a)?a:f.wrap(a),a.remaining()<1)return null;if(d=a.offset,e=a.readVarint32(),a.remaining()<e)return a.offset=d,null;try{return g=c.decode(a.slice(a.offset,a.offset+e).LE()),a.offset+=e,g}catch(h){throw a.offset+=e,h}},g.decode64=function(a){return g.decode(a,"base64")},g.decodeHex=function(a){return g.decode(a,"hex")},g.decodeJSON=function(a){return new g(JSON.parse(a))},h.toString=function(){return c.toString()},Object.defineProperty&&(Object.defineProperty(g,"$options",{value:c.buildOpt()}),Object.defineProperty(h,"$options",{value:g["$options"]}),Object.defineProperty(g,"$type",{value:c}),Object.defineProperty(h,"$type",{value:c})),g}(a,this),this._fields=[],this._fieldsById={},this._fieldsByName={},e=0,g=this.children.length;g>e;e++)if(h=this.children[e],h instanceof t||h instanceof m||h instanceof x){if(d.hasOwnProperty(h.name))throw Error("Illegal reflect child of "+this.toString(!0)+": "+h.toString(!0)+" cannot override static property '"+h.name+"'");d[h.name]=h.build();}else if(h instanceof m.Field)h.build(),this._fields.push(h),this._fieldsById[h.id]=h,this._fieldsByName[h.name]=h;else if(!(h instanceof m.OneOf||h instanceof w))throw Error("Illegal reflect child of "+this.toString(!0)+": "+this.children[e].toString(!0));return this.clazz=d},n.encode=function(a,b,c){var e,h,f,g,i,d=null;for(f=0,g=this._fields.length;g>f;++f)e=this._fields[f],h=a[e.name],e.required&&null===h?null===d&&(d=e):e.encode(c?h:e.verifyValue(h),b,a);if(null!==d)throw i=Error("Missing at least one required field for "+this.toString(!0)+": "+d),i.encoded=b,i;return b},n.calculate=function(a){for(var e,f,b=0,c=0,d=this._fields.length;d>c;++c){if(e=this._fields[c],f=a[e.name],e.required&&null===f)throw Error("Missing at least one required field for "+this.toString(!0)+": "+e);b+=e.calculate(f,a);}return b},n.decode=function(b,c,d){var g,h,i,j,e,f,k,l,m,n,p,q;for(c="number"==typeof c?c:-1,e=b.offset,f=new this.clazz;b.offset<e+c||-1===c&&b.remaining()>0;){if(g=b.readVarint32(),h=7&g,i=g>>>3,h===a.WIRE_TYPES.ENDGROUP){if(i!==d)throw Error("Illegal group end indicator for "+this.toString(!0)+": "+i+" ("+(d?d+" expected":"not a group")+")");break}if(j=this._fieldsById[i])j.repeated&&!j.options.packed?f[j.name].push(j.decode(h,b)):j.map?(l=j.decode(h,b),f[j.name].set(l[0],l[1])):(f[j.name]=j.decode(h,b),j.oneof&&(m=f[j.oneof.name],null!==m&&m!==j.name&&(f[m]=null),f[j.oneof.name]=j.name));else switch(h){case a.WIRE_TYPES.VARINT:b.readVarint32();break;case a.WIRE_TYPES.BITS32:b.offset+=4;break;case a.WIRE_TYPES.BITS64:b.offset+=8;break;case a.WIRE_TYPES.LDELIM:k=b.readVarint32(),b.offset+=k;break;case a.WIRE_TYPES.STARTGROUP:for(;o(i,b););break;default:throw Error("Illegal wire type for unknown field "+i+" in "+this.toString(!0)+"#decode: "+h)}}for(n=0,p=this._fields.length;p>n;++n)if(j=this._fields[n],null===f[j.name])if("proto3"===this.syntax)f[j.name]=j.defaultValue;else{if(j.required)throw q=Error("Missing at least one required field for "+this.toString(!0)+": "+j.name),q.decoded=f,q;a.populateDefaults&&null!==j.defaultValue&&(f[j.name]=j.defaultValue);}return f},c.Message=m,p=function(b,c,e,f,g,h,i,j,k,l){d.call(this,b,c,h),this.className="Message.Field",this.required="required"===e,this.repeated="repeated"===e,this.map="map"===e,this.keyType=f||null,this.type=g,this.resolvedType=null,this.id=i,this.options=j||{},this.defaultValue=null,this.oneof=k||null,this.syntax=l||"proto2",this.originalName=this.name,this.element=null,this.keyElement=null,!this.builder.options.convertFieldsToCamelCase||this instanceof m.ExtensionField||(this.name=a.Util.toCamelCase(this.name));},q=p.prototype=Object.create(d.prototype),q.build=function(){this.element=new i(this.type,this.resolvedType,!1,this.syntax),this.map&&(this.keyElement=new i(this.keyType,void 0,!0,this.syntax)),"proto3"!==this.syntax||this.repeated||this.map?"undefined"!=typeof this.options["default"]&&(this.defaultValue=this.verifyValue(this.options["default"])):this.defaultValue=i.defaultFieldValue(this.type);},q.verifyValue=function(b,c){var d,e,f;if(c=c||!1,d=function(a,b){throw Error("Illegal value for "+this.toString(!0)+" of type "+this.type.name+": "+a+" ("+b+")")}.bind(this),null===b)return this.required&&d(typeof b,"required"),"proto3"===this.syntax&&this.type!==a.TYPES.message&&d(typeof b,"proto3 field without field presence cannot be null"),null;if(this.repeated&&!c){for(Array.isArray(b)||(b=[b]),f=[],e=0;e<b.length;e++)f.push(this.element.verifyValue(b[e]));return f}return this.map&&!c?b instanceof a.Map?b:(b instanceof Object||d(typeof b,"expected ProtoBuf.Map or raw object for map field"),new a.Map(this,b)):(!this.repeated&&Array.isArray(b)&&d(typeof b,"no array expected"),this.element.verifyValue(b))},q.hasWirePresence=function(b,c){if("proto3"!==this.syntax)return null!==b;if(this.oneof&&c[this.oneof.name]===this.name)return !0;switch(this.type){case a.TYPES.int32:case a.TYPES.sint32:case a.TYPES.sfixed32:case a.TYPES.uint32:case a.TYPES.fixed32:return 0!==b;case a.TYPES.int64:case a.TYPES.sint64:case a.TYPES.sfixed64:case a.TYPES.uint64:case a.TYPES.fixed64:return 0!==b.low||0!==b.high;case a.TYPES.bool:return b;case a.TYPES["float"]:case a.TYPES["double"]:return 0!==b;case a.TYPES.string:return b.length>0;case a.TYPES.bytes:return b.remaining()>0;case a.TYPES["enum"]:return 0!==b;case a.TYPES.message:return null!==b;default:return !0}},q.encode=function(b,c,d){var e,g,h,i,j;if(null===this.type||"object"!=typeof this.type)throw Error("[INTERNAL] Unresolved type in "+this.toString(!0)+": "+this.type);if(null===b||this.repeated&&0==b.length)return c;try{if(this.repeated)if(this.options.packed&&a.PACKABLE_WIRE_TYPES.indexOf(this.type.wireType)>=0){for(c.writeVarint32(this.id<<3|a.WIRE_TYPES.LDELIM),c.ensureCapacity(c.offset+=1),g=c.offset,e=0;e<b.length;e++)this.element.encodeValue(this.id,b[e],c);h=c.offset-g,i=f.calculateVarint32(h),i>1&&(j=c.slice(g,c.offset),g+=i-1,c.offset=g,c.append(j)),c.writeVarint32(h,g-i);}else for(e=0;e<b.length;e++)c.writeVarint32(this.id<<3|this.type.wireType),this.element.encodeValue(this.id,b[e],c);else this.map?b.forEach(function(b,d){var g=f.calculateVarint32(8|this.keyType.wireType)+this.keyElement.calculateLength(1,d)+f.calculateVarint32(16|this.type.wireType)+this.element.calculateLength(2,b);c.writeVarint32(this.id<<3|a.WIRE_TYPES.LDELIM),c.writeVarint32(g),c.writeVarint32(8|this.keyType.wireType),this.keyElement.encodeValue(1,d,c),c.writeVarint32(16|this.type.wireType),this.element.encodeValue(2,b,c);},this):this.hasWirePresence(b,d)&&(c.writeVarint32(this.id<<3|this.type.wireType),this.element.encodeValue(this.id,b,c));}catch(k){throw Error("Illegal value for "+this.toString(!0)+": "+b+" ("+k+")")}return c},q.calculate=function(b,c){var d,e,g;if(b=this.verifyValue(b),null===this.type||"object"!=typeof this.type)throw Error("[INTERNAL] Unresolved type in "+this.toString(!0)+": "+this.type);if(null===b||this.repeated&&0==b.length)return 0;d=0;try{if(this.repeated)if(this.options.packed&&a.PACKABLE_WIRE_TYPES.indexOf(this.type.wireType)>=0){for(d+=f.calculateVarint32(this.id<<3|a.WIRE_TYPES.LDELIM),g=0,e=0;e<b.length;e++)g+=this.element.calculateLength(this.id,b[e]);d+=f.calculateVarint32(g),d+=g;}else for(e=0;e<b.length;e++)d+=f.calculateVarint32(this.id<<3|this.type.wireType),d+=this.element.calculateLength(this.id,b[e]);else this.map?b.forEach(function(b,c){var g=f.calculateVarint32(8|this.keyType.wireType)+this.keyElement.calculateLength(1,c)+f.calculateVarint32(16|this.type.wireType)+this.element.calculateLength(2,b);d+=f.calculateVarint32(this.id<<3|a.WIRE_TYPES.LDELIM),d+=f.calculateVarint32(g),d+=g;},this):this.hasWirePresence(b,c)&&(d+=f.calculateVarint32(this.id<<3|this.type.wireType),d+=this.element.calculateLength(this.id,b));}catch(h){throw Error("Illegal value for "+this.toString(!0)+": "+b+" ("+h+")")}return d},q.decode=function(b,c,d){var e,f,h,j,k,l,m,g=!this.map&&b==this.type.wireType||!d&&this.repeated&&this.options.packed&&b==a.WIRE_TYPES.LDELIM||this.map&&b==a.WIRE_TYPES.LDELIM;if(!g)throw Error("Illegal wire type for field "+this.toString(!0)+": "+b+" ("+this.type.wireType+" expected)");if(b==a.WIRE_TYPES.LDELIM&&this.repeated&&this.options.packed&&a.PACKABLE_WIRE_TYPES.indexOf(this.type.wireType)>=0&&!d){for(f=c.readVarint32(),f=c.offset+f,h=[];c.offset<f;)h.push(this.decode(this.type.wireType,c,!0));return h}if(this.map){if(j=i.defaultFieldValue(this.keyType),e=i.defaultFieldValue(this.type),f=c.readVarint32(),c.remaining()<f)throw Error("Illegal number of bytes for "+this.toString(!0)+": "+f+" required but got only "+c.remaining());for(k=c.clone(),k.limit=k.offset+f,c.offset+=f;k.remaining()>0;)if(l=k.readVarint32(),b=7&l,m=l>>>3,1===m)j=this.keyElement.decode(k,b,m);else{if(2!==m)throw Error("Unexpected tag in map field key/value submessage");e=this.element.decode(k,b,m);}return [j,e]}return this.element.decode(c,b,this.id)},c.Message.Field=p,r=function(a,b,c,d,e,f,g){p.call(this,a,b,c,null,d,e,f,g),this.extension;},r.prototype=Object.create(p.prototype),c.Message.ExtensionField=r,s=function(a,b,c){d.call(this,a,b,c),this.fields=[];},c.Message.OneOf=s,t=function(a,b,c,d,e){g.call(this,a,b,c,d,e),this.className="Enum",this.object=null;},t.getName=function(a,b){var e,d,c=Object.keys(a);for(d=0;d<c.length;++d)if(a[e=c[d]]===b)return e;return null},u=t.prototype=Object.create(g.prototype),u.build=function(b){var c,d,e,f;if(this.object&&!b)return this.object;for(c=new a.Builder.Enum,d=this.getChildren(t.Value),e=0,f=d.length;f>e;++e)c[d[e]["name"]]=d[e]["id"];return Object.defineProperty&&Object.defineProperty(c,"$options",{value:this.buildOpt(),enumerable:!1}),this.object=c},c.Enum=t,v=function(a,b,c,e){d.call(this,a,b,c),this.className="Enum.Value",this.id=e;},v.prototype=Object.create(d.prototype),c.Enum.Value=v,w=function(a,b,c,e){d.call(this,a,b,c),this.field=e;},w.prototype=Object.create(d.prototype),c.Extension=w,x=function(a,b,c,d){g.call(this,a,b,c,d),this.className="Service",this.clazz=null;},y=x.prototype=Object.create(g.prototype),y.build=function(b){return this.clazz&&!b?this.clazz:this.clazz=function(a,b){var g,c=function(b){a.Builder.Service.call(this),this.rpcImpl=b||function(a,b,c){setTimeout(c.bind(this,Error("Not implemented, see: https://github.com/dcodeIO/ProtoBuf.js/wiki/Services")),0);};},d=c.prototype=Object.create(a.Builder.Service.prototype),e=b.getChildren(a.Reflect.Service.RPCMethod);for(g=0;g<e.length;g++)!function(a){d[a.name]=function(c,d){try{try{c=a.resolvedRequestType.clazz.decode(f.wrap(c));}catch(e){if(!(e instanceof TypeError))throw e}if(null===c||"object"!=typeof c)throw Error("Illegal arguments");c instanceof a.resolvedRequestType.clazz||(c=new a.resolvedRequestType.clazz(c)),this.rpcImpl(a.fqn(),c,function(c,e){if(c)return d(c),void 0;try{e=a.resolvedResponseType.clazz.decode(e);}catch(f){}return e&&e instanceof a.resolvedResponseType.clazz?(d(null,e),void 0):(d(Error("Illegal response type received in service method "+b.name+"#"+a.name)),void 0)});}catch(e){setTimeout(d.bind(this,e),0);}},c[a.name]=function(b,d,e){new c(b)[a.name](d,e);},Object.defineProperty&&(Object.defineProperty(c[a.name],"$options",{value:a.buildOpt()}),Object.defineProperty(d[a.name],"$options",{value:c[a.name]["$options"]}));}(e[g]);return Object.defineProperty&&(Object.defineProperty(c,"$options",{value:b.buildOpt()}),Object.defineProperty(d,"$options",{value:c["$options"]}),Object.defineProperty(c,"$type",{value:b}),Object.defineProperty(d,"$type",{value:b})),c}(a,this)},c.Service=x,z=function(a,b,c,e){d.call(this,a,b,c),this.className="Service.Method",this.options=e||{};},A=z.prototype=Object.create(d.prototype),A.buildOpt=h.buildOpt,c.Service.Method=z,B=function(a,b,c,d,e,f,g,h){z.call(this,a,b,c,h),this.className="Service.RPCMethod",this.requestName=d,this.responseName=e,this.requestStream=f,this.responseStream=g,this.resolvedRequestType=null,this.resolvedResponseType=null;},B.prototype=Object.create(z.prototype),c.Service.RPCMethod=B,c}(e),e.Builder=function(a,b,c){function f(a){a.messages&&a.messages.forEach(function(b){b.syntax=a.syntax,f(b);}),a.enums&&a.enums.forEach(function(b){b.syntax=a.syntax;});}var d=function(a){this.ns=new c.Namespace(this,null,""),this.ptr=this.ns,this.resolved=!1,this.result=null,this.files={},this.importRoot=null,this.options=a||{};},e=d.prototype;return d.isMessage=function(a){return "string"!=typeof a.name?!1:"undefined"!=typeof a.values||"undefined"!=typeof a.rpc?!1:!0},d.isMessageField=function(a){return "string"!=typeof a.rule||"string"!=typeof a.name||"string"!=typeof a.type||"undefined"==typeof a.id?!1:!0},d.isEnum=function(a){return "string"!=typeof a.name?!1:"undefined"!=typeof a.values&&Array.isArray(a.values)&&0!==a.values.length?!0:!1},d.isService=function(a){return "string"==typeof a.name&&"object"==typeof a.rpc&&a.rpc?!0:!1},d.isExtend=function(a){return "string"!=typeof a.ref?!1:!0},e.reset=function(){return this.ptr=this.ns,this},e.define=function(a){if("string"!=typeof a||!b.TYPEREF.test(a))throw Error("illegal namespace: "+a);return a.split(".").forEach(function(a){var b=this.ptr.getChild(a);null===b&&this.ptr.addChild(b=new c.Namespace(this,this.ptr,a)),this.ptr=b;},this),this},e.create=function(b){var e,f,g,h,i;if(!b)return this;if(Array.isArray(b)){if(0===b.length)return this;b=b.slice();}else b=[b];for(e=[b];e.length>0;){if(b=e.pop(),!Array.isArray(b))throw Error("not a valid namespace: "+JSON.stringify(b));for(;b.length>0;){if(f=b.shift(),d.isMessage(f)){if(g=new c.Message(this,this.ptr,f.name,f.options,f.isGroup,f.syntax),h={},f.oneofs&&Object.keys(f.oneofs).forEach(function(a){g.addChild(h[a]=new c.Message.OneOf(this,g,a));},this),f.fields&&f.fields.forEach(function(a){if(null!==g.getChild(0|a.id))throw Error("duplicate or invalid field id in "+g.name+": "+a.id);if(a.options&&"object"!=typeof a.options)throw Error("illegal field options in "+g.name+"#"+a.name);var b=null;if("string"==typeof a.oneof&&!(b=h[a.oneof]))throw Error("illegal oneof in "+g.name+"#"+a.name+": "+a.oneof);a=new c.Message.Field(this,g,a.rule,a.keytype,a.type,a.name,a.id,a.options,b,f.syntax),b&&b.fields.push(a),g.addChild(a);},this),i=[],f.enums&&f.enums.forEach(function(a){i.push(a);}),f.messages&&f.messages.forEach(function(a){i.push(a);}),f.services&&f.services.forEach(function(a){i.push(a);}),f.extensions&&(g.extensions="number"==typeof f.extensions[0]?[f.extensions]:f.extensions),this.ptr.addChild(g),i.length>0){e.push(b),b=i,i=null,this.ptr=g,g=null;continue}i=null;}else if(d.isEnum(f))g=new c.Enum(this,this.ptr,f.name,f.options,f.syntax),f.values.forEach(function(a){g.addChild(new c.Enum.Value(this,g,a.name,a.id));},this),this.ptr.addChild(g);else if(d.isService(f))g=new c.Service(this,this.ptr,f.name,f.options),Object.keys(f.rpc).forEach(function(a){var b=f.rpc[a];g.addChild(new c.Service.RPCMethod(this,g,a,b.request,b.response,!!b.request_stream,!!b.response_stream,b.options));},this),this.ptr.addChild(g);else{if(!d.isExtend(f))throw Error("not a valid definition: "+JSON.stringify(f));if(g=this.ptr.resolve(f.ref,!0))f.fields.forEach(function(b){var d,e,f,h;if(null!==g.getChild(0|b.id))throw Error("duplicate extended field id in "+g.name+": "+b.id);
   if(g.extensions&&(d=!1,g.extensions.forEach(function(a){b.id>=a[0]&&b.id<=a[1]&&(d=!0);}),!d))throw Error("illegal extended field id in "+g.name+": "+b.id+" (not within valid ranges)");e=b.name,this.options.convertFieldsToCamelCase&&(e=a.Util.toCamelCase(e)),f=new c.Message.ExtensionField(this,g,b.rule,b.type,this.ptr.fqn()+"."+e,b.id,b.options),h=new c.Extension(this,this.ptr,b.name,f),f.extension=h,this.ptr.addChild(h),g.addChild(f);},this);else if(!/\.?google\.protobuf\./.test(f.ref))throw Error("extended message "+f.ref+" is not defined")}f=null,g=null;}b=null,this.ptr=this.ptr.parent;}return this.resolved=!1,this.result=null,this},e["import"]=function(b,c){var e,g,h,i,j,k,l,m,d="/";if("string"==typeof c){if(a.Util.IS_NODE,this.files[c]===!0)return this.reset();this.files[c]=!0;}else if("object"==typeof c){if(e=c.root,a.Util.IS_NODE,(e.indexOf("\\")>=0||c.file.indexOf("\\")>=0)&&(d="\\"),g=e+d+c.file,this.files[g]===!0)return this.reset();this.files[g]=!0;}if(b.imports&&b.imports.length>0){for(i=!1,"object"==typeof c?(this.importRoot=c.root,i=!0,h=this.importRoot,c=c.file,(h.indexOf("\\")>=0||c.indexOf("\\")>=0)&&(d="\\")):"string"==typeof c?this.importRoot?h=this.importRoot:c.indexOf("/")>=0?(h=c.replace(/\/[^\/]*$/,""),""===h&&(h="/")):c.indexOf("\\")>=0?(h=c.replace(/\\[^\\]*$/,""),d="\\"):h=".":h=null,j=0;j<b.imports.length;j++)if("string"==typeof b.imports[j]){if(!h)throw Error("cannot determine import root");if(k=b.imports[j],"google/protobuf/descriptor.proto"===k)continue;if(k=h+d+k,this.files[k]===!0)continue;if(/\.proto$/i.test(k)&&!a.DotProto&&(k=k.replace(/\.proto$/,".json")),l=a.Util.fetch(k),null===l)throw Error("failed to import '"+k+"' in '"+c+"': file not found");/\.json$/i.test(k)?this["import"](JSON.parse(l+""),k):this["import"](a.DotProto.Parser.parse(l),k);}else c?/\.(\w+)$/.test(c)?this["import"](b.imports[j],c.replace(/^(.+)\.(\w+)$/,function(a,b,c){return b+"_import"+j+"."+c})):this["import"](b.imports[j],c+"_import"+j):this["import"](b.imports[j]);i&&(this.importRoot=null);}return b["package"]&&this.define(b["package"]),b.syntax&&f(b),m=this.ptr,b.options&&Object.keys(b.options).forEach(function(a){m.options[a]=b.options[a];}),b.messages&&(this.create(b.messages),this.ptr=m),b.enums&&(this.create(b.enums),this.ptr=m),b.services&&(this.create(b.services),this.ptr=m),b["extends"]&&this.create(b["extends"]),this.reset()},e.resolveAll=function(){var d;if(null==this.ptr||"object"==typeof this.ptr.type)return this;if(this.ptr instanceof c.Namespace)this.ptr.children.forEach(function(a){this.ptr=a,this.resolveAll();},this);else if(this.ptr instanceof c.Message.Field){if(b.TYPE.test(this.ptr.type))this.ptr.type=a.TYPES[this.ptr.type];else{if(!b.TYPEREF.test(this.ptr.type))throw Error("illegal type reference in "+this.ptr.toString(!0)+": "+this.ptr.type);if(d=(this.ptr instanceof c.Message.ExtensionField?this.ptr.extension.parent:this.ptr.parent).resolve(this.ptr.type,!0),!d)throw Error("unresolvable type reference in "+this.ptr.toString(!0)+": "+this.ptr.type);if(this.ptr.resolvedType=d,d instanceof c.Enum){if(this.ptr.type=a.TYPES["enum"],"proto3"===this.ptr.syntax&&"proto3"!==d.syntax)throw Error("proto3 message cannot reference proto2 enum")}else{if(!(d instanceof c.Message))throw Error("illegal type reference in "+this.ptr.toString(!0)+": "+this.ptr.type);this.ptr.type=d.isGroup?a.TYPES.group:a.TYPES.message;}}if(this.ptr.map){if(!b.TYPE.test(this.ptr.keyType))throw Error("illegal key type for map field in "+this.ptr.toString(!0)+": "+this.ptr.keyType);this.ptr.keyType=a.TYPES[this.ptr.keyType];}}else if(this.ptr instanceof a.Reflect.Service.Method){if(!(this.ptr instanceof a.Reflect.Service.RPCMethod))throw Error("illegal service type in "+this.ptr.toString(!0));if(d=this.ptr.parent.resolve(this.ptr.requestName,!0),!(d&&d instanceof a.Reflect.Message))throw Error("Illegal type reference in "+this.ptr.toString(!0)+": "+this.ptr.requestName);if(this.ptr.resolvedRequestType=d,d=this.ptr.parent.resolve(this.ptr.responseName,!0),!(d&&d instanceof a.Reflect.Message))throw Error("Illegal type reference in "+this.ptr.toString(!0)+": "+this.ptr.responseName);this.ptr.resolvedResponseType=d;}else if(!(this.ptr instanceof a.Reflect.Message.OneOf||this.ptr instanceof a.Reflect.Extension||this.ptr instanceof a.Reflect.Enum.Value))throw Error("illegal object in namespace: "+typeof this.ptr+": "+this.ptr);return this.reset()},e.build=function(a){var b,c,d;if(this.reset(),this.resolved||(this.resolveAll(),this.resolved=!0,this.result=null),null===this.result&&(this.result=this.ns.build()),!a)return this.result;for(b="string"==typeof a?a.split("."):a,c=this.result,d=0;d<b.length;d++){if(!c[b[d]]){c=null;break}c=c[b[d]];}return c},e.lookup=function(a,b){return a?this.ns.resolve(a,b):this.ns},e.toString=function(){return "Builder"},d.Message=function(){},d.Enum=function(){},d.Service=function(){},d}(e,e.Lang,e.Reflect),e.Map=function(a,b){function e(a){var b=0;return {next:function(){return b<a.length?{done:!1,value:a[b++]}:{done:!0}}}}var c=function(a,c){var d,e,f,g;if(!a.map)throw Error("field is not a map");if(this.field=a,this.keyElem=new b.Element(a.keyType,null,!0,a.syntax),this.valueElem=new b.Element(a.type,a.resolvedType,!1,a.syntax),this.map={},Object.defineProperty(this,"size",{get:function(){return Object.keys(this.map).length}}),c)for(d=Object.keys(c),e=0;e<d.length;e++)f=this.keyElem.valueFromString(d[e]),g=this.valueElem.verifyValue(c[d[e]]),this.map[this.keyElem.valueToString(f)]={key:f,value:g};},d=c.prototype;return d.clear=function(){this.map={};},d["delete"]=function(a){var b=this.keyElem.valueToString(this.keyElem.verifyValue(a)),c=b in this.map;return delete this.map[b],c},d.entries=function(){var d,c,a=[],b=Object.keys(this.map);for(c=0;c<b.length;c++)a.push([(d=this.map[b[c]]).key,d.value]);return e(a)},d.keys=function(){var c,a=[],b=Object.keys(this.map);for(c=0;c<b.length;c++)a.push(this.map[b[c]].key);return e(a)},d.values=function(){var c,a=[],b=Object.keys(this.map);for(c=0;c<b.length;c++)a.push(this.map[b[c]].value);return e(a)},d.forEach=function(a,b){var e,d,c=Object.keys(this.map);for(d=0;d<c.length;d++)a.call(b,(e=this.map[c[d]]).value,e.key,this);},d.set=function(a,b){var c=this.keyElem.verifyValue(a),d=this.valueElem.verifyValue(b);return this.map[this.keyElem.valueToString(c)]={key:c,value:d},this},d.get=function(a){var b=this.keyElem.valueToString(this.keyElem.verifyValue(a));return b in this.map?this.map[b].value:void 0},d.has=function(a){var b=this.keyElem.valueToString(this.keyElem.verifyValue(a));return b in this.map},c}(e,e.Reflect),e.loadProto=function(a,b,c){return ("string"==typeof b||b&&"string"==typeof b.file&&"string"==typeof b.root)&&(c=b,b=void 0),e.loadJson(e.DotProto.Parser.parse(a),b,c)},e.protoFromString=e.loadProto,e.loadProtoFile=function(a,b,c){if(b&&"object"==typeof b?(c=b,b=null):b&&"function"==typeof b||(b=null),b)return e.Util.fetch("string"==typeof a?a:a.root+"/"+a.file,function(d){if(null===d)return b(Error("Failed to fetch file")),void 0;try{b(null,e.loadProto(d,c,a));}catch(f){b(f);}});var d=e.Util.fetch("object"==typeof a?a.root+"/"+a.file:a);return null===d?null:e.loadProto(d,c,a)},e.protoFromFile=e.loadProtoFile,e.newBuilder=function(a){return a=a||{},"undefined"==typeof a.convertFieldsToCamelCase&&(a.convertFieldsToCamelCase=e.convertFieldsToCamelCase),"undefined"==typeof a.populateAccessors&&(a.populateAccessors=e.populateAccessors),new e.Builder(a)},e.loadJson=function(a,b,c){return ("string"==typeof b||b&&"string"==typeof b.file&&"string"==typeof b.root)&&(c=b,b=null),b&&"object"==typeof b||(b=e.newBuilder()),"string"==typeof a&&(a=JSON.parse(a)),b["import"](a,c),b.resolveAll(),b},e.loadJsonFile=function(a,b,c){if(b&&"object"==typeof b?(c=b,b=null):b&&"function"==typeof b||(b=null),b)return e.Util.fetch("string"==typeof a?a:a.root+"/"+a.file,function(d){if(null===d)return b(Error("Failed to fetch file")),void 0;try{b(null,e.loadJson(JSON.parse(d),c,a));}catch(f){b(f);}});var d=e.Util.fetch("object"==typeof a?a.root+"/"+a.file:a);return null===d?null:e.loadJson(JSON.parse(d),c,a)},h=a,i=e.loadProto(h,void 0,"").build("Modules").probuf}(d,c,b);return e}
 
-  var SSMsg$1 = "\npackage Modules;\nmessage probuf {\n  message " + PBName.SetUserStatusInput + "\n  {\n    optional int32 status=1;\n  }\n\n  message SetUserStatusOutput\n  {\n    optional int32 nothing=1;\n  }\n\n  message GetUserStatusInput\n  {\n    optional int32 nothing=1;\n  }\n\n  message GetUserStatusOutput\n  {\n    optional string status=1;\n    optional string subUserId=2;\n  }\n\n  message SubUserStatusInput\n  {\n    repeated string userid =1;\n  }\n\n  message SubUserStatusOutput\n  {\n    optional int32 nothing=1; \n  }\n  message VoipDynamicInput\n  {\n    required int32  engineType = 1;\n    required string channelName = 2;\n    optional string channelExtra = 3;\n  }\n\n  message VoipDynamicOutput\n  {\n      required string dynamicKey=1;\n  }\n  message " + PBName.NotifyMsg + " {\n    required int32 type = 1;\n    optional int64 time = 2;\n    optional string chrmId=3;\n  }\n  message " + PBName.SyncRequestMsg + " {\n    required int64 syncTime = 1;\n    required bool ispolling = 2;\n    optional bool isweb=3;\n    optional bool isPullSend=4;\n    optional bool isKeeping=5;\n    optional int64 sendBoxSyncTime=6;\n  }\n  message " + PBName.UpStreamMessage + " {\n    required int32 sessionId = 1;\n    required string classname = 2;\n    required bytes content = 3;\n    optional string pushText = 4;\n    optional string appData = 5;\n    repeated string userId = 6;\n    optional int64 delMsgTime = 7;\n    optional string delMsgId = 8;\n    optional int32 configFlag = 9;\n  }\n  message " + PBName.DownStreamMessages + " {\n    repeated DownStreamMessage list = 1;\n    required int64 syncTime = 2;\n    optional bool finished = 3;\n  }\n  message " + PBName.DownStreamMessage + " {\n    required string fromUserId = 1;\n    required ChannelType type = 2;\n    optional string groupId = 3;\n    required string classname = 4;\n    required bytes content = 5;\n    required int64 dataTime = 6;\n    required int64 status = 7;\n    optional int64 extra = 8;\n    optional string msgId = 9;\n    optional int32 direction = 10;\n  }\n  enum ChannelType {\n    PERSON = 1;\n    PERSONS = 2;\n    GROUP = 3;\n    TEMPGROUP = 4;\n    CUSTOMERSERVICE = 5;\n    NOTIFY = 6;\n    MC=7;\n    MP=8;\n  }\n  message CreateDiscussionInput {\n    optional string name = 1;\n  }\n  message CreateDiscussionOutput {\n    required string id = 1;\n  }\n  message ChannelInvitationInput {\n    repeated string users = 1;\n  }\n  message LeaveChannelInput {\n    required int32 nothing = 1;\n  }\n  message ChannelEvictionInput {\n    required string user = 1;\n  }\n  message RenameChannelInput {\n    required string name = 1;\n  }\n  message ChannelInfoInput {\n    required int32 nothing = 1;\n  }\n  message ChannelInfoOutput {\n    required ChannelType type = 1;\n    required string channelId = 2;\n    required string channelName = 3;\n    required string adminUserId = 4;\n    repeated string firstTenUserIds = 5;\n    required int32 openStatus = 6;\n  }\n  message ChannelInfosInput {\n    required int32 page = 1;\n    optional int32 number = 2;\n  }\n  message ChannelInfosOutput {\n    repeated ChannelInfoOutput channels = 1;\n    required int32 total = 2;\n  }\n  message MemberInfo {\n    required string userId = 1;\n    required string userName = 2;\n    required string userPortrait = 3;\n    required string extension = 4;\n  }\n  message GroupMembersInput {\n    required int32 page = 1;\n    optional int32 number = 2;\n  }\n  message GroupMembersOutput {\n    repeated MemberInfo members = 1;\n    required int32 total = 2;\n  }\n  message GetUserInfoInput {\n    required int32 nothing = 1;\n  }\n  message GetUserInfoOutput {\n    required string userId = 1;\n    required string userName = 2;\n    required string userPortrait = 3;\n  }\n  message GetSessionIdInput {\n    required int32 nothing = 1;\n  }\n  message GetSessionIdOutput {\n    required int32 sessionId = 1;\n  }\n  enum FileType {\n    image = " + FILE_TYPE.IMAGE + ";\n    audio = " + FILE_TYPE.AUDIO + ";\n    video = " + FILE_TYPE.VIDEO + ";\n    file = " + FILE_TYPE.FILE + ";\n  }\n  message " + PBName.GetQNupTokenInput + " {\n    required FileType type = 1;\n    optional string key = 2;\n  }\n  message " + PBName.GetQNdownloadUrlInput + " {\n    required FileType type = 1;\n    required string key = 2;\n    optional string  fileName = 3;\n  }\n  message " + PBName.GetQNupTokenOutput + " {\n    required int64 deadline = 1;\n    required string token = 2;\n    optional string bosToken = 3;\n    optional string bosDate = 4;\n    optional string path = 5;\n  }\n  message " + PBName.GetQNdownloadUrlOutput + " {\n    required string downloadUrl = 1;\n  }\n  message Add2BlackListInput {\n    required string userId = 1;\n  }\n  message RemoveFromBlackListInput {\n    required string userId = 1;\n  }\n  message QueryBlackListInput {\n    required int32 nothing = 1;\n  }\n  message QueryBlackListOutput {\n    repeated string userIds = 1;\n  }\n  message BlackListStatusInput {\n    required string userId = 1;\n  }\n  message BlockPushInput {\n    required string blockeeId = 1;\n  }\n  message ModifyPermissionInput {\n    required int32 openStatus = 1;\n  }\n  message GroupInput {\n    repeated GroupInfo groupInfo = 1;\n  }\n  message GroupOutput {\n    required int32 nothing = 1;\n  }\n  message GroupInfo {\n    required string id = 1;\n    required string name = 2;\n  }\n  message GroupHashInput {\n    required string userId = 1;\n    required string groupHashCode = 2;\n  }\n  message GroupHashOutput {\n    required GroupHashType result = 1;\n  }\n  enum GroupHashType {\n    group_success = 0x00;\n    group_failure = 0x01;\n  }\n  message " + PBName.ChrmInput + " {\n    required int32 nothing = 1;\n  }\n  message ChrmOutput {\n    required int32 nothing = 1;\n  }\n  message " + PBName.ChrmPullMsg + " {\n    required int64 syncTime = 1;\n    required int32 count = 2;\n  }\n  \n  message ChrmPullMsgNew \n  {\n    required int32 count = 1;\n    required int64 syncTime = 2;\n    optional string chrmId=3;\n  }\n  message " + PBName.RelationQryInput + "\n  {\n    optional ChannelType type = 1;\n    optional int32 count = 2;\n    optional int64 startTime = 3;\n    optional int32 order = 4;\n  }\n  message " + PBName.RelationsInput + "\n  {\n    required ChannelType type = 1;\n    optional DownStreamMessage msg =2;\n    optional int32 count = 3;\n    optional int32 offset = 4;\n    optional int64 startTime = 5;\n    optional int64 endTime = 6;\n  }\n  message " + PBName.RelationsOutput + "\n  {\n    repeated RelationInfo info = 1;\n  }\n  message RelationInfo\n  {\n    required ChannelType type = 1;\n    required string userId = 2;\n    optional DownStreamMessage msg =3;\n    optional int64 readMsgTime= 4;\n    optional int64 unreadCount= 5;\n  }\n  message RelationInfoReadTime\n  {\n    required ChannelType type = 1;\n    required int64 readMsgTime= 2;\n    required string targetId = 3;\n  }\n  message " + PBName.CleanHisMsgInput + "\n  {\n      required string targetId = 1;\n      required int64 dataTime = 2;\n      optional int32 conversationType= 3;\n  }\n  message HistoryMessageInput\n  {\n    required string targetId = 1;\n    required int64 dataTime =2;\n    required int32 size  = 3;\n  }\n\n  message HistoryMessagesOuput\n  {\n    repeated DownStreamMessage list = 1;\n    required int64 syncTime = 2;\n    required int32 hasMsg = 3;\n  }\n  message " + PBName.QueryChatRoomInfoInput + "\n  {\n    required int32 count= 1;\n    optional int32 order= 2;\n  }\n\n  message " + PBName.QueryChatRoomInfoOutput + "\n  {\n    optional int32 userTotalNums = 1;\n    repeated ChrmMember userInfos = 2;\n  }\n  message ChrmMember\n  {\n    required int64 time = 1;\n    required string id = 2;\n  }\n  message MPFollowInput\n  {\n    required string id = 1;\n  }\n\n  message MPFollowOutput\n  {\n    required int32 nothing = 1;\n    optional MpInfo info =2;\n  }\n\n  message " + PBName.MCFollowInput + "\n  {\n    required string id = 1;\n  }\n\n  message MCFollowOutput\n  {\n    required int32 nothing = 1;\n    optional MpInfo info =2;\n  }\n\n  message MpInfo  \n  {\n    required string mpid=1;\n    required string name = 2;\n    required string type = 3;\n    required int64 time=4;\n    optional string portraitUrl=5;\n    optional string extra =6;\n  }\n\n  message SearchMpInput\n  {\n    required int32 type=1;\n    required string id=2;\n  }\n\n  message SearchMpOutput\n  {\n    required int32 nothing=1;\n    repeated MpInfo info = 2;\n  }\n\n  message PullMpInput\n  {\n    required int64 time=1;\n    required string mpid=2;\n  }\n\n  message PullMpOutput\n  {\n    required int32 status=1;\n    repeated MpInfo info = 2;\n  }\n  message " + PBName.HistoryMsgInput + "\n  {\n    optional string targetId = 1;\n    optional int64 time = 2;\n    optional int32 count  = 3;\n    optional int32 order = 4;\n  }\n\n  message " + PBName.HistoryMsgOuput + "\n  {\n    repeated DownStreamMessage list=1;\n    required int64 syncTime=2;\n    required int32 hasMsg=3;\n  }\n  message " + PBName.RtcQueryListInput + "{\n    optional int32 order=1;\n  }\n\n  message " + PBName.RtcKeyDeleteInput + "{\n    repeated string key=1;\n  }\n\n  message " + PBName.RtcValueInfo + "{\n    required string key=1;\n    required string value=2;\n  }\n\n  message RtcUserInfo{\n    required string userId=1;\n    repeated " + PBName.RtcValueInfo + " userData=2;\n  }\n\n  message " + PBName.RtcUserListOutput + "{\n    repeated RtcUserInfo list=1;\n    optional string token=2;\n    optional string sessionId=3;\n  }\n  message RtcRoomInfoOutput{\n    optional string roomId = 1;\n    repeated " + PBName.RtcValueInfo + " roomData = 2;\n    optional int32 userCount = 3;\n    repeated RtcUserInfo list=4;\n  }\n  message " + PBName.RtcInput + "{\n    required int32 roomType=1;\n    optional int32 broadcastType=2;\n  }\n  message RtcQryInput{ \n    required bool isInterior=1;\n    required targetType target=2;\n    repeated string key=3;\n  }\n  message " + PBName.RtcQryOutput + "{\n    repeated " + PBName.RtcValueInfo + " outInfo=1;\n  }\n  message RtcDelDataInput{\n    repeated string key=1;\n    required bool isInterior=2;\n    required targetType target=3;\n  }\n  message " + PBName.RtcDataInput + "{ \n    required bool interior=1;\n    required targetType target=2;\n    repeated string key=3;\n    optional string objectName=4;\n    optional string content=5;\n  }\n  message " + PBName.RtcSetDataInput + "{\n    required bool interior=1;\n    required targetType target=2;\n    required string key=3;\n    required string value=4;\n    optional string objectName=5;\n    optional string content=6;\n  }\n  message RtcOutput\n  {\n    optional int32 nothing=1; \n  }\n  message " + PBName.RtcTokenOutput + "{\n    required string rtcToken=1;\n  }\n  enum targetType {\n    ROOM =1 ;\n    PERSON = 2;\n  }\n  message " + PBName.RtcSetOutDataInput + "{\n    required targetType target=1;\n    repeated " + PBName.RtcValueInfo + " valueInfo=2;\n    optional string objectName=3;\n    optional string content=4;\n  }\n  message " + PBName.RtcQryUserOutDataInput + "{\n    repeated string userId = 1;\n  }\n  message " + PBName.RtcUserOutDataOutput + "{\n    repeated RtcUserInfo user = 1;\n  }\n  message " + PBName.SessionsAttQryInput + "{\n    required int32 nothing = 1;\n  }\n  message " + PBName.SessionsAttOutput + "{\n    required int64 inboxTime = 1;\n    required int64 sendboxTime = 2;\n    required int64 totalUnreadCount = 3;\n  }\n  message " + PBName.SessionMsgReadInput + "\n  {\n    required ChannelType type = 1;\n    required int64 msgTime = 2;\n    required string channelId = 3;\n  }\n  message SessionMsgReadOutput\n  {\n    optional int32 nothing=1; \n  }\n  message " + PBName.DeleteSessionsInput + "\n  {\n    repeated SessionInfo sessions = 1;\n  }\n  message " + PBName.SessionInfo + "\n  {\n    required ChannelType type = 1;\n    required string channelId = 2;\n  }\n  message " + PBName.DeleteSessionsOutput + "\n  {\n    optional int32 nothing=1; \n  }\n  message " + PBName.DeleteMsgInput + "\n  {\n    optional ChannelType type = 1;\n    optional string conversationId = 2;\n    repeated DeleteMsg msgs = 3;\n  }\n  message DeleteMsg\n  {\n    optional string msgId = 1;\n    optional int64 msgDataTime = 2;\n    optional int32 direct = 3;\n  }\n  message ChrmKVEntity {\n    required string key = 1;\n    required string value = 2;\n    optional int32 status = 3;\n    optional int64 timestamp = 4;\n    optional string uid = 5;\n  }\n  message " + PBName.SetChrmKV + " {\n    required ChrmKVEntity entry = 1;\n    optional bool bNotify = 2;\n    optional UpStreamMessage notification = 3;\n    optional ChannelType type = 4;\n  }\n  message " + PBName.ChrmKVOutput + " {\n    repeated ChrmKVEntity entries = 1;\n    optional bool bFullUpdate = 2;\n    optional int64 syncTime = 3;\n  }\n  message " + PBName.QueryChrmKV + " {\n    required int64 timestamp = 1;\n  }\n  message " + PBName.ChrmNotifyMsg + " {\t\n    required int32 type= 1;\n    optional int64 time= 2;\n    optional string chrmId=3;\n  }\n  message " + PBName.SetUserSettingInput + " {\n    required int64 version=1;\n    required string value=2;\n  }\n  message " + PBName.SetUserSettingOutput + " {\n    required int64 version=1;\n    required bool reserve=2;\n  }\n  message " + PBName.PullUserSettingInput + " {\n    required int64 version=1;//\u5F53\u524D\u5BA2\u6237\u7AEF\u7684\u6700\u5927\u7248\u672C\u53F7\n    optional bool reserve=2;\n  }\n  message " + PBName.PullUserSettingOutput + " {\n    repeated UserSettingItem items = 1;\n    required int64 version=2;\n  }\n  message UserSettingItem {\n    required string targetId= 1;\n    required ChannelType type = 2;\n    required string key = 4;\n    required bytes value = 5;\n    required int64 version=6;\n    required int32 status=7;\n  }\n  message " + PBName.SessionReq + " {\n    required int64 time = 1;\n  }\n  message " + PBName.SessionStates + " {\n    required int64 version=1;\n    repeated SessionState state= 2;\n  }\n  message " + PBName.SessionState + " {\n    required ChannelType type = 1;\n    required string channelId = 2;  \n    optional int64 time = 3;\n    repeated SessionStateItem stateItem = 4;\n  }\n  message " + PBName.SessionStateItem + " {\n    required SessionStateType sessionStateType = 1;\n    required string value = 2;\n  }\n  enum SessionStateType {\n    IsSilent = 1;\n    IsTop = 2;\n  }\n  message " + PBName.SessionStateModifyReq + " {\n    required int64 version=1;\n    repeated SessionState state= 2;\n  }\n  message " + PBName.SessionStateModifyResp + " {\n    required int64 version=1;\n  }\n}\n";
+  var SSMsg$1 = "\npackage Modules;\nmessage probuf {\n  message " + PBName.SetUserStatusInput + "\n  {\n    optional int32 status=1;\n  }\n\n  message SetUserStatusOutput\n  {\n    optional int32 nothing=1;\n  }\n\n  message GetUserStatusInput\n  {\n    optional int32 nothing=1;\n  }\n\n  message GetUserStatusOutput\n  {\n    optional string status=1;\n    optional string subUserId=2;\n  }\n\n  message SubUserStatusInput\n  {\n    repeated string userid =1;\n  }\n\n  message SubUserStatusOutput\n  {\n    optional int32 nothing=1; \n  }\n  message VoipDynamicInput\n  {\n    required int32  engineType = 1;\n    required string channelName = 2;\n    optional string channelExtra = 3;\n  }\n\n  message VoipDynamicOutput\n  {\n      required string dynamicKey=1;\n  }\n  message " + PBName.NotifyMsg + " {\n    required int32 type = 1;\n    optional int64 time = 2;\n    optional string chrmId=3;\n  }\n  message " + PBName.SyncRequestMsg + " {\n    required int64 syncTime = 1;\n    required bool ispolling = 2;\n    optional bool isweb=3;\n    optional bool isPullSend=4;\n    optional bool isKeeping=5;\n    optional int64 sendBoxSyncTime=6;\n  }\n  message " + PBName.UpStreamMessage + " {\n    required int32 sessionId = 1;\n    required string classname = 2;\n    required bytes content = 3;\n    optional string pushText = 4;\n    optional string appData = 5;\n    repeated string userId = 6;\n    optional int64 delMsgTime = 7;\n    optional string delMsgId = 8;\n    optional int32 configFlag = 9;\n  }\n  message " + PBName.DownStreamMessages + " {\n    repeated DownStreamMessage list = 1;\n    required int64 syncTime = 2;\n    optional bool finished = 3;\n  }\n  message " + PBName.DownStreamMessage + " {\n    required string fromUserId = 1;\n    required ChannelType type = 2;\n    optional string groupId = 3;\n    required string classname = 4;\n    required bytes content = 5;\n    required int64 dataTime = 6;\n    required int64 status = 7;\n    optional int64 extra = 8;\n    optional string msgId = 9;\n    optional int32 direction = 10;\n  }\n  enum ChannelType {\n    PERSON = 1;\n    PERSONS = 2;\n    GROUP = 3;\n    TEMPGROUP = 4;\n    CUSTOMERSERVICE = 5;\n    NOTIFY = 6;\n    MC=7;\n    MP=8;\n  }\n  message CreateDiscussionInput {\n    optional string name = 1;\n  }\n  message CreateDiscussionOutput {\n    required string id = 1;\n  }\n  message ChannelInvitationInput {\n    repeated string users = 1;\n  }\n  message LeaveChannelInput {\n    required int32 nothing = 1;\n  }\n  message ChannelEvictionInput {\n    required string user = 1;\n  }\n  message RenameChannelInput {\n    required string name = 1;\n  }\n  message ChannelInfoInput {\n    required int32 nothing = 1;\n  }\n  message ChannelInfoOutput {\n    required ChannelType type = 1;\n    required string channelId = 2;\n    required string channelName = 3;\n    required string adminUserId = 4;\n    repeated string firstTenUserIds = 5;\n    required int32 openStatus = 6;\n  }\n  message ChannelInfosInput {\n    required int32 page = 1;\n    optional int32 number = 2;\n  }\n  message ChannelInfosOutput {\n    repeated ChannelInfoOutput channels = 1;\n    required int32 total = 2;\n  }\n  message MemberInfo {\n    required string userId = 1;\n    required string userName = 2;\n    required string userPortrait = 3;\n    required string extension = 4;\n  }\n  message GroupMembersInput {\n    required int32 page = 1;\n    optional int32 number = 2;\n  }\n  message GroupMembersOutput {\n    repeated MemberInfo members = 1;\n    required int32 total = 2;\n  }\n  message GetUserInfoInput {\n    required int32 nothing = 1;\n  }\n  message GetUserInfoOutput {\n    required string userId = 1;\n    required string userName = 2;\n    required string userPortrait = 3;\n  }\n  message GetSessionIdInput {\n    required int32 nothing = 1;\n  }\n  message GetSessionIdOutput {\n    required int32 sessionId = 1;\n  }\n  enum FileType {\n    image = " + FILE_TYPE.IMAGE + ";\n    audio = " + FILE_TYPE.AUDIO + ";\n    video = " + FILE_TYPE.VIDEO + ";\n    file = " + FILE_TYPE.FILE + ";\n  }\n  message " + PBName.GetQNupTokenInput + " {\n    required FileType type = 1;\n    optional string key = 2;\n  }\n  message " + PBName.GetQNdownloadUrlInput + " {\n    required FileType type = 1;\n    required string key = 2;\n    optional string  fileName = 3;\n  }\n  message " + PBName.GetQNupTokenOutput + " {\n    required int64 deadline = 1;\n    required string token = 2;\n    optional string bosToken = 3;\n    optional string bosDate = 4;\n    optional string path = 5;\n  }\n  message " + PBName.GetQNdownloadUrlOutput + " {\n    required string downloadUrl = 1;\n  }\n  message Add2BlackListInput {\n    required string userId = 1;\n  }\n  message RemoveFromBlackListInput {\n    required string userId = 1;\n  }\n  message QueryBlackListInput {\n    required int32 nothing = 1;\n  }\n  message QueryBlackListOutput {\n    repeated string userIds = 1;\n  }\n  message BlackListStatusInput {\n    required string userId = 1;\n  }\n  message BlockPushInput {\n    required string blockeeId = 1;\n  }\n  message ModifyPermissionInput {\n    required int32 openStatus = 1;\n  }\n  message GroupInput {\n    repeated GroupInfo groupInfo = 1;\n  }\n  message GroupOutput {\n    required int32 nothing = 1;\n  }\n  message GroupInfo {\n    required string id = 1;\n    required string name = 2;\n  }\n  message GroupHashInput {\n    required string userId = 1;\n    required string groupHashCode = 2;\n  }\n  message GroupHashOutput {\n    required GroupHashType result = 1;\n  }\n  enum GroupHashType {\n    group_success = 0x00;\n    group_failure = 0x01;\n  }\n  message " + PBName.ChrmInput + " {\n    required int32 nothing = 1;\n  }\n  message ChrmOutput {\n    required int32 nothing = 1;\n  }\n  message " + PBName.ChrmPullMsg + " {\n    required int64 syncTime = 1;\n    required int32 count = 2;\n  }\n  \n  message ChrmPullMsgNew \n  {\n    required int32 count = 1;\n    required int64 syncTime = 2;\n    optional string chrmId=3;\n  }\n  message " + PBName.RelationQryInput + "\n  {\n    optional ChannelType type = 1;\n    optional int32 count = 2;\n    optional int64 startTime = 3;\n    optional int32 order = 4;\n  }\n  message " + PBName.RelationsInput + "\n  {\n    required ChannelType type = 1;\n    optional DownStreamMessage msg =2;\n    optional int32 count = 3;\n    optional int32 offset = 4;\n    optional int64 startTime = 5;\n    optional int64 endTime = 6;\n  }\n  message " + PBName.RelationsOutput + "\n  {\n    repeated RelationInfo info = 1;\n  }\n  message RelationInfo\n  {\n    required ChannelType type = 1;\n    required string userId = 2;\n    optional DownStreamMessage msg =3;\n    optional int64 readMsgTime= 4;\n    optional int64 unreadCount= 5;\n  }\n  message RelationInfoReadTime\n  {\n    required ChannelType type = 1;\n    required int64 readMsgTime= 2;\n    required string targetId = 3;\n  }\n  message " + PBName.CleanHisMsgInput + "\n  {\n      required string targetId = 1;\n      required int64 dataTime = 2;\n      optional int32 conversationType= 3;\n  }\n  message HistoryMessageInput\n  {\n    required string targetId = 1;\n    required int64 dataTime =2;\n    required int32 size  = 3;\n  }\n\n  message HistoryMessagesOuput\n  {\n    repeated DownStreamMessage list = 1;\n    required int64 syncTime = 2;\n    required int32 hasMsg = 3;\n  }\n  message " + PBName.QueryChatRoomInfoInput + "\n  {\n    required int32 count= 1;\n    optional int32 order= 2;\n  }\n\n  message " + PBName.QueryChatRoomInfoOutput + "\n  {\n    optional int32 userTotalNums = 1;\n    repeated ChrmMember userInfos = 2;\n  }\n  message ChrmMember\n  {\n    required int64 time = 1;\n    required string id = 2;\n  }\n  message MPFollowInput\n  {\n    required string id = 1;\n  }\n\n  message MPFollowOutput\n  {\n    required int32 nothing = 1;\n    optional MpInfo info =2;\n  }\n\n  message " + PBName.MCFollowInput + "\n  {\n    required string id = 1;\n  }\n\n  message MCFollowOutput\n  {\n    required int32 nothing = 1;\n    optional MpInfo info =2;\n  }\n\n  message MpInfo  \n  {\n    required string mpid=1;\n    required string name = 2;\n    required string type = 3;\n    required int64 time=4;\n    optional string portraitUrl=5;\n    optional string extra =6;\n  }\n\n  message SearchMpInput\n  {\n    required int32 type=1;\n    required string id=2;\n  }\n\n  message SearchMpOutput\n  {\n    required int32 nothing=1;\n    repeated MpInfo info = 2;\n  }\n\n  message PullMpInput\n  {\n    required int64 time=1;\n    required string mpid=2;\n  }\n\n  message PullMpOutput\n  {\n    required int32 status=1;\n    repeated MpInfo info = 2;\n  }\n  message " + PBName.HistoryMsgInput + "\n  {\n    optional string targetId = 1;\n    optional int64 time = 2;\n    optional int32 count  = 3;\n    optional int32 order = 4;\n  }\n\n  message " + PBName.HistoryMsgOuput + "\n  {\n    repeated DownStreamMessage list=1;\n    required int64 syncTime=2;\n    required int32 hasMsg=3;\n  }\n  message " + PBName.RtcQueryListInput + "{\n    optional int32 order=1;\n  }\n\n  message " + PBName.RtcKeyDeleteInput + "{\n    repeated string key=1;\n  }\n\n  message " + PBName.RtcValueInfo + "{\n    required string key=1;\n    required string value=2;\n  }\n\n  message RtcUserInfo{\n    required string userId=1;\n    repeated " + PBName.RtcValueInfo + " userData=2;\n  }\n\n  message " + PBName.RtcUserListOutput + "{\n    repeated RtcUserInfo list=1;\n    optional string token=2;\n    optional string sessionId=3;\n  }\n  message RtcRoomInfoOutput{\n    optional string roomId = 1;\n    repeated " + PBName.RtcValueInfo + " roomData = 2;\n    optional int32 userCount = 3;\n    repeated RtcUserInfo list=4;\n  }\n  message " + PBName.RtcInput + "{\n    required int32 roomType=1;\n    optional int32 broadcastType=2;\n  }\n  message RtcQryInput{ \n    required bool isInterior=1;\n    required targetType target=2;\n    repeated string key=3;\n  }\n  message " + PBName.RtcQryOutput + "{\n    repeated " + PBName.RtcValueInfo + " outInfo=1;\n  }\n  message RtcDelDataInput{\n    repeated string key=1;\n    required bool isInterior=2;\n    required targetType target=3;\n  }\n  message " + PBName.RtcDataInput + "{ \n    required bool interior=1;\n    required targetType target=2;\n    repeated string key=3;\n    optional string objectName=4;\n    optional string content=5;\n  }\n  message " + PBName.RtcSetDataInput + "{\n    required bool interior=1;\n    required targetType target=2;\n    required string key=3;\n    required string value=4;\n    optional string objectName=5;\n    optional string content=6;\n  }\n  message " + PBName.RtcUserSetDataInput + " {\n    repeated " + PBName.RtcValueInfo + " valueInfo = 1;\n    required string objectName = 2;\n    repeated " + PBName.RtcValueInfo + " content = 3;\n  }\n  message RtcOutput\n  {\n    optional int32 nothing=1; \n  }\n  message " + PBName.RtcTokenOutput + "{\n    required string rtcToken=1;\n  }\n  enum targetType {\n    ROOM =1 ;\n    PERSON = 2;\n  }\n  message " + PBName.RtcSetOutDataInput + "{\n    required targetType target=1;\n    repeated " + PBName.RtcValueInfo + " valueInfo=2;\n    optional string objectName=3;\n    optional string content=4;\n  }\n  message " + PBName.RtcQryUserOutDataInput + "{\n    repeated string userId = 1;\n  }\n  message " + PBName.RtcUserOutDataOutput + "{\n    repeated RtcUserInfo user = 1;\n  }\n  message " + PBName.SessionsAttQryInput + "{\n    required int32 nothing = 1;\n  }\n  message " + PBName.SessionsAttOutput + "{\n    required int64 inboxTime = 1;\n    required int64 sendboxTime = 2;\n    required int64 totalUnreadCount = 3;\n  }\n  message " + PBName.SessionMsgReadInput + "\n  {\n    required ChannelType type = 1;\n    required int64 msgTime = 2;\n    required string channelId = 3;\n  }\n  message SessionMsgReadOutput\n  {\n    optional int32 nothing=1; \n  }\n  message " + PBName.DeleteSessionsInput + "\n  {\n    repeated SessionInfo sessions = 1;\n  }\n  message " + PBName.SessionInfo + "\n  {\n    required ChannelType type = 1;\n    required string channelId = 2;\n  }\n  message " + PBName.DeleteSessionsOutput + "\n  {\n    optional int32 nothing=1; \n  }\n  message " + PBName.DeleteMsgInput + "\n  {\n    optional ChannelType type = 1;\n    optional string conversationId = 2;\n    repeated DeleteMsg msgs = 3;\n  }\n  message DeleteMsg\n  {\n    optional string msgId = 1;\n    optional int64 msgDataTime = 2;\n    optional int32 direct = 3;\n  }\n  message ChrmKVEntity {\n    required string key = 1;\n    required string value = 2;\n    optional int32 status = 3;\n    optional int64 timestamp = 4;\n    optional string uid = 5;\n  }\n  message " + PBName.SetChrmKV + " {\n    required ChrmKVEntity entry = 1;\n    optional bool bNotify = 2;\n    optional UpStreamMessage notification = 3;\n    optional ChannelType type = 4;\n  }\n  message " + PBName.ChrmKVOutput + " {\n    repeated ChrmKVEntity entries = 1;\n    optional bool bFullUpdate = 2;\n    optional int64 syncTime = 3;\n  }\n  message " + PBName.QueryChrmKV + " {\n    required int64 timestamp = 1;\n  }\n  message " + PBName.ChrmNotifyMsg + " {\t\n    required int32 type= 1;\n    optional int64 time= 2;\n    optional string chrmId=3;\n  }\n  message " + PBName.SetUserSettingInput + " {\n    required int64 version=1;\n    required string value=2;\n  }\n  message " + PBName.SetUserSettingOutput + " {\n    required int64 version=1;\n    required bool reserve=2;\n  }\n  message " + PBName.PullUserSettingInput + " {\n    required int64 version=1;//\u5F53\u524D\u5BA2\u6237\u7AEF\u7684\u6700\u5927\u7248\u672C\u53F7\n    optional bool reserve=2;\n  }\n  message " + PBName.PullUserSettingOutput + " {\n    repeated UserSettingItem items = 1;\n    required int64 version=2;\n  }\n  message UserSettingItem {\n    required string targetId= 1;\n    required ChannelType type = 2;\n    required string key = 4;\n    required bytes value = 5;\n    required int64 version=6;\n    required int32 status=7;\n  }\n  message " + PBName.SessionReq + " {\n    required int64 time = 1;\n  }\n  message " + PBName.SessionStates + " {\n    required int64 version=1;\n    repeated SessionState state= 2;\n  }\n  message " + PBName.SessionState + " {\n    required ChannelType type = 1;\n    required string channelId = 2;  \n    optional int64 time = 3;\n    repeated SessionStateItem stateItem = 4;\n  }\n  message " + PBName.SessionStateItem + " {\n    required SessionStateType sessionStateType = 1;\n    required string value = 2;\n  }\n  enum SessionStateType {\n    IsSilent = 1;\n    IsTop = 2;\n  }\n  message " + PBName.SessionStateModifyReq + " {\n    required int64 version=1;\n    repeated SessionState state= 2;\n  }\n  message " + PBName.SessionStateModifyResp + " {\n    required int64 version=1;\n  }\n}\n";
 
   var Codec$1 = {};
 
@@ -5665,6 +5824,7 @@
           isPersited = _common$getMessageOpt.isPersited,
           isCounted = _common$getMessageOpt.isCounted,
           isMentiond = _common$getMessageOpt.isMentiond,
+          disableNotification = _common$getMessageOpt.disableNotification,
           targetId = isGroup$1(type) || isChatRoom$1(type) ? groupId : fromUserId,
           senderUserId = isSelfSend ? currentUserId : fromUserId,
           sentTime = utils.int64ToTimestamp(dataTime),
@@ -5690,6 +5850,7 @@
         isOffLineMessage: isOffLineMessage,
         messageDirection: messageDirection,
         receivedTime: common.DelayTimer.getTime(),
+        disableNotification: disableNotification,
         content: self.formatBytes(content)
       };
     };
@@ -5706,10 +5867,12 @@
           date = signal.date,
           topic = signal.topic,
           targetId = signal.targetId,
-          _common$getPersitedAn = common.getPersitedAndCountedBySessionId(sessionId),
+          _common$getPersitedAn = common.getPersitedAndCountedAndSlientBySessionId(sessionId),
           isPersited = _common$getPersitedAn.isPersited,
           isCounted = _common$getPersitedAn.isCounted,
-          type = PUBLISH_TOPIC_TO_CONVERSATION_TYPE[topic] || CONVERSATION_TYPE.PRIVATE;
+          disableNotification = _common$getPersitedAn.disableNotification,
+          type = PUBLISH_TOPIC_TO_CONVERSATION_TYPE[topic] || CONVERSATION_TYPE.PRIVATE,
+          isStatusMessage = utils.isInclude(PUBLISH_STATUS_TOPIC, topic);
 
       return {
         type: type,
@@ -5718,12 +5881,14 @@
         messageUId: messageUId,
         isPersited: isPersited,
         isCounted: isCounted,
+        isStatusMessage: isStatusMessage,
         senderUserId: currentUserId,
         content: self.formatBytes(content),
         sentTime: utils.secondsToMilliseconds(date),
         receivedTime: common.DelayTimer.getTime(),
         messageDirection: MESSAGE_DIRECTION.SEND,
-        isOffLineMessage: false
+        isOffLineMessage: false,
+        disableNotification: disableNotification
       };
     };
 
@@ -6141,6 +6306,20 @@
         modules.setContent(content);
       }
 
+      return modules.getArrayData();
+    };
+
+    _proto.encodeUserSetRTCData = function encodeUserSetRTCData(message, valueInfo, objectName) {
+      var modules = this.codec.getModule(PBName.RtcUserSetDataInput);
+      modules.setObjectName(objectName);
+      var val = this.codec.getModule(PBName.RtcValueInfo);
+      val.setKey(message.name);
+      val.setValue(message.content);
+      modules.setContent(val);
+      val = this.codec.getModule(PBName.RtcValueInfo);
+      val.setKey('uris');
+      val.setValue(valueInfo);
+      modules.setValueInfo(val);
       return modules.getArrayData();
     };
 
@@ -6591,13 +6770,15 @@
           connectType = self.option.connectType,
           _serverDataCodec = self._serverDataCodec;
       var isComet = connectType === CONNECT_TYPE.COMET;
+      var data = signal.data,
+          topic = signal.topic;
 
-      var msg = _serverDataCodec.decodeByPBName(signal.data, PBName.UpStreamMessage, {
+      var msg = _serverDataCodec.decodeByPBName(data, PBName.UpStreamMessage, {
         currentUserId: currentUserId,
         signal: signal
       });
 
-      if (isComet) {
+      if (isComet || msg.isStatusMessage) {
         msg.sentTime = common.DelayTimer.getTime();
         return self._serverEventEmitter.emit(SERVER_EVENT_NAME.DIRECT_MSG, msg);
       }
@@ -6614,11 +6795,11 @@
         msg.sentTime = ackSignal.timestamp;
         return self._serverEventEmitter.emit(SERVER_EVENT_NAME.DIRECT_MSG, msg);
       })["catch"](function (error) {
-        Logger.error(TAG.L_CRASH_F, {
+        Logger.error(TAG.L_DECODE_MSG_E, {
           content: {
             info: 'received msg from other device error',
             error: error,
-            msg: msg
+            topic: topic
           }
         });
       });
@@ -6865,11 +7046,14 @@
     _proto.joinChatRoom = function joinChatRoom(chrm, option) {
       var self = this;
       var id = chrm.id;
-      var count = option.count;
+      var count = option.count,
+          isJoinExist = option.isJoinExist,
+          isAutoRejoin = option.isAutoRejoin;
 
       var data = self._serverDataCodec.encodeJoinOrQuitChatRoom();
 
-      var writer = new QueryWriter(QUERY_TOPIC.JOIN_CHATROOM, data, id);
+      var topic = isJoinExist ? QUERY_TOPIC.JOIN_EXIST_CHATROOM : QUERY_TOPIC.JOIN_CHATROOM;
+      var writer = new QueryWriter(topic, data, id);
 
       self._serverEventEmitter.emit(SERVER_EVENT_NAME.BEFORE_JOIN_CHATROOM, {
         id: id
@@ -6878,7 +7062,8 @@
       return self._sendSignalForData(writer).then(function (result) {
         self._serverEventEmitter.emit(SERVER_EVENT_NAME.JOIN_CHATROOM, {
           id: id,
-          count: count
+          count: count,
+          isAutoRejoin: isAutoRejoin
         });
 
         return result;
@@ -7045,6 +7230,13 @@
       var data = this._serverDataCodec.encodeSetRTCData(key, value, isInner, apiType, message);
 
       var writer = new PublishWriter(QUERY_TOPIC.SET_RTC_DATA, data, roomId);
+      return this._sendSignalForData(writer);
+    };
+
+    _proto.setRTCUserData = function setRTCUserData(roomId, message, valueInfo, objectName) {
+      var data = this._serverDataCodec.encodeUserSetRTCData(message, valueInfo, objectName);
+
+      var writer = new PublishWriter(QUERY_TOPIC.USER_SET_RTC_DATA, data, roomId);
       return this._sendSignalForData(writer);
     };
 
@@ -7339,6 +7531,47 @@
       isPersited: false
     }
   };
+  var BASE_NAVI_RESP = {
+    isFixedNaviResp: true,
+    code: 300,
+    userId: '',
+    server: '',
+    backupServer: '',
+    voipCallInfo: '{"strategy":1,"callEngine":[{"engineType":4,"mediaServer":"https://rtc-info.ronghub.com","maxStreamCount":20},{"engineType":3,"vendorKey":"","signKey":"","blinkCMPServer":"rtccmp.ronghub.com:80","blinkSnifferServer":"rtccmp.ronghub.com:80"}]}',
+    kvStorage: 1,
+    uploadServer: 'upload.qiniup.com',
+    openMp: 1,
+    openUS: 1,
+    logSwitch: 1,
+    logPolicy: '{"url": "logcollection.ronghub.com","level": 1,"itv": 6,"times": 5}',
+    bosAddr: 'gz.bcebos.com',
+    joinMChrm: true,
+    activeServer: '',
+    alone: true,
+    chatroomMsg: true,
+    compDays: 0,
+    errorMessage: '',
+    extkitSwitch: 1,
+    gifSize: 2048,
+    grpMsgLimit: 1,
+    historyMsg: true,
+    isFormatted: 1,
+    location: '',
+    monitor: 0,
+    msgAck: '',
+    offlinelogserver: '',
+    onlinelogserver: '',
+    openHttpDNS: true,
+    qnAddr: '',
+    videoTimes: 120,
+    voipServer: ''
+  };
+  var CMP_HOST_HTTPS = {
+    backupServer: 'wsap-cn.ronghub.com:443'
+  };
+  var CMP_HOST_HTTP = {
+    backupServer: 'wsap-cn.ronghub.com:80'
+  };
 
   var RCStorage$1 = common.RCStorage;
 
@@ -7444,6 +7677,31 @@
     return utils.Defer.resolve(naviResp);
   };
 
+  var getNaviRespByWS = function getNaviRespByWS(navi) {
+    var protocol = env.protocol.http;
+    var optionCMP = protocol === HTTP_PROTOCOL.HTTP ? CMP_HOST_HTTP : CMP_HOST_HTTPS;
+    return utils.extend(navi, optionCMP);
+  };
+
+  var getPreparedNaviResp = function getPreparedNaviResp(option) {
+    var appkey = option.appkey;
+    var naviResp = BASE_NAVI_RESP;
+    var voipCallInfo = naviResp.voipCallInfo;
+
+    try {
+      var parseVoipCallInfo = utils.parseJSON(voipCallInfo);
+      utils.forEach(parseVoipCallInfo.callEngine, function (item) {
+        if (item.engineType === 3) {
+          item.vendorKey = appkey;
+        }
+      });
+      var jsonVoipCallInfo = utils.toJSON(parseVoipCallInfo);
+      naviResp.voipCallInfo = jsonVoipCallInfo;
+    } catch (error) {}
+
+    return getNaviRespByWS(naviResp);
+  };
+
   var NaviManager = function () {
     function NaviManager(option) {
       this.option = void 0;
@@ -7459,7 +7717,8 @@
       var option = self.option,
           localNaviHandler = self.localNaviHandler;
       var navigators = option.navigators,
-          token = option.token;
+          token = option.token,
+          connectType = option.connectType;
 
       if (env.isMini) {
         return getMiniNavi(option).then(function (miniNaviResp) {
@@ -7499,7 +7758,8 @@
           }
         });
         var resp = parseNaviResponse(responseText);
-        var code = resp.code;
+        var code = resp.code,
+            isFixedNaviResp = resp.isFixedNaviResp;
         var isSuccess = code === NAVI_REQUEST_SUCCESS_CODE;
 
         if (isSuccess) {
@@ -7510,6 +7770,14 @@
             msg: resp.errorMessage
           });
           return utils.Defer.reject(error);
+        } else if (isFixedNaviResp) {
+          if (connectType === CONNECT_TYPE.COMET) {
+            return utils.Defer.reject(ERROR_INFO.NAVI_REQUEST_ERROR);
+          }
+
+          var naviResp = getPreparedNaviResp(option);
+          localNaviHandler.set(naviResp);
+          return naviResp;
         } else {
           return utils.Defer.reject(utils.extendInShallow(ERROR_INFO.NAVI_REQUEST_ERROR, {
             error: responseText
@@ -8056,7 +8324,7 @@
         });
         list.push(conversation);
       });
-      return common.sortConversationList(list);
+      return common.sortConList(list);
     };
 
     _proto._setUnreadCount = function _setUnreadCount(message, conversation) {
@@ -8106,7 +8374,7 @@
       var content = message.content,
           messageDirection = message.messageDirection,
           isMentiond = message.isMentiond,
-          isSelfSend = utils.isEqual(messageDirection, MESSAGE_DIRECTION.RECEIVE),
+          isSelfSend = utils.isEqual(messageDirection, MESSAGE_DIRECTION.SEND),
           hasContent = utils.isObject(content);
       var hasChanged = false;
 
@@ -8205,7 +8473,7 @@
       this._serverEngine = void 0;
       this._pullQueue = void 0;
       this._messageTimeSyner = void 0;
-      this._chatRoomMessageTimeSyner = ChatRoomMessageTimeSyner$1;
+      this._chatRoomMessageTimeSyner = void 0;
       this._eventEmitter = new utils.EventEmitter();
       this._pullMessageTimer = new utils.Timer({
         type: TIMER_TYPE.INTERVAL,
@@ -8240,14 +8508,15 @@
 
       self._handleJoinChatRoom = function (_ref) {
         var id = _ref.id,
-            count = _ref.count;
+            count = _ref.count,
+            isAutoRejoin = _ref.isAutoRejoin;
 
         if (utils.isEqual(count, CHATROOM_NOT_PULL_MSG_COUNT)) {
           self._chatRoomMessageTimeSyner.set(id, common.DelayTimer.getTime());
         } else {
           var type = PULL_MSG_TYPE.CHATROOM,
-              time = 0,
               chrmId = id;
+          var time = isAutoRejoin ? self._chatRoomMessageTimeSyner.get(id) + 1 : 0;
 
           self._chatRoomMessageTimeSyner.set(id, time);
 
@@ -8271,6 +8540,10 @@
         appkey: appkey,
         userId: userId,
         startSyncTime: startSyncTime
+      });
+      self._chatRoomMessageTimeSyner = new ChatRoomMessageTimeSyner$1({
+        appkey: appkey,
+        userId: userId
       });
 
       self._pullMessageTimer.start(pullQueue.pull, {
@@ -8853,6 +9126,7 @@
       this._connectionStatus = CONNECTION_STATUS.DISCONNECTED;
       this._connectedDomain = void 0;
       this._networkDetecter = void 0;
+      this._joinedChatRoomSyner = void 0;
       var self = this;
       var detect = option.detect;
       var serverEngine = new ServerEngine(option);
@@ -8908,6 +9182,7 @@
           _connectedDomain = this._connectedDomain;
       var isNeedUpdateCMPList = utils.isInclude(TRANSPORTER_STATUS_NEED_UPDATE_CMP, status);
       var isNeedReconnect = utils.isInclude(TRANSPORTER_STATUS_NEED_RECONNECT, status);
+      var isKickedOfflineByOtherClient = utils.isEqual(CONNECTION_STATUS.KICKED_OFFLINE_BY_OTHER_CLIENT, status);
 
       if (isNeedUpdateCMPList) {
         _cmpManager.addInvalid(_connectedDomain);
@@ -8921,7 +9196,11 @@
 
       if (isNeedReconnect) {
         this.disconnect();
-        this.reconnect();
+        this.reconnect(true);
+      }
+
+      if (isKickedOfflineByOtherClient) {
+        this.disconnect();
       }
 
       var connectionStatus = TRANSPORTER_STATUS_TO_CONNECTION_STATUS[status] || status;
@@ -8987,6 +9266,10 @@
         userId: id,
         isAutoPull: isAutoPull
       });
+      self._joinedChatRoomSyner = new common.JoinedChatRoomSyner({
+        appkey: appkey,
+        userId: id
+      });
       userSettingManager.watchSettingChanged(function (config) {
         config = config || {};
         var _config = config,
@@ -9006,9 +9289,10 @@
 
       var statusWatcher = watchers.status,
           messageWatcher = watchers.message,
-          conversationWatcher = watchers.conversation;
+          conversationWatcher = watchers.conversation,
+          chatroomWatcher = watchers.chatroom;
       var self = this;
-      var events = (_events = {}, _events[IM_EVENT.STATUS] = statusWatcher, _events[IM_EVENT.MESSAGE] = messageWatcher, _events[IM_EVENT.CONVERSATION] = conversationWatcher, _events);
+      var events = (_events = {}, _events[IM_EVENT.STATUS] = statusWatcher, _events[IM_EVENT.MESSAGE] = messageWatcher, _events[IM_EVENT.CONVERSATION] = conversationWatcher, _events[IM_EVENT.CHATROOM] = chatroomWatcher, _events);
       utils.forEach(events, function (event, eventName) {
         utils.isFunction(event) && self._imEventEmitter.on(eventName, event);
       });
@@ -9019,7 +9303,8 @@
       var offEventNameObj = {
         status: 'IM_EVENT.STATUS',
         message: 'IM_EVENT.MESSAGE',
-        conversation: 'IM_EVENT.CONVERSATION'
+        conversation: 'IM_EVENT.CONVERSATION',
+        chatroom: 'IM_EVENT.CHATROOM'
       };
 
       if (watchers) {
@@ -9052,7 +9337,7 @@
       });
     };
 
-    _proto.connect = function connect(user) {
+    _proto.connect = function connect(user, options) {
       Logger.startRealtimeUpload();
       var self = this;
       var _option = self._option,
@@ -9061,6 +9346,8 @@
       var naviOpt = common.getNavReqOption(_option, user);
       var naviManager = new NaviManager(naviOpt);
       var getServerConfig = _option.isOldServer ? _serverEngine.getOldServerConfig : _serverEngine.getServerConfig;
+      options = options || {};
+      var isAutoReconnect = options.isAutoReconnect;
 
       self._handleConnectionStatus(CONNECTION_STATUS.CONNECTING);
 
@@ -9082,9 +9369,12 @@
         });
       }).then(function (user) {
         connectUser = user;
+        isAutoReconnect && self.rejoinChatRoom();
         return getServerConfig.call(_serverEngine, user.id);
       }).then(function (serverConfig) {
         self._afterConnect(connectUser, serverConfig);
+
+        self._handleConnectionStatus(CONNECTION_STATUS.CONNECTED);
 
         return connectUser;
       })["catch"](function (error) {
@@ -9092,7 +9382,7 @@
       });
     };
 
-    _proto.reconnect = function reconnect() {
+    _proto.reconnect = function reconnect(isAutoReconnect) {
       var self = this;
       var _user = self._user;
 
@@ -9101,7 +9391,9 @@
       }
 
       return self._networkDetecter.start().then(function () {
-        return self.connect(_user);
+        return self.connect(_user, {
+          isAutoReconnect: isAutoReconnect
+        });
       });
     };
 
@@ -9218,16 +9510,67 @@
       var self = this;
       var _serverEngine = self._serverEngine,
           _naviManager = self._naviManager,
-          _chatRoomKVManager = self._chatRoomKVManager;
+          _chatRoomKVManager = self._chatRoomKVManager,
+          _joinedChatRoomSyner = self._joinedChatRoomSyner;
+      var isAutoRejoin = option.isAutoRejoin;
       return _serverEngine.joinChatRoom(chrm, option).then(function () {
         return _naviManager.get();
       }).then(function (configForNavi) {
-        var isOpenKVStorageService = configForNavi.kvStorage;
+        var isOpenKVStorageService = configForNavi.kvStorage,
+            isOpenJoinMulitpleChrmService = configForNavi.joinMChrm;
+        !isAutoRejoin && _joinedChatRoomSyner.set({
+          chrmId: chrm.id,
+          count: option.count,
+          isOpenJoinMulitpleChrmService: isOpenJoinMulitpleChrmService
+        });
         var initialTime = 0;
         return isOpenKVStorageService ? _chatRoomKVManager.pull({
           time: initialTime,
           chrmId: chrm.id
         }) : utils.Defer.resolve();
+      });
+    };
+
+    _proto.quitChatRoom = function quitChatRoom(chrm) {
+      var self = this;
+      var _serverEngine = self._serverEngine;
+      return _serverEngine.quitChatRoom(chrm).then(function () {
+        self._joinedChatRoomSyner.remove(chrm.id);
+
+        return utils.Defer.resolve();
+      });
+    };
+
+    _proto.rejoinChatRoom = function rejoinChatRoom() {
+      var self = this;
+      var _joinedChatRoomSyner = self._joinedChatRoomSyner,
+          _imEventEmitter = self._imEventEmitter;
+
+      var joinedChrmInfos = _joinedChatRoomSyner.get();
+
+      utils.forEach(joinedChrmInfos, function (chrmInfo) {
+        var chrmId = chrmInfo.chrmId,
+            count = chrmInfo.count;
+        var isAutoRejoin = true,
+            isJoinExist = true;
+        return self.joinChatRoom({
+          id: chrmId
+        }, {
+          count: count,
+          isAutoRejoin: isAutoRejoin,
+          isJoinExist: isJoinExist
+        }).then(function () {
+          _imEventEmitter.emit(IM_EVENT.CHATROOM, {
+            chatroomId: chrmId,
+            count: count
+          });
+        }, function (reason) {
+          _imEventEmitter.emit(IM_EVENT.CHATROOM, {
+            chatroomId: chrmId,
+            count: count,
+            errorCode: reason
+          });
+        });
       });
     };
 
@@ -9370,7 +9713,7 @@
             error = error.stack.toString();
           }
 
-          Logger.fatal(TAG.L_CRASH_F, {
+          Logger.fatal(TAG.L_CRASH_E, {
             content: {
               desc: 'SDK Error',
               error: error
@@ -10028,6 +10371,25 @@
         });
       };
 
+      _proto.joinExist = function joinExist(option) {
+        var _validate3 = validate({
+          count: Type.Number.canBeNull()
+        }, option, 'chatRoom.joinExist'),
+            isError = _validate3.isError,
+            info = _validate3.info;
+
+        if (isError) {
+          return utils.Defer.reject(info);
+        }
+
+        option['isJoinExist'] = true;
+        option = utils.extendInShallow(JOIN_CHATROOM_OPTION, option);
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.JOIN_CHATROOM,
+          args: [this, option]
+        });
+      };
+
       _proto.quit = function quit() {
         return _engineDispatcher.exec({
           event: ENGINE_EVENT.QUIT_CHATROOM,
@@ -10036,12 +10398,12 @@
       };
 
       _proto.getInfo = function getInfo(option) {
-        var _validate3 = validate({
+        var _validate4 = validate({
           count: Type.Number.canBeNull(),
           order: Type.Number.canBeNull()
         }, option, 'chatRoom.getInfo'),
-            isError = _validate3.isError,
-            info = _validate3.info;
+            isError = _validate4.isError,
+            info = _validate4.info;
 
         if (isError) {
           return utils.Defer.reject(info);
@@ -10057,12 +10419,12 @@
       _proto.send = function send(option) {
         var eventName = 'chatRoom.send';
 
-        var _validate4 = validate({
+        var _validate5 = validate({
           messageType: Type.String,
           content: Type.Object
         }, option, eventName),
-            isError = _validate4.isError,
-            info = _validate4.info;
+            isError = _validate5.isError,
+            info = _validate5.info;
 
         if (isError) {
           return utils.Defer.reject(info);
@@ -10093,13 +10455,13 @@
       };
 
       _proto.getMessages = function getMessages(option) {
-        var _validate5 = validate({
+        var _validate6 = validate({
           count: Type.Number.canBeNull(),
           order: Type.Number.canBeNull(),
           timestrap: Type.Number
         }, option, 'chatRoom.getInfo'),
-            isError = _validate5.isError,
-            info = _validate5.info;
+            isError = _validate6.isError,
+            info = _validate6.info;
 
         if (isError) {
           return utils.Defer.reject(info);
@@ -10113,12 +10475,12 @@
       };
 
       _proto.setEntry = function setEntry(option) {
-        var _validate6 = validate({
+        var _validate7 = validate({
           key: Type.ChatRoomEntryKey,
           value: Type.ChatRoomEntryValue
         }, option, 'chatRoom.setEntry'),
-            isError = _validate6.isError,
-            info = _validate6.info;
+            isError = _validate7.isError,
+            info = _validate7.info;
 
         if (isError) {
           return utils.Defer.reject(info);
@@ -10131,12 +10493,12 @@
       };
 
       _proto.forceSetEntry = function forceSetEntry(option) {
-        var _validate7 = validate({
+        var _validate8 = validate({
           key: Type.ChatRoomEntryKey,
           value: Type.ChatRoomEntryValue
         }, option, 'chatRoom.forceSetEntry'),
-            isError = _validate7.isError,
-            info = _validate7.info;
+            isError = _validate8.isError,
+            info = _validate8.info;
 
         if (isError) {
           return utils.Defer.reject(info);
@@ -10149,11 +10511,11 @@
       };
 
       _proto.removeEntry = function removeEntry(option) {
-        var _validate8 = validate({
+        var _validate9 = validate({
           key: Type.ChatRoomEntryKey
         }, option, 'chatRoom.removeEntry'),
-            isError = _validate8.isError,
-            info = _validate8.info;
+            isError = _validate9.isError,
+            info = _validate9.info;
 
         if (isError) {
           return utils.Defer.reject(info);
@@ -10166,11 +10528,11 @@
       };
 
       _proto.forceRemoveEntry = function forceRemoveEntry(option) {
-        var _validate9 = validate({
+        var _validate10 = validate({
           key: Type.ChatRoomEntryKey
         }, option, 'chatRoom.forceRemoveEntry'),
-            isError = _validate9.isError,
-            info = _validate9.info;
+            isError = _validate10.isError,
+            info = _validate10.info;
 
         if (isError) {
           return utils.Defer.reject(info);
@@ -10183,9 +10545,9 @@
       };
 
       _proto.getEntry = function getEntry(key) {
-        var _validate10 = validate(Type.ChatRoomEntryKey, key, 'chatRoom.getEntry'),
-            isError = _validate10.isError,
-            info = _validate10.info;
+        var _validate11 = validate(Type.ChatRoomEntryKey, key, 'chatRoom.getEntry'),
+            isError = _validate11.isError,
+            info = _validate11.info;
 
         if (isError) {
           return utils.Defer.reject(info);
@@ -10297,6 +10659,13 @@
 
       _proto.setUserData = function setUserData(key, value, isInner, message) {
         return this.setData(key, value, isInner, RTC_API_TYPE.PERSON, message);
+      };
+
+      _proto.setRTCUserData = function setRTCUserData(message, valueInfo, objectName) {
+        return _engineDispatcher.exec({
+          event: ENGINE_EVENT.SET_RTC_USER_DATA,
+          args: [this.roomId, message, valueInfo, objectName]
+        });
       };
 
       _proto.getUserData = function getUserData(keys, isInner) {
