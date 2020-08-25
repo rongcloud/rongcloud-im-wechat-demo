@@ -1,9 +1,8 @@
 /*
-* RongIMLib.js v3.0.5-dev
-* CodeVersion: 38e13212284015eff208f8969a844cf7c348dc5a
-* Release Date: Thu Jul 30 2020 17:15:28 GMT+0800 (China Standard Time)
+* RongIMLib.js v3.0.6-dev
+* CodeVersion: 05e9c1154f65555f0bf3a7e715f5f35dd8c0c685
+* Release Date: Fri Aug 21 2020 11:07:01 GMT+0800 (GMT+08:00)
 * Copyright 2020 RongCloud
-* Released under the MIT License.
 */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -11,7 +10,7 @@
   (global.RongIMLib = factory());
 }(this, (function () { 'use strict';
 
-  var versionToServer = "3.0.5";
+  var versionToServer = "3.0.6";
 
   var SDK_VERSION = versionToServer;
 
@@ -116,6 +115,10 @@
       code: 31003,
       msg: 'Mini program service is not open, Please go to the developer to open this service'
     },
+    CONN_ACK_TIMEOUT: {
+      code: 31000,
+      msg: 'Connection ACK timeout'
+    },
     CONN_TOKEN_INCORRECT: {
       code: 31004,
       msg: 'Your token is not valid or expired'
@@ -211,7 +214,6 @@
     DEVICE_ERROR: 11,
     DOMAIN_INCORRECT: 12
   };
-  var CONNECT_SERVER_STATUS_MAP_ERROR_INFO = (_CONNECT_SERVER_STATU = {}, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.IDENTIFIER_REJECTED] = ERROR_INFO.CONN_APPKEY_FAKE, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.CONN_MINI_SERVICE_NOT_OPEN] = ERROR_INFO.CONN_MINI_SERVICE_NOT_OPEN, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.TOKEN_INCORRECT] = ERROR_INFO.CONN_TOKEN_INCORRECT, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.NOT_AUTHORIZED] = ERROR_INFO.CONN_NOT_AUTHRORIZED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.REDIRECT] = ERROR_INFO.CONN_REDIRECTED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.APP_BLOCK_OR_DELETE] = ERROR_INFO.CONN_APP_BLOCKED_OR_DELETED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.BLOCK] = ERROR_INFO.CONN_USER_BLOCKED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.TOKEN_EXPIRE] = ERROR_INFO.CONN_TOKEN_INCORRECT, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.DOMAIN_INCORRECT] = ERROR_INFO.CONN_DOMAIN_INCORRECT, _CONNECT_SERVER_STATU);
   var TRANSPORTER_STATUS = {
     CONNECTED: CONNECTION_STATUS.CONNECTED,
     KICKED_OFFLINE_BY_OTHER_CLIENT: CONNECTION_STATUS.KICKED_OFFLINE_BY_OTHER_CLIENT,
@@ -235,8 +237,10 @@
     DISCONNECT_TOO_FAST: 2003,
     EXCEED_MESSAGE_ID_LIMIT: 2004,
     COMET_REQUEST_ERROR: 2005,
-    MINI_URL_NOT_IN_DOMAIN_LIST: 2006
+    MINI_URL_NOT_IN_DOMAIN_LIST: 2006,
+    CMP_CONNECTION_TIMEOUT: 2007
   };
+  var CONNECT_SERVER_STATUS_MAP_ERROR_INFO = (_CONNECT_SERVER_STATU = {}, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.IDENTIFIER_REJECTED] = ERROR_INFO.CONN_APPKEY_FAKE, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.CONN_MINI_SERVICE_NOT_OPEN] = ERROR_INFO.CONN_MINI_SERVICE_NOT_OPEN, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.TOKEN_INCORRECT] = ERROR_INFO.CONN_TOKEN_INCORRECT, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.NOT_AUTHORIZED] = ERROR_INFO.CONN_NOT_AUTHRORIZED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.REDIRECT] = ERROR_INFO.CONN_REDIRECTED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.APP_BLOCK_OR_DELETE] = ERROR_INFO.CONN_APP_BLOCKED_OR_DELETED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.BLOCK] = ERROR_INFO.CONN_USER_BLOCKED, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.TOKEN_EXPIRE] = ERROR_INFO.CONN_TOKEN_INCORRECT, _CONNECT_SERVER_STATU[CONNECT_SERVER_STATUS.DOMAIN_INCORRECT] = ERROR_INFO.CONN_DOMAIN_INCORRECT, _CONNECT_SERVER_STATU[TRANSPORTER_STATUS.CMP_CONNECTION_TIMEOUT] = ERROR_INFO.CONN_ACK_TIMEOUT, _CONNECT_SERVER_STATU);
   var MINI_ERROR_MSG_TO_STATUS = {
     'url not in domain list': TRANSPORTER_STATUS.MINI_URL_NOT_IN_DOMAIN_LIST
   };
@@ -306,6 +310,13 @@
     DO_NOT_DISTURB: 1,
     NOTIFY: 2
   };
+  var RECEIVED_STATUS = {
+    READ: 0x1,
+    LISTENED: 0x2,
+    DOWNLOADED: 0x4,
+    RETRIEVED: 0x8,
+    UNREAD: 0
+  };
   var product = {
     CONNECT_TYPE: CONNECT_TYPE,
     CONNECTION_STATUS: CONNECTION_STATUS,
@@ -319,7 +330,8 @@
     SDK_VERSION: SDK_VERSION,
     FILE_TYPE: FILE_TYPE,
     CHATROOM_ENTRY_TYPE: CHATROOM_ENTRY_TYPE,
-    NOTIFICATION_STATUS: NOTIFICATION_STATUS
+    NOTIFICATION_STATUS: NOTIFICATION_STATUS,
+    RECEIVED_STATUS: RECEIVED_STATUS
   };
 
   var IM_TIMEOUT = 30000;
@@ -330,9 +342,11 @@
   var PULL_MSG_TIME = 180000;
   var NAVI_EXPIRED_TIME = 7200000;
   var CMP_SNIFF_INTERNAL_TIME = 1000;
+  var CMP_CONNECT_TIMEOUT_TIME = 10000;
   var FIRST_PING_TIMEOUT = 1000;
   var NAVI_REQUEST_SUCCESS_CODE = 200;
   var NAVI_SEPARATOR_IN_TOKEN = '@';
+  var NAVI_REQUEST_TIMEOUT = 10000;
   var DOMAIN_SEPARATOR_IN_NAVLIST = ';';
   var DOMAIN_SEPARATOR_IN_CMPLIST = ',';
   var MAX_SINGAL_ID = 65535;
@@ -470,20 +484,7 @@
   };
 
   var isFromUniapp = isFromUniappEnv();
-
-  var isAppPlusEnv = function isAppPlusEnv() {
-    if (isFromUniapp) {
-      var systemInfo = uni.getSystemInfoSync();
-
-      if (['ios', 'android'].includes(systemInfo.platform) && systemInfo.version) {
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-  var isAppPlus = isAppPlusEnv();
+  var isAppPlus = false;
 
   var isMiniEnv = function isMiniEnv(global) {
     if (isAppPlus) {
@@ -494,12 +495,7 @@
   };
 
   var getEnvInfo = function getEnvInfo() {
-    if (isAppPlus) {
-      return {
-        platform: PLATFORM.UNI,
-        global: uni
-      };
-    } else if (typeof swan !== 'undefined' && hasMiniBaseEvent(swan)) {
+    if (typeof swan !== 'undefined' && hasMiniBaseEvent(swan)) {
       return {
         platform: PLATFORM.BAIDU,
         global: swan
@@ -514,7 +510,7 @@
         platform: PLATFORM.ZFB,
         global: my
       };
-    } else if (typeof wx !== 'undefined' && hasMiniBaseEvent(wx) && !navigator) {
+    } else if (typeof wx !== 'undefined' && hasMiniBaseEvent(wx)) {
       return {
         platform: PLATFORM.WX,
         global: wx
@@ -524,6 +520,55 @@
         platform: PLATFORM.WEB,
         global: window
       };
+    }
+  };
+
+  var getFromUniEnvInfo = function getFromUniEnvInfo() {
+    var uniPlatform = process.env.VUE_APP_PLATFORM;
+
+    switch (uniPlatform) {
+      case 'app-plus':
+        isAppPlus = true;
+        return {
+          platform: PLATFORM.UNI,
+          global: uni
+        };
+
+      case 'mp-baidu':
+        return {
+          platform: PLATFORM.BAIDU,
+          global: swan
+        };
+
+      case 'mp-toutiao':
+        return {
+          platform: PLATFORM.TT,
+          global: tt
+        };
+
+      case 'mp-alipay':
+        return {
+          platform: PLATFORM.ZFB,
+          global: my
+        };
+
+      case 'mp-weixin':
+        return {
+          platform: PLATFORM.WX,
+          global: wx
+        };
+
+      case 'h5':
+        return {
+          platform: PLATFORM.WEB,
+          global: window
+        };
+
+      default:
+        return {
+          platform: 'not included platform',
+          global: window
+        };
     }
   };
 
@@ -636,7 +681,7 @@
     });
   };
 
-  var envInfo = getEnvInfo();
+  var envInfo = isFromUniapp ? getFromUniEnvInfo() : getEnvInfo();
   var platform = envInfo.platform,
       global$1 = envInfo.global;
   var isMini = isMiniEnv(global$1);
@@ -1218,6 +1263,12 @@
             success(result, xhr, status);
           }
         }
+      };
+    }
+
+    if ('ontimeout' in xhr) {
+      xhr.ontimeout = function () {
+        fail(xhr.responseText, xhr);
       };
     }
 
@@ -1994,18 +2045,15 @@
     }
 
     var url = urlList[0];
-    var fixedNaviResp = {
-      'responseText': '{"isFixedNaviResp":true}'
-    };
     return request$2(url, options).then(function (result) {
       result = result || {};
       result.urlList = urlList;
       return result;
-    })["catch"](function () {
+    })["catch"](function (error) {
       urlList.splice(0, 1);
 
       if (isEmpty(urlList)) {
-        return fixedNaviResp;
+        return Defer.reject(error);
       } else {
         return requestByUrlList(urlList, options);
       }
@@ -2465,18 +2513,13 @@
     DISCONNECT: 14,
     '14': 'DISCONNECT'
   };
-  var MESSAGE_TAG = {
-    NONE: 0,
-    PERSIT_ONLY: 1,
-    COUNT_ONLY: 2,
-    PERSIT_AND_COUNT: 3
-  };
   var PUBLISH_TOPIC = {
     PRIVATE: 'ppMsgP',
     GROUP: 'pgMsgP',
     CHATROOM: 'chatMsg',
     CUSTOMER_SERVICE: 'pcMsgP',
     RECALL: 'recallMsg',
+    RTC_MSG: 'prMsgS',
     NOTIFY_PULL_MSG: 's_ntf',
     RECEIVE_MSG: 's_msg',
     SYNC_STATUS: 's_stat',
@@ -2550,7 +2593,7 @@
     OPERATE: 0x0004
   };
   var PUBLISH_TOPIC_TO_CONVERSATION_TYPE = (_PUBLISH_TOPIC_TO_CON = {}, _PUBLISH_TOPIC_TO_CON[PUBLISH_TOPIC.PRIVATE] = CONVERSATION_TYPE.PRIVATE, _PUBLISH_TOPIC_TO_CON[PUBLISH_TOPIC.GROUP] = CONVERSATION_TYPE.GROUP, _PUBLISH_TOPIC_TO_CON[PUBLISH_TOPIC.CHATROOM] = CONVERSATION_TYPE.CHATROOM, _PUBLISH_TOPIC_TO_CON[PUBLISH_TOPIC.CUSTOMER_SERVICE] = CONVERSATION_TYPE.CUSTOMER_SERVICE, _PUBLISH_TOPIC_TO_CON[PUBLISH_STATUS_TOPIC.PRIVATE] = CONVERSATION_TYPE.PRIVATE, _PUBLISH_TOPIC_TO_CON[PUBLISH_STATUS_TOPIC.GROUP] = CONVERSATION_TYPE.GROUP, _PUBLISH_TOPIC_TO_CON[PUBLISH_STATUS_TOPIC.CHATROOM] = CONVERSATION_TYPE.CHATROOM, _PUBLISH_TOPIC_TO_CON);
-  var CONVERSATION_TYPE_TO_PUBLISH_TOPIC = (_CONVERSATION_TYPE_TO = {}, _CONVERSATION_TYPE_TO[CONVERSATION_TYPE.PRIVATE] = PUBLISH_TOPIC.PRIVATE, _CONVERSATION_TYPE_TO[CONVERSATION_TYPE.GROUP] = PUBLISH_TOPIC.GROUP, _CONVERSATION_TYPE_TO[CONVERSATION_TYPE.CHATROOM] = PUBLISH_TOPIC.CHATROOM, _CONVERSATION_TYPE_TO[CONVERSATION_TYPE.CUSTOMER_SERVICE] = PUBLISH_TOPIC.CUSTOMER_SERVICE, _CONVERSATION_TYPE_TO);
+  var CONVERSATION_TYPE_TO_PUBLISH_TOPIC = (_CONVERSATION_TYPE_TO = {}, _CONVERSATION_TYPE_TO[CONVERSATION_TYPE.PRIVATE] = PUBLISH_TOPIC.PRIVATE, _CONVERSATION_TYPE_TO[CONVERSATION_TYPE.GROUP] = PUBLISH_TOPIC.GROUP, _CONVERSATION_TYPE_TO[CONVERSATION_TYPE.CHATROOM] = PUBLISH_TOPIC.CHATROOM, _CONVERSATION_TYPE_TO[CONVERSATION_TYPE.CUSTOMER_SERVICE] = PUBLISH_TOPIC.CUSTOMER_SERVICE, _CONVERSATION_TYPE_TO[CONVERSATION_TYPE.RTC_ROOM] = PUBLISH_TOPIC.RTC_MSG, _CONVERSATION_TYPE_TO);
   var CONVERSATION_TYPE_TO_PUBLISH_STATUS_TOPIC = (_CONVERSATION_TYPE_TO2 = {}, _CONVERSATION_TYPE_TO2[CONVERSATION_TYPE.PRIVATE] = PUBLISH_STATUS_TOPIC.PRIVATE, _CONVERSATION_TYPE_TO2[CONVERSATION_TYPE.GROUP] = PUBLISH_STATUS_TOPIC.GROUP, _CONVERSATION_TYPE_TO2);
   var CONVERSATION_TYPE_TO_QUERY_HISTORY_TOPIC = (_CONVERSATION_TYPE_TO3 = {}, _CONVERSATION_TYPE_TO3[CONVERSATION_TYPE.PRIVATE] = QUERY_HISTORY_TOPIC.PRIVATE, _CONVERSATION_TYPE_TO3[CONVERSATION_TYPE.GROUP] = QUERY_HISTORY_TOPIC.GROUP, _CONVERSATION_TYPE_TO3[CONVERSATION_TYPE.CHATROOM] = QUERY_HISTORY_TOPIC.CHATROOM, _CONVERSATION_TYPE_TO3[CONVERSATION_TYPE.CUSTOMER_SERVICE] = QUERY_HISTORY_TOPIC.CUSTOMER_SERVICE, _CONVERSATION_TYPE_TO3[CONVERSATION_TYPE.SYSTEM] = QUERY_HISTORY_TOPIC.SYSTEM, _CONVERSATION_TYPE_TO3);
   var CONVERSATION_TYPE_TO_CLEAR_MESSAGE_TOPIC = (_CONVERSATION_TYPE_TO4 = {}, _CONVERSATION_TYPE_TO4[CONVERSATION_TYPE.PRIVATE] = QUERY_TOPIC.CLEAR_MESSAGES.PRIVATE, _CONVERSATION_TYPE_TO4[CONVERSATION_TYPE.GROUP] = QUERY_TOPIC.CLEAR_MESSAGES.GROUP, _CONVERSATION_TYPE_TO4[CONVERSATION_TYPE.CUSTOMER_SERVICE] = QUERY_TOPIC.CLEAR_MESSAGES.CUSTOMER_SERVICE, _CONVERSATION_TYPE_TO4[CONVERSATION_TYPE.SYSTEM] = QUERY_TOPIC.CLEAR_MESSAGES.SYSTEM, _CONVERSATION_TYPE_TO4);
@@ -2651,34 +2694,46 @@
       }
     },
     readUTF: function readUTF(arr) {
-      var UTF = '';
+      var MAX_SIZE = 0x4000;
+      var codeUnits = [];
+      var highSurrogate;
+      var lowSurrogate;
+      var index = -1;
+      var strBytes = arr;
+      var result = '';
 
-      for (var i = 0, len = arr.length; i < len; i++) {
-        var _char3 = arr[i];
+      while (++index < strBytes.length) {
+        var codePoint = Number(strBytes[index]);
 
-        if (_char3 < 0) {
-          arr[i] += 256;
+        if (codePoint === (codePoint & 0x7F)) ; else if (0xF0 === (codePoint & 0xF0)) {
+          codePoint ^= 0xF0;
+          codePoint = codePoint << 6 | strBytes[++index] ^ 0x80;
+          codePoint = codePoint << 6 | strBytes[++index] ^ 0x80;
+          codePoint = codePoint << 6 | strBytes[++index] ^ 0x80;
+        } else if (0xE0 === (codePoint & 0xE0)) {
+          codePoint ^= 0xE0;
+          codePoint = codePoint << 6 | strBytes[++index] ^ 0x80;
+          codePoint = codePoint << 6 | strBytes[++index] ^ 0x80;
+        } else if (0xC0 === (codePoint & 0xC0)) {
+          codePoint ^= 0xC0;
+          codePoint = codePoint << 6 | strBytes[++index] ^ 0x80;
         }
 
-        var one = arr[i].toString(2),
-            v = one.match(/^1+?(?=0)/);
+        if (!isFinite(codePoint) || codePoint < 0 || codePoint > 0x10FFFF || Math.floor(codePoint) !== codePoint) throw RangeError('Invalid code point: ' + codePoint);
+        if (codePoint <= 0xFFFF) codeUnits.push(codePoint);else {
+          codePoint -= 0x10000;
+          highSurrogate = codePoint >> 10 | 0xD800;
+          lowSurrogate = codePoint % 0x400 | 0xDC00;
+          codeUnits.push(highSurrogate, lowSurrogate);
+        }
 
-        if (v && one.length === 8) {
-          var bytesLength = v[0].length,
-              store = '';
-
-          for (var st = 0; st < bytesLength; st++) {
-            store += arr[st + i].toString(2).slice(2);
-          }
-
-          UTF += String.fromCharCode(parseInt(store, 2));
-          i += bytesLength - 1;
-        } else {
-          UTF += String.fromCharCode(arr[i]);
+        if (index + 1 === strBytes.length || codeUnits.length > MAX_SIZE) {
+          result += String.fromCharCode.apply(null, codeUnits);
+          codeUnits.length = 0;
         }
       }
 
-      return UTF;
+      return result;
     }
   };
 
@@ -3497,6 +3552,7 @@
     fullMaxTimes: 3,
     fullLevel: LEVEL.DEBUG
   };
+  var IGNORE_ERROR_CODE = [ERROR_CODE.RC_CONNECTION_EXIST];
 
   var isEmpty$1 = utils.isEmpty,
       tplEngine$1 = utils.tplEngine;
@@ -3581,49 +3637,17 @@
     return sessionId;
   };
 
-  var getPersitedAndCountedBySessionId = function getPersitedAndCountedBySessionId(sessionId) {
-    var isPersited, isCounted;
-
-    switch (sessionId) {
-      case MESSAGE_TAG.COUNT_ONLY:
-        isPersited = false;
-        isCounted = true;
-        break;
-
-      case MESSAGE_TAG.PERSIT_ONLY:
-        isPersited = true;
-        isCounted = false;
-        break;
-
-      case MESSAGE_TAG.NONE:
-        isPersited = isCounted = false;
-        break;
-
-      case MESSAGE_TAG.PERSIT_AND_COUNT:
-      default:
-        isPersited = isCounted = true;
-        break;
-    }
-
+  var getUpMessageOptionBySessionId = function getUpMessageOptionBySessionId(sessionId) {
+    var isPersited = false,
+        isCounted = false,
+        disableNotification = false;
+    isPersited = !!(sessionId & 0x01);
+    isCounted = !!(sessionId & 0x02);
+    disableNotification = !!(sessionId & 0x10);
     return {
       isPersited: isPersited,
-      isCounted: isCounted
-    };
-  };
-
-  var getPersitedAndCountedAndSlientBySessionId = function getPersitedAndCountedAndSlientBySessionId(sessionId) {
-    var binaryNum = Number(sessionId).toString(2);
-    var sessionIdArr = [];
-
-    for (var i = 0; i < binaryNum.length; i++) {
-      var index = binaryNum.length - 1 - i;
-      sessionIdArr.push(Number(binaryNum[index]));
-    }
-
-    return {
-      isPersited: Boolean(sessionIdArr[0]),
-      isCounted: Boolean(sessionIdArr[1]),
-      disableNotification: Boolean(sessionIdArr[5])
+      isCounted: isCounted,
+      disableNotification: disableNotification
     };
   };
 
@@ -3631,16 +3655,21 @@
     var isPersited = true,
         isCounted = true,
         isMentiond = false,
-        disableNotification = false;
+        disableNotification = false,
+        receivedStatus = RECEIVED_STATUS.READ;
+    var isReceivedByOtherClient = false;
     isPersited = !!(status & 0x10);
     isCounted = !!(status & 0x20);
     isMentiond = !!(status & 0x40);
-    disableNotification = !!(status & 0x200);
+    disableNotification = !!(status & 0x100);
+    isReceivedByOtherClient = !!(status & 0x02);
+    receivedStatus = isReceivedByOtherClient ? RECEIVED_STATUS.RETRIEVED : receivedStatus;
     return {
       isPersited: isPersited,
       isCounted: isCounted,
       isMentiond: isMentiond,
-      disableNotification: disableNotification
+      disableNotification: disableNotification,
+      receivedStatus: receivedStatus
     };
   };
 
@@ -3740,13 +3769,13 @@
 
   var RCStorage = function () {
     function RCStorage(suffix) {
-      var _ref;
+      var _utils$Cache;
 
       this._cache = void 0;
       this.STORAGE_KEY = void 0;
       var storageKey = suffix ? STORAGE_ROOT_KEY + suffix : STORAGE_ROOT_KEY;
       var localCache = utils.Storage.get(storageKey) || {};
-      this._cache = new utils.Cache((_ref = {}, _ref[storageKey] = localCache, _ref));
+      this._cache = new utils.Cache((_utils$Cache = {}, _utils$Cache[storageKey] = localCache, _utils$Cache));
       this.STORAGE_KEY = storageKey;
     }
 
@@ -4168,6 +4197,10 @@
     var topConversationList = [],
         unToppedConversationList = [];
     utils.forEach(conversationList, function (conversation) {
+      var hasMentiond = conversation.hasMentiond,
+          mentiondInfo = conversation.mentiondInfo;
+      conversation.hasMentioned = hasMentiond;
+      conversation.mentionedInfo = mentiondInfo;
       var isTop = conversation.isTop || false;
 
       if (isTop) {
@@ -4705,7 +4738,6 @@
     getUIDByToken: getUIDByToken,
     getSessionId: getSessionId,
     getMessageOptionByStatus: getMessageOptionByStatus,
-    getPersitedAndCountedBySessionId: getPersitedAndCountedBySessionId,
     SignalId: SignalId,
     MessageTimeSyner: MessageTimeSyner,
     ChatRoomMessageTimeSyner: ChatRoomMessageTimeSyner,
@@ -4738,7 +4770,7 @@
     getUploadFileDomains: getUploadFileDomains,
     mergeConversationList: mergeConversationList,
     sortConList: sortConList,
-    getPersitedAndCountedAndSlientBySessionId: getPersitedAndCountedAndSlientBySessionId
+    getUpMessageOptionBySessionId: getUpMessageOptionBySessionId
   };
 
   var EventEmitter$1 = utils.EventEmitter,
@@ -4807,7 +4839,12 @@
         timeout: IM_PING_INTERVAL_TIME
       });
       this._connectedTime = void 0;
+      this._timer = void 0;
       this._option = option;
+      this._timer = new Timer$1({
+        type: TIMER_TYPE.TIMEOUT,
+        timeout: CMP_CONNECT_TIMEOUT_TIME
+      });
     }
 
     var _proto2 = SocketTransporter.prototype;
@@ -4891,6 +4928,15 @@
       });
       var timeBeforeConnect = utils.getCurrentTimestamp();
       self._socket = this._createSocket(url);
+
+      self._timer.start(function () {
+        self.disconnect();
+
+        _deferHandler.reject(TransHandlerID.CONNECT, {
+          status: TRANSPORTER_STATUS.CMP_CONNECTION_TIMEOUT
+        });
+      });
+
       return utils.deferred(function (resolve, reject) {
         _deferHandler.add(TransHandlerID.CONNECT, {
           resolve: resolve,
@@ -4901,6 +4947,8 @@
         var timeSpentConnect = timeAfterConnect - timeBeforeConnect;
 
         self._startHeartbeat(timeSpentConnect);
+
+        self._timer.stop();
 
         return result;
       });
@@ -5238,6 +5286,10 @@
     }
   };
 
+  var isIgnoreErrorCode = function isIgnoreErrorCode(code) {
+    return utils.indexOf(IGNORE_ERROR_CODE, code) > -1;
+  };
+
   var Logger = {
     _events: [],
     LogStore: LogStore,
@@ -5305,7 +5357,8 @@
     resetRealtimeUpload: function resetRealtimeUpload() {
       RealtimeUploadTimes = 1;
     },
-    uploadFull: uploadFull
+    uploadFull: uploadFull,
+    isIgnoreErrorCode: isIgnoreErrorCode
   };
 
   var EventEmitter$2 = utils.EventEmitter,
@@ -5628,7 +5681,7 @@
   };
 
   var _SSMsg;
-  var SSMsg = (_SSMsg = {}, _SSMsg[PBName.UpStreamMessage] = ['sessionId', 'classname', 'content', 'pushText', 'userId', 'configFlag', 'appData'], _SSMsg[PBName.DownStreamMessages] = ['list', 'syncTime', 'finished'], _SSMsg[PBName.DownStreamMessage] = ['fromUserId', 'type', 'groupId', 'classname', 'content', 'dataTime', 'status', 'msgId'], _SSMsg[PBName.SessionsAttQryInput] = ['nothing'], _SSMsg[PBName.SessionsAttOutput] = ['inboxTime', 'sendboxTime', 'totalUnreadCount'], _SSMsg[PBName.SyncRequestMsg] = ['syncTime', 'ispolling', 'isweb', 'isPullSend', 'isKeeping', 'sendBoxSyncTime'], _SSMsg[PBName.ChrmPullMsg] = ['syncTime', 'count'], _SSMsg[PBName.NotifyMsg] = ['type', 'time', 'chrmId'], _SSMsg[PBName.HistoryMsgInput] = ['targetId', 'time', 'count', 'order'], _SSMsg[PBName.HistoryMsgOuput] = ['list', 'syncTime', 'hasMsg'], _SSMsg[PBName.RelationQryInput] = ['type', 'count', 'startTime', 'order'], _SSMsg[PBName.RelationsOutput] = ['info'], _SSMsg[PBName.DeleteSessionsInput] = ['sessions'], _SSMsg[PBName.SessionInfo] = ['type', 'channelId'], _SSMsg[PBName.DeleteSessionsOutput] = ['nothing'], _SSMsg[PBName.RelationsInput] = ['type', 'msg', 'count', 'offset', 'startTime', 'endTime'], _SSMsg[PBName.DeleteMsgInput] = ['type', 'conversationId', 'msgs'], _SSMsg[PBName.CleanHisMsgInput] = ['targetId', 'dataTime', 'conversationType'], _SSMsg[PBName.SessionMsgReadInput] = ['type', 'msgTime', 'channelId'], _SSMsg[PBName.ChrmInput] = ['nothing'], _SSMsg[PBName.QueryChatRoomInfoInput] = ['count', 'order'], _SSMsg[PBName.QueryChatRoomInfoOutput] = ['userTotalNums', 'userInfos'], _SSMsg[PBName.GetQNupTokenInput] = ['type'], _SSMsg[PBName.GetQNdownloadUrlInput] = ['type', 'key', 'fileName'], _SSMsg[PBName.GetQNupTokenOutput] = ['deadline', 'token'], _SSMsg[PBName.GetQNdownloadUrlOutput] = ['downloadUrl'], _SSMsg[PBName.SetChrmKV] = ['entry', 'bNotify', 'notification', 'type'], _SSMsg[PBName.ChrmKVOutput] = ['entries', 'bFullUpdate', 'syncTime'], _SSMsg[PBName.QueryChrmKV] = ['timestamp'], _SSMsg[PBName.ChrmNotifyMsg] = ['type', 'time', 'chrmId'], _SSMsg[PBName.SetUserSettingInput] = ['version', 'value'], _SSMsg[PBName.SetUserSettingOutput] = ['version', 'reserve'], _SSMsg[PBName.PullUserSettingInput] = ['version', 'reserve'], _SSMsg[PBName.PullUserSettingOutput] = ['items', 'version'], _SSMsg);
+  var SSMsg = (_SSMsg = {}, _SSMsg[PBName.UpStreamMessage] = ['sessionId', 'classname', 'content', 'pushText', 'userId', 'configFlag', 'appData'], _SSMsg[PBName.DownStreamMessages] = ['list', 'syncTime', 'finished'], _SSMsg[PBName.DownStreamMessage] = ['fromUserId', 'type', 'groupId', 'classname', 'content', 'dataTime', 'status', 'msgId'], _SSMsg[PBName.SessionsAttQryInput] = ['nothing'], _SSMsg[PBName.SessionsAttOutput] = ['inboxTime', 'sendboxTime', 'totalUnreadCount'], _SSMsg[PBName.SyncRequestMsg] = ['syncTime', 'ispolling', 'isweb', 'isPullSend', 'isKeeping', 'sendBoxSyncTime'], _SSMsg[PBName.ChrmPullMsg] = ['syncTime', 'count'], _SSMsg[PBName.NotifyMsg] = ['type', 'time', 'chrmId'], _SSMsg[PBName.HistoryMsgInput] = ['targetId', 'time', 'count', 'order'], _SSMsg[PBName.HistoryMsgOuput] = ['list', 'syncTime', 'hasMsg'], _SSMsg[PBName.RelationQryInput] = ['type', 'count', 'startTime', 'order'], _SSMsg[PBName.RelationsOutput] = ['info'], _SSMsg[PBName.DeleteSessionsInput] = ['sessions'], _SSMsg[PBName.SessionInfo] = ['type', 'channelId'], _SSMsg[PBName.DeleteSessionsOutput] = ['nothing'], _SSMsg[PBName.RelationsInput] = ['type', 'msg', 'count', 'offset', 'startTime', 'endTime'], _SSMsg[PBName.DeleteMsgInput] = ['type', 'conversationId', 'msgs'], _SSMsg[PBName.CleanHisMsgInput] = ['targetId', 'dataTime', 'conversationType'], _SSMsg[PBName.SessionMsgReadInput] = ['type', 'msgTime', 'channelId'], _SSMsg[PBName.ChrmInput] = ['nothing'], _SSMsg[PBName.QueryChatRoomInfoInput] = ['count', 'order'], _SSMsg[PBName.QueryChatRoomInfoOutput] = ['userTotalNums', 'userInfos'], _SSMsg[PBName.GetQNupTokenInput] = ['type', 'key'], _SSMsg[PBName.GetQNdownloadUrlInput] = ['type', 'key', 'fileName'], _SSMsg[PBName.GetQNupTokenOutput] = ['deadline', 'token', 'bosToken', 'bosDate', 'path'], _SSMsg[PBName.GetQNdownloadUrlOutput] = ['downloadUrl'], _SSMsg[PBName.SetChrmKV] = ['entry', 'bNotify', 'notification', 'type'], _SSMsg[PBName.ChrmKVOutput] = ['entries', 'bFullUpdate', 'syncTime'], _SSMsg[PBName.QueryChrmKV] = ['timestamp'], _SSMsg[PBName.ChrmNotifyMsg] = ['type', 'time', 'chrmId'], _SSMsg[PBName.SetUserSettingInput] = ['version', 'value'], _SSMsg[PBName.SetUserSettingOutput] = ['version', 'reserve'], _SSMsg[PBName.PullUserSettingInput] = ['version', 'reserve'], _SSMsg[PBName.PullUserSettingOutput] = ['items', 'version'], _SSMsg);
 
   var Codec = {};
   utils.forEach(SSMsg, function (paramList, name) {
@@ -5825,6 +5878,7 @@
           isCounted = _common$getMessageOpt.isCounted,
           isMentiond = _common$getMessageOpt.isMentiond,
           disableNotification = _common$getMessageOpt.disableNotification,
+          receivedStatus = _common$getMessageOpt.receivedStatus,
           targetId = isGroup$1(type) || isChatRoom$1(type) ? groupId : fromUserId,
           senderUserId = isSelfSend ? currentUserId : fromUserId,
           sentTime = utils.int64ToTimestamp(dataTime),
@@ -5837,6 +5891,7 @@
         messageDirection = MESSAGE_DIRECTION.SEND;
       }
 
+      var isMentioned = isMentiond;
       return {
         type: type,
         targetId: targetId,
@@ -5846,11 +5901,13 @@
         isPersited: isPersited,
         isCounted: isCounted,
         isMentiond: isMentiond,
+        isMentioned: isMentioned,
         sentTime: sentTime,
         isOffLineMessage: isOffLineMessage,
         messageDirection: messageDirection,
         receivedTime: common.DelayTimer.getTime(),
         disableNotification: disableNotification,
+        receivedStatus: receivedStatus,
         content: self.formatBytes(content)
       };
     };
@@ -5867,10 +5924,10 @@
           date = signal.date,
           topic = signal.topic,
           targetId = signal.targetId,
-          _common$getPersitedAn = common.getPersitedAndCountedAndSlientBySessionId(sessionId),
-          isPersited = _common$getPersitedAn.isPersited,
-          isCounted = _common$getPersitedAn.isCounted,
-          disableNotification = _common$getPersitedAn.disableNotification,
+          _common$getUpMessageO = common.getUpMessageOptionBySessionId(sessionId),
+          isPersited = _common$getUpMessageO.isPersited,
+          isCounted = _common$getUpMessageO.isCounted,
+          disableNotification = _common$getUpMessageO.disableNotification,
           type = PUBLISH_TOPIC_TO_CONVERSATION_TYPE[topic] || CONVERSATION_TYPE.PRIVATE,
           isStatusMessage = utils.isInclude(PUBLISH_STATUS_TOPIC, topic);
 
@@ -7749,7 +7806,11 @@
       var urlList = utils.map(navigators, function (url) {
         return getNaviUrl(url, option);
       });
-      return utils.requestByUrlList(urlList).then(function (_ref) {
+      var requestOptions = {
+        timeout: NAVI_REQUEST_TIMEOUT
+      };
+
+      var success = function success(_ref) {
         var responseText = _ref.responseText;
         Logger.info(TAG.L_GET_NAVI_R, {
           content: {
@@ -7783,10 +7844,13 @@
             error: responseText
           }));
         }
-      }, function (error) {
-        return utils.Defer.reject(utils.extendInShallow(ERROR_INFO.NAVI_REQUEST_ERROR, {
-          error: error
-        }));
+      };
+
+      return utils.requestByUrlList(urlList, requestOptions).then(success, function () {
+        var fixedNaviResp = {
+          'responseText': '{"isFixedNaviResp":true}'
+        };
+        return success(fixedNaviResp);
       });
     };
 
@@ -8852,6 +8916,9 @@
       PullTimeCache._caches[chrmId] = 0;
     }
   };
+  var KV_EVENT_NAME = {
+    KV_RECEIVED: 'kv-received'
+  };
 
   var ChatRoomKVManager = function () {
     function ChatRoomKVManager(serverEngine) {
@@ -8862,6 +8929,7 @@
       this._handleChrmKVSet = void 0;
       this._handleChrmKVChanged = void 0;
       this._handleBeforeJoinChrm = void 0;
+      this._eventEmitter = new utils.EventEmitter();
       var self = this;
       var userId = serverEngine._selfUserId;
       var pullQueue = new PullQueueManager({
@@ -8884,6 +8952,8 @@
           });
           ChatRoomKVStore$1.set(chrmId, data, userId);
           PullTimeCache.set(chrmId, data.syncTime || 0);
+
+          self._notifyReceivedKV(chrmId, data);
         }
       });
 
@@ -8949,6 +9019,34 @@
 
     _proto.getAll = function getAll(chrmId) {
       return ChatRoomKVStore$1.getAll(chrmId);
+    };
+
+    _proto._notifyReceivedKV = function _notifyReceivedKV(chrmId, data) {
+      var self = this;
+      var kvEntries = data.kvEntries,
+          updatedEntries = [];
+
+      if (kvEntries.length > 0) {
+        utils.forEach(kvEntries, function (entry) {
+          var key = entry.key,
+              value = entry.value,
+              type = entry.type,
+              timestamp = entry.timestamp;
+          updatedEntries.push({
+            key: key,
+            value: value,
+            timestamp: timestamp,
+            chatroomId: chrmId,
+            type: type
+          });
+        });
+
+        self._eventEmitter.emit(KV_EVENT_NAME.KV_RECEIVED, updatedEntries);
+      }
+    };
+
+    _proto.watchReceived = function watchReceived(event) {
+      this._eventEmitter.on(KV_EVENT_NAME.KV_RECEIVED, event);
     };
 
     _proto.close = function close() {
@@ -9260,6 +9358,13 @@
       });
       self._messageManager = messageManager;
       self._chatRoomKVManager = new ChatRoomKVManager(_serverEngine);
+
+      self._chatRoomKVManager.watchReceived(function (updatedEntries) {
+        self._imEventEmitter.emit(IM_EVENT.CHATROOM, {
+          updatedEntries: updatedEntries
+        });
+      });
+
       var isAutoPull = !!Number(localNavi.openUS);
       var userSettingManager = new SettingManager(_serverEngine, {
         appkey: appkey,
@@ -9553,6 +9658,10 @@
             count = chrmInfo.count;
         var isAutoRejoin = true,
             isJoinExist = true;
+        var rejoinedRoom = {
+          chrmId: chrmId,
+          count: count
+        };
         return self.joinChatRoom({
           id: chrmId
         }, {
@@ -9561,14 +9670,13 @@
           isJoinExist: isJoinExist
         }).then(function () {
           _imEventEmitter.emit(IM_EVENT.CHATROOM, {
-            chatroomId: chrmId,
-            count: count
+            rejoinedRoom: rejoinedRoom
           });
         }, function (reason) {
           _imEventEmitter.emit(IM_EVENT.CHATROOM, {
-            chatroomId: chrmId,
-            count: count,
-            errorCode: reason
+            rejoinedRoom: utils.extend(rejoinedRoom, {
+              errorCode: reason
+            })
           });
         });
       });
@@ -9746,7 +9854,14 @@
           isNeedLog && Logger.info(respLogTag, result);
           return result;
         })["catch"](function (error) {
-          isNeedLog && Logger.error(respLogTag, error);
+          error = error || {};
+          var _error = error,
+              code = _error.code;
+
+          if (isNeedLog && !Logger.isIgnoreErrorCode(code)) {
+            Logger.error(respLogTag, error);
+          }
+
           return utils.Defer.reject(error);
         });
       } else {
@@ -10159,6 +10274,13 @@
           return utils.Defer.reject(formatInfo);
         }
 
+        var _option2 = option,
+            isMentioned = _option2.isMentioned,
+            mentionedType = _option2.mentionedType,
+            mentionedUserIdList = _option2.mentionedUserIdList;
+        isMentioned && (option.isMentiond = isMentioned);
+        mentionedType && (option.mentiondType = mentionedType);
+        mentionedUserIdList && (option.mentiondUserIdList = mentionedUserIdList);
         option = utils.extendInShallow(SEND_MESSAGE_TYPE_OPTION[messageType], option);
         option = utils.extendInShallow(SEND_MESSAGE_OPTION, option);
         return _engineDispatcher.exec({
