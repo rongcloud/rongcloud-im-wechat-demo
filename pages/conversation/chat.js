@@ -183,7 +183,7 @@ const onLoad = (context, query) => {
 
 const onUnload = (context) => {
   let { playingVoice, playingMusicComponent } = context.data;
-  if (playingVoice) {
+  if (playingVoice && playingMusicComponent) {
     playingMusicComponent.stop();
   }
   if (playingMusicComponent) {
@@ -317,7 +317,7 @@ const getMoreMessages = (context) => {
   messageList = messageList || [];
   let firstMessage = messageList[0] || {};
   let position = firstMessage.sentTime || 0;
-  let count = 5;
+  let count = 15;
   if (hasMore) {
     context.setData({
       isAllowScroll: false

@@ -1,7 +1,7 @@
 /*
 * RongIMLib.js v3.0.7-dev
-* CodeVersion: dd46cca8d06697ba1dd68ca4910033304f5a614b
-* Release Date: Mon Sep 07 2020 15:28:55 GMT+0800 (GMT+08:00)
+* CodeVersion: 58e7711d1b73004fc4f494eec33854b5d6968c6d
+* Release Date: Fri Sep 18 2020 10:05:19 GMT+0800 (China Standard Time)
 * Copyright 2020 RongCloud
 */
 (function (global, factory) {
@@ -3889,13 +3889,13 @@
 
   var RCStorage = function () {
     function RCStorage(suffix) {
-      var _utils$Cache;
+      var _ref;
 
       this._cache = void 0;
       this.STORAGE_KEY = void 0;
       var storageKey = suffix ? STORAGE_ROOT_KEY + suffix : STORAGE_ROOT_KEY;
       var localCache = utils.Storage.get(storageKey) || {};
-      this._cache = new utils.Cache((_utils$Cache = {}, _utils$Cache[storageKey] = localCache, _utils$Cache));
+      this._cache = new utils.Cache((_ref = {}, _ref[storageKey] = localCache, _ref));
       this.STORAGE_KEY = storageKey;
     }
 
@@ -5953,9 +5953,10 @@
   var Codec$2 = function () {
     function Codec$$1(option) {
       this.codec = SocketCodec;
+      this.connectType = void 0;
       option = option || {};
-      var type = option.connectType;
-      type && this.setCodecType(type);
+      this.connectType = option.connectType;
+      this.connectType && this.setCodecType(this.connectType);
     }
 
     var _proto = Codec$$1.prototype;
@@ -6816,11 +6817,13 @@
             val = val ? CONVERSATION_STATUS_CONFIG.ENABLED : CONVERSATION_STATUS_CONFIG.DISABLED;
             stateItemModules.setSessionStateType(Number(type));
             stateItemModules.setValue(val);
-            stateItemModuleList.push(stateItemModules.getArrayData());
+            var stateItemModulesData = _this2.connectType === CONNECT_TYPE.COMET ? stateItemModules.data : stateItemModules;
+            stateItemModuleList.push(stateItemModulesData);
           }
         });
         stateModules.setStateItem(stateItemModuleList);
-        stateModuleList.push(stateModules.getArrayData());
+        var stateModulesData = _this2.connectType === CONNECT_TYPE.COMET ? stateModules.data : stateModules;
+        stateModuleList.push(stateModulesData);
       });
       modules.setVersion(currentTime);
       modules.setState(stateModuleList);
@@ -7216,13 +7219,15 @@
       var type = conversation.type,
           targetId = conversation.targetId;
       var messageUId = message.messageUId,
-          sentTime = message.sentTime;
+          sentTime = message.sentTime,
+          user = message.user;
       upMsgArgs.messageType = RECALL_MESSAGE_TYPE;
       upMsgArgs.content = {
         conversationType: type,
         targetId: targetId,
         messageUId: messageUId,
-        sentTime: sentTime
+        sentTime: sentTime,
+        user: user
       };
       return this.sendMessage({
         type: type,
@@ -8247,9 +8252,10 @@
           mentiondInfo = {};
       var localMentiondInfo = local[mentiondInfoKey] || {};
       var localUserIdList = localMentiondInfo.userIdList || [];
+      var mentionedInfo = content.mentionedInfo;
+      mentionedInfo = mentionedInfo || {};
 
       if (isMentiond && type === CONVERSATION_TYPE.GROUP) {
-        var mentionedInfo = content.mentionedInfo;
         utils.forEach(mentionedInfo.userIdList, function (userId) {
           if (userId === _this._selfUserId && !utils.isInclude(localUserIdList, senderUserId)) {
             localUserIdList.push(senderUserId);
@@ -8274,7 +8280,7 @@
       }
 
       mentiondInfo.userIdList = mentionedList;
-      mentiondInfo.type = 2;
+      mentionedInfo.type && (mentiondInfo.type = mentionedInfo.type);
 
       if (mentionedList.length !== 0) {
         local[mentiondInfoKey] = mentiondInfo;

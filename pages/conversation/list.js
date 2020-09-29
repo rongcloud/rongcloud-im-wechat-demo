@@ -65,7 +65,7 @@ const connect = (context) => {
         });
       }).catch((error) => {
         wx.showToast({
-          title: error.msg,
+          title: error.msg || 'getUserInfo error',
           icon: 'none',
           duration: 3000
         })

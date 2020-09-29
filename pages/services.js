@@ -3,7 +3,8 @@
  * RongIMLib-3.0.2-upload.js 该 SDK 为 BOS 上传分支 SDK, 调用 getFileUrl 会返回上传必要的 header 头 Authorization（ bosToken ） 、 x-bce-date （ bosDate ） 
 */
 
-const RongIMLib = require('./lib/RongIMLib-3.0.7-dev.js');
+// const RongIMLib = require('./lib/RongIMLib-3.0.7-dev.js');
+const RongIMLib = require('./lib/RongIMLib-3.1.0.js');
 
 const utils = require('./utils/utils.js');
 const { UserList, GroupList, MusicList} = require('./mock.js');
@@ -313,10 +314,12 @@ Message.getList = (params) => {
     type: +type,
     targetId
   });
+  console.log('拉取时间', position);
   return conversation.getMessages({
-    timestrap: timestamp,
+    timestamp: timestamp,
     count
   }).then(({ list, hasMore }) => {
+    console.log('历史消息', list)
     let messageList = list;
     // let messageList = list.filter((message) => {
     //   return message.messageType != 'RC:RcCmd';
@@ -338,7 +341,7 @@ Message.getChatRoomMessageList = (params) => {
     id: targetId
   });
   return chatRoom.getMessages({
-    timestrap: timestamp,
+    timestamp: timestamp,
     count
   }).then(({ list, hasMore }) => {
     let messageList = list;
@@ -526,6 +529,7 @@ let File = {};
 const uploadBos = (url, fileInfo, header) => {
   return new Promise((resolve, reject) => {
     const fileData = wx.getFileSystemManager().readFileSync(fileInfo.path);
+    console.log(url, fileData);
     wx.request({
       url: url,
       header: header,
@@ -539,7 +543,10 @@ const uploadBos = (url, fileInfo, header) => {
         }
         resolve(data);
       },
-      fail: reject
+      fail: function(err) {
+        console.log(err)
+        reject()
+      }
     })
   })
   
@@ -610,7 +617,6 @@ let modules = {
 };
 module.exports = (_config) => {
   utils.extend(config, _config);
-  // config.connectType = 'comet';
   config.debug = true;
   imInstance = RongIMLib.init(config);
   return modules;
