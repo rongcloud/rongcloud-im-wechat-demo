@@ -1,7 +1,7 @@
 /**
 * Version: v3.1.0
-* CommitId: 4067de6b638a280e9d3802de0d33a55c9e95fa1b
-* Date: Tue Sep 29 2020 16:54:36 GMT+0800 (GMT+08:00)
+* CommitId: c524cecb333201815764d68b9539153da986b663
+* Date: Wed Sep 30 2020 15:34:28 GMT+0800 (GMT+08:00)
 * ©2020 RongCloud, Inc. All rights reserved.
 */
 'use strict';
@@ -3265,7 +3265,7 @@ class DisconnectReader extends BaseReader {
         this._name = MessageName.DISCONNECT;
         this.status = 0;
     }
-    readMessage(stream) {
+    readMessage(stream, length) {
         stream.readByte();
         // (1)、此处未转换为链接状态码  (2)、2.0 代码限制了 status 为 0 - 5, 不在范围内则报错. 此处去掉此判断
         this.status = +stream.readByte();
@@ -4467,9 +4467,10 @@ class AEngine {
      * 引擎初始化
      * @param appkey
      */
-    constructor(appkey, watcher) {
+    constructor(appkey, watcher, cppProto) {
         this.appkey = appkey;
         this.watcher = watcher;
+        this.cppProto = cppProto;
         /**
          * 当前用户 Id
          */
@@ -4480,11 +4481,6 @@ class AEngine {
         this.connectedTime = 0;
     }
 }
-var RTCApiType;
-(function (RTCApiType) {
-    RTCApiType[RTCApiType["ROOM"] = 1] = "ROOM";
-    RTCApiType[RTCApiType["PERSON"] = 2] = "PERSON";
-})(RTCApiType || (RTCApiType = {}));
 
 const OUTBOX_KEY = 'outbox';
 const INBOX_KEY = 'inbox';
@@ -5405,8 +5401,8 @@ const transSentAttrs2IReceivedMessage = (conversationType, targetId, options, me
     };
 };
 class JSEngine extends AEngine {
-    constructor(appkey, watcher) {
-        super(appkey, watcher);
+    constructor(appkey, watcher, _) {
+        super(appkey, watcher, _);
         /**
          * 拉取离线消息标记
          */
@@ -5482,7 +5478,8 @@ class JSEngine extends AEngine {
             return;
         }
         if (status === ConnectionStatus$1.BLOCKED || status === ConnectionStatus$1.KICKED_OFFLINE_BY_OTHER_CLIENT) {
-            // 用户被封禁，或多端被踢下线
+            // 用户被封禁，或多端被踢下线，需主动断开 websocket 连接
+            this.disconnect();
             this.watcher.status(status);
             return;
         }
@@ -6489,7 +6486,7 @@ const CallLibMsgType = {
 {
     logger.warn('RongCloudEngine Version:', "4.0.0");
     logger.warn('RongIMLib Version:', "3.1.0");
-    logger.warn('Version Code:', "4067de6b638a280e9d3802de0d33a55c9e95fa1b");
+    logger.warn('Version Code:', "c524cecb333201815764d68b9539153da986b663");
 }
 function cloneMessage(message) {
     return Object.assign({}, message);
@@ -7994,6 +7991,12 @@ class Chatroom {
         });
     }
 }
+
+var RTCApiType;
+(function (RTCApiType) {
+    RTCApiType[RTCApiType["ROOM"] = 1] = "ROOM";
+    RTCApiType[RTCApiType["PERSON"] = 2] = "PERSON";
+})(RTCApiType || (RTCApiType = {}));
 
 class RTCClient {
     constructor(_options, _context) {

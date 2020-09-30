@@ -6,8 +6,9 @@ module.exports = {
   // appkey: 'c9kqb3rdkbb8j',
 	// token: 'aJmtOwmr0tFNFFSch5Ax+xqovSzmOsDJKb1hImj3oZ4=@mwga.dy01-navqa.cn.ronghub.com;mwga.dy02-navqa.cn.ronghub.com',
   // 线上
-  appkey: '8luwapkv847cl',
-  token: 'GIZdyWVeBLSLFeN4I19auTEWhHbheoXkZnPhx4LQNFY=@aa8f.cn.rongnav.com;aa8f.cn.rongcfg.com',
+  appkey: '8luwapkv84k9l',
+  token: 'RAK3kB3PfxjrhcJHnANEr9xGTTY1OyqtejKm1UC9Lc0=@ak0f.cn.rongnav.com;ak0f.cn.rongcfg.com',
+  // token: 'GIZdyWVeBLSLFeN4I19auTEWhHbheoXkZnPhx4LQNFY=@aa8f.cn.rongnav.com;aa8f.cn.rongcfg.com',
   // customCMP: ['wsqa0.cn.ronghub.com'],
   qiniuHost: 'https://upload.qiniup.com'
 };
