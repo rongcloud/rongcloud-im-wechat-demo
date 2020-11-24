@@ -13,7 +13,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@rongcloud/engine": "^0.1.0",
-    "miniprogram-sm-crypto": "^0.2.1"
+    "@rongcloud/engine": "^0.1.0"
   }
 }
