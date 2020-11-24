@@ -1,0 +1,19 @@
+{
+  "name": "miniprogram-app",
+  "version": "1.0.0",
+  "description": "### 目录说明",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab2.rongcloud.net/websdk-team/miniprogram-app.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@rongcloud/engine": "^0.1.0",
+    "miniprogram-sm-crypto": "^0.2.1"
+  }
+}

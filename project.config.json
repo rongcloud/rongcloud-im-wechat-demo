@@ -3,11 +3,13 @@
 	"setting": {
 		"urlCheck": false,
 		"es6": false,
+		"enhance": true,
 		"postcss": true,
 		"preloadBackgroundData": false,
 		"minified": false,
 		"newFeature": true,
 		"coverView": true,
+		"nodeModules": true,
 		"autoAudits": false,
 		"showShadowRootInWxmlPanel": true,
 		"scopeDataCheck": false,
