@@ -3,19 +3,7 @@ const ChatroomId = 'OIBbeKlkx';
 const {globalData} = getApp();
 const { Service: { Status, Conversation, User, CONNECTION_STATUS}} = globalData;
 
-const requestUserAuth = () => {
-  return new Promise((resolve, reject) => {
-    wx.getSetting({
-      success: function (res) {
-        resolve(!!res.authSetting['scope.userInfo'])
-      },
-      fail: function (error) {
-        console.log(error);
-        reject(error)
-      }
-    })
-  });
-};
+
 
 const watchConversation = (context) => {
   Conversation.watch((conversationList) => {
@@ -51,34 +39,24 @@ const watchStatus = () => {
  })
 }
 
-const connect = (context) => {
+const connect = (context,user) => {
   watchConversation(context);
   watchStatus();
-  wx.getUserInfo({
-    success: (user) => {
-      Status.connect(user.userInfo).then((user) => {
-        console.log('connect successfully', user);
-        return Conversation.getList();
-      }).then((list) => {
-        context.setData({
-          conversationList: list
-        });
-      }).catch((error) => {
-        wx.showToast({
-          title: error.msg || 'getUserInfo error',
-          icon: 'none',
-          duration: 3000
-        })
-      })
-    },
-    fail: (error) => {
-      console.log(error);
-      wx.showToast({
-        title: '换个网络试试，只能帮你到这了～',
-        icon: 'none',
-        duration: 3000
-      })
-    }
+  //console.log(user);
+  Status.connect(user.detail.userInfo).then((user) => {
+    console.log('connect successfully', user);
+    return Conversation.getList();
+  }).then((list) => {
+    context.setData({
+      conversationList: list,
+      hasUserAuth:true
+    });
+  }).catch((error) => {
+    wx.showToast({
+      title: error.msg || 'getUserInfo error',
+      icon: 'none',
+      duration: 3000
+    })
   })
 };
 
@@ -88,36 +66,19 @@ Page({
    * 页面的初始数据
    */
   data: {
-    hasUserAuth: true,
+    hasUserAuth: false,
     conversationList: []
   },
   /**
    * 生命周期函数--监听页面加载
    */
-  onLoad: function (options) {
-    requestUserAuth().then((hasUserAuth) => {
-      this.setData({
-        hasUserAuth
-      });
-      if (hasUserAuth){
-        connect(this);
-      }
-    });
-  },
   onAuthCompleted: function(user){
-    requestUserAuth().then((hasUserAuth) => {
-      this.setData({
-        hasUserAuth
-      });
-      if (hasUserAuth) {
-        connect(this);
-      }
-    });
+      connect(this,user);
   },
   gotoChat: function(event){
     let { currentTarget: { dataset: { item } } } = event;
     let { type, targetId, target } = item;
-    
+    console.log("event",event)
     let isSame = (conversation, another) => {
       let isSaveType = (conversation.type == another.type);
       let isSaveTarget = (conversation.targetId == another.targetId);

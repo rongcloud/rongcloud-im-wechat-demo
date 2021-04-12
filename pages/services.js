@@ -4,8 +4,8 @@
 */
 
 // const RongIMLib = require('./lib/RongIMLib-3.0.7-dev.js');
-const RongIMLib = require('./lib/RongIMLib-3.1.0.js');
-
+//const RongIMLib = require('./lib/RongIMLib-3.1.0.js');
+const  RongIMLib = require('@rongcloud/imlib-v4')
 const utils = require('./utils/utils.js');
 const { UserList, GroupList, MusicList} = require('./mock.js');
 
@@ -615,8 +615,11 @@ let modules = {
   ConnectionStatus: RongIMLib.CONNECTION_STATUS,
   CONNECTION_STATUS: RongIMLib.CONNECTION_STATUS
 };
+//console.log("IMClient",IMClient)
 module.exports = (_config) => {
   utils.extend(config, _config);
+  console.log("utils.map",utils.map);
+  //console.log("RongIMLib",RongIMLib);
   config.debug = true;
   imInstance = RongIMLib.init(config);
   return modules;
