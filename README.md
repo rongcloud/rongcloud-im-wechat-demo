@@ -214,15 +214,3 @@ const upload = (fileInfo, uploadType) => {
 ```
 连接状态: 其他设备登录请误调用连接、重连方法
 ```
-
-### 参考
-
-官网: http://www.rongcloud.cn/
-
-开发者后台: https://developer.rongcloud.cn/
-
-API 示例: https://rongcloud.github.io/websdk-demo/api-test.html
-
-API 说明: http://www.rongcloud.cn/docs/web_api_demo.html
-
-Server SDK: http://www.rongcloud.cn/docs/server_sdk_api/index.html
