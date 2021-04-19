@@ -52,8 +52,6 @@
       </swiper-item>
     </block>
   </swiper>
-  
 </view>
-<view class='mask' wx:if="{{flag}}" id="log">{{log}}</view>
- <button size="mini" class="rightBottom" bindtap="showLog" type="defaults" plain="true"> 日志 </button>
+
 <view class='rong-adapter-box' style='height: {{adapterHeight}}px;'></view>

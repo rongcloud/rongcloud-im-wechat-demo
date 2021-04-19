@@ -1,11 +1,22 @@
-const Config = require('./config.js');
-const Service = require('./pages/services.js')(Config);
+const config = require('./config.js');
+
+const logArr = [];
 
 App({
   onLaunch: function () {
+    config.logStdout = (level, content) => {
+      logArr.unshift(content);
+      logArr.splice(500)
+    };
+    config.logLevel = 0;
+    this.globalData.Service = require('./pages/services.js')(config);
   },
   globalData: {
-    Service: Service
+    Service: null,
+    logInfo: '',
+  },
+  getLogInfo () {
+    return logArr.reverse().join('\n')
   },
   onShow: function () {
   },

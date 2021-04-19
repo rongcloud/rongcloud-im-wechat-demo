@@ -1,5 +1,11 @@
 ## 小程序示例
 
+### 工程构建
+
+1. 安装依赖包 `@rongcloud/imlib-v4`: `npm install`
+2. 通过微信小程序开发者工具菜单，使用 `工具 - 构建 Npm` 以生成 `miniprogram_npm` 包
+3. 需详情信息中取消 **增强编译** 选项，避免对 @rongcloud/imlib-v4 做二次编译而出错
+
 ### 目录说明
 
 ```

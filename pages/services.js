@@ -1,10 +1,3 @@
-
-/**
- * RongIMLib-3.0.2-upload.js 该 SDK 为 BOS 上传分支 SDK, 调用 getFileUrl 会返回上传必要的 header 头 Authorization（ bosToken ） 、 x-bce-date （ bosDate ） 
-*/
-
-// const RongIMLib = require('./lib/RongIMLib-3.0.7-dev.js');
-//const RongIMLib = require('./lib/RongIMLib-3.1.0.js');
 const  RongIMLib = require('@rongcloud/imlib-v4')
 const utils = require('./utils/utils.js');
 const { UserList, GroupList, MusicList} = require('./mock.js');
@@ -182,7 +175,6 @@ let bindSender = (message, position) => {
 let Message = {
   watcher: new ObserverList(),
   _push: (message) => {
-    console.log('received msg', message);
     //不处理离线消息
     if (message.isOffLineMessage){
       return;
@@ -313,12 +305,10 @@ Message.getList = (params) => {
     type: +type,
     targetId
   });
-  console.log('拉取时间', position);
   return conversation.getMessages({
     timestamp: timestamp,
     count
   }).then(({ list, hasMore }) => {
-    console.log('历史消息', list)
     let messageList = list;
     // let messageList = list.filter((message) => {
     //   return message.messageType != 'RC:RcCmd';
@@ -386,7 +376,6 @@ let Conversation = {
 
 Conversation.getList = () => {
   return imInstance.Conversation.getList().then((list) => {
-    console.log('会话列表:', list);
     conversationList = imInstance.Conversation.merge({
       conversationList,
       updatedConversationList: list
@@ -470,13 +459,11 @@ Conversation.clearUnreadCount = (conversation) => {
 Conversation.watch = (watcher) => {
   imInstance.watch({
     conversation: function (event) {
-      console.log('conversation updated');
       const { updatedConversationList } = event;
       conversationList = imInstance.Conversation.merge({
         conversationList,
         updatedConversationList
       });
-      console.log(conversationList);
       bindUserInfo(conversationList);
       watcher(conversationList);
     }
@@ -528,14 +515,14 @@ let File = {};
 const uploadBos = (url, fileInfo, header) => {
   return new Promise((resolve, reject) => {
     const fileData = wx.getFileSystemManager().readFileSync(fileInfo.path);
-    console.log(url, fileData);
+    // console.log(url, fileData);
     wx.request({
       url: url,
       header: header,
       method: 'POST',
       data: fileData,
       success: function(res) {
-        console.log(res);
+        // console.log(res);
         let data = {
           downloadUrl: url, //上传成功的 url 即为下载 url
           isBosRes: true // 判断是否是百度返回
@@ -603,8 +590,8 @@ File.upload = (fileInfo, uploadType) => {
     return imInstance.getFileUrl(fileType, qiniuHash, qiniuName, res);
   })
 }
-let logArray=[];
-let modules = {
+
+const modules = {
   User,
   Message,
   Conversation,
@@ -613,20 +600,10 @@ let modules = {
   File,
   ConnectionStatus: RongIMLib.CONNECTION_STATUS,
   CONNECTION_STATUS: RongIMLib.CONNECTION_STATUS,
-  logArray
 };
-//console.log("IMClient",IMClient)
+
 module.exports = (_config) => {
   utils.extend(config, _config);
-  console.log("utils.map",utils.map);
-  //console.log("RongIMLib",RongIMLib);
-  config.debug = true;
-  
-  config.logStdout = (level, content) => {
-    logArray.push(content);
-    //console.log("test",test)
-    console.log( content)
-  }
   imInstance = RongIMLib.init(config);
   return modules;
 };

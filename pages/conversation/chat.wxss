@@ -160,22 +160,3 @@
 .rong-editor-module-file{
   background-image: url('http://gz.bcebos.com/v1/rongcloud-image/1__RC-2020-6-8_801_1591602970942118ba250-962e-466a-ae75-016c23462b45.png');
 }
-.mask{
-  width:100%;
-  height:85%;
-  position:absolute;
-  background-color:#999;
-  z-index:9999;
-  top:0;
-  left:0;
-  opacity:0.6;
-  color: white;
-  font-size:8pt;
-  background-color: black;
-}
-.rightBottom{
-  position:absolute;
-  bottom:40px;
-  right:0;
-  opacity:1;
-}
