@@ -1,7 +1,7 @@
 const utils = require('../utils/utils');
 const ChatroomId = 'OIBbeKlkx';
 const {globalData} = getApp();
-const { Service: { Status, Conversation, User, CONNECTION_STATUS}} = globalData;
+const { Service: { Status, Conversation, User, CONNECTION_STATUS,logArray}} = globalData;
 
 
 
@@ -42,7 +42,6 @@ const watchStatus = () => {
 const connect = (context,user) => {
   watchConversation(context);
   watchStatus();
-  //console.log(user);
   Status.connect(user.detail.userInfo).then((user) => {
     console.log('connect successfully', user);
     return Conversation.getList();
@@ -67,13 +66,20 @@ Page({
    */
   data: {
     hasUserAuth: false,
-    conversationList: []
+    conversationList: [],
+    flag:false,
+    log:logArray.toString()
   },
   /**
    * 生命周期函数--监听页面加载
    */
   onAuthCompleted: function(user){
       connect(this,user);
+  },
+  showLog(){
+    this.setData({
+      flag:!this.data.flag,
+    })
   },
   gotoChat: function(event){
     let { currentTarget: { dataset: { item } } } = event;

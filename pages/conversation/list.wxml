@@ -4,3 +4,6 @@
 
 <view class='rong-authorization-tip' wx:if="{{!hasUserAuth}}">需要您的授权才可以使用哦～</view>
  <button  wx:if="{{!hasUserAuth}}" open-type="getUserInfo" bindgetuserinfo="onAuthCompleted" class='rong-authorization-btn'> 立即授权 </button>
+ <view class='mask' wx:if="{{flag}}" id="log">{{log}}</view>
+ <button size="mini" class="rightBottom" bindtap="showLog" type="defaults" plain="true"> 日志 </button>
+ 

@@ -2,7 +2,7 @@ const utils = require('../utils/utils.js');
 const { adapterHeight } = utils.getAdapterheight();
 
 const { globalData } = getApp();
-const { Service: { Status, Message, File, Conversation } } = globalData;
+const { Service: { Status, Message, File, Conversation ,logArray} } = globalData;
 
 const RongEmoji = require('../lib/RongIMEmoji-2.2.6.js');
 RongEmoji.init();
@@ -534,7 +534,14 @@ Page({
     playingVoice: null,
     playingMusicComponent: null,
     isAllowScroll: true,
-    scrollTop: 0
+    scrollTop: 0,
+    flag:false,
+    log:logArray.toString()
+  },
+  showLog(){
+    this.setData({
+      flag:!this.data.flag,
+    })
   },
   hideKeyboard: function () {
     hideKeyboard(this);

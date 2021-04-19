@@ -8,7 +8,6 @@
 const  RongIMLib = require('@rongcloud/imlib-v4')
 const utils = require('./utils/utils.js');
 const { UserList, GroupList, MusicList} = require('./mock.js');
-
 let imInstance = null;
 let currentUser = null;
 
@@ -604,7 +603,7 @@ File.upload = (fileInfo, uploadType) => {
     return imInstance.getFileUrl(fileType, qiniuHash, qiniuName, res);
   })
 }
-
+let logArray=[];
 let modules = {
   User,
   Message,
@@ -613,7 +612,8 @@ let modules = {
   Status,
   File,
   ConnectionStatus: RongIMLib.CONNECTION_STATUS,
-  CONNECTION_STATUS: RongIMLib.CONNECTION_STATUS
+  CONNECTION_STATUS: RongIMLib.CONNECTION_STATUS,
+  logArray
 };
 //console.log("IMClient",IMClient)
 module.exports = (_config) => {
@@ -621,6 +621,12 @@ module.exports = (_config) => {
   console.log("utils.map",utils.map);
   //console.log("RongIMLib",RongIMLib);
   config.debug = true;
+  
+  config.logStdout = (level, content) => {
+    logArray.push(content);
+    //console.log("test",test)
+    console.log( content)
+  }
   imInstance = RongIMLib.init(config);
   return modules;
 };
