@@ -39,11 +39,10 @@ const watchStatus = () => {
  })
 }
 
-const connect = (context,user) => {
+const connect = (context) => {
   watchConversation(context);
   watchStatus();
-  //console.log(user);
-  Status.connect(user.detail.userInfo).then((user) => {
+  Status.connect({ nickName: 'test_01', avatarUrl: '' }).then((user) => {
     console.log('connect successfully', user);
     return Conversation.getList();
   }).then((list) => {
@@ -62,18 +61,14 @@ const connect = (context,user) => {
 
 Page({
 
+  onLoad () {
+    connect(this);
+  },
   /**
    * 页面的初始数据
    */
   data: {
-    hasUserAuth: false,
     conversationList: []
-  },
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  onAuthCompleted: function(user){
-      connect(this,user);
   },
   gotoChat: function(event){
     let { currentTarget: { dataset: { item } } } = event;

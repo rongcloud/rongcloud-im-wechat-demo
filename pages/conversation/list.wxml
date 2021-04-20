@@ -1,6 +1,3 @@
 <scroll-view class='rong-conversations'>
   <Conversation bindtap='gotoChat'  bindlongpress="showConversationHandles" wx:for="{{conversationList}}" wx:for-item="conversation" wx:key='{{conversation.targetId}}' data-item='{{conversation}}' conversation='{{conversation}}'></Conversation>
 </scroll-view>
-
-<view class='rong-authorization-tip' wx:if="{{!hasUserAuth}}">需要您的授权才可以使用哦～</view>
- <button  wx:if="{{!hasUserAuth}}" open-type="getUserInfo" bindgetuserinfo="onAuthCompleted" class='rong-authorization-btn'> 立即授权 </button>
