@@ -13,6 +13,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@rongcloud/imlib-v4": "^4.3.1"
+    "@rongcloud/imlib-next": "^5.2.2"
   }
 }

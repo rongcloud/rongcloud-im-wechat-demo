@@ -1,6 +1,6 @@
 // pages/conversation/components/conversation.js
 const { globalData } = getApp();
-const { Service: { Status, Conversation, User, CONNECTION_STATUS } } = globalData;
+const { Service: { Status, Conversation, User } } = globalData;
 Component({
   /**
    * 组件的属性列表
@@ -24,10 +24,7 @@ Component({
       const { data: { conversation } } = this;
       console.log('settop', conversation);
       let topStatus = conversation.isTop ? false : true;
-      Conversation.setStatus(conversation, {
-        isTop: topStatus,
-        notificationStatus: conversation.notificationStatus
-      }).then(() => {
+      Conversation.setConversationToTop(conversation, topStatus ).then(() => {
         console.log('setTop succ');
       }).catch(err => {
         console.log('setTop err', err);
@@ -43,10 +40,7 @@ Component({
       const { data: { conversation } } = this;
       console.log('setdisturb', conversation);
       let notifiStatus = conversation.notificationStatus == 1 ? 2 : 1;
-      Conversation.setStatus(conversation, {
-        notificationStatus: notifiStatus,
-        isTop: conversation.isTop
-      }).then(() => {
+      Conversation.setConversationNotificationStatus(conversation, notifiStatus).then(() => {
         console.log('setDisturb succ');
       }).catch(err => {
         console.log('setDisturb err', err);

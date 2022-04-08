@@ -1,4 +1,4 @@
-const  RongIMLib = require('@rongcloud/imlib-v4')
+const RongIMLib = require('@rongcloud/imlib-next')
 const utils = require('./utils/utils.js');
 const { UserList, GroupList, MusicList} = require('./mock.js');
 let imInstance = null;
@@ -9,8 +9,8 @@ let conversationList = [];
 let config = {
   appkey: '',
   url: '',
-  wsScheme: 'wss://',
-  protocol: 'https://'
+  // wsScheme: 'wss://',
+  // protocol: 'https://'
 };
 
 
@@ -136,7 +136,7 @@ User.getToken = (user) => {
   currentUser = getUser(user);
   return Promise.resolve(currentUser);
 };
-
+// 没有此功能
 User.joinChatroom = (id) => {
   const chatRoom = imInstance.ChatRoom.get({id});
   return chatRoom.join({ count: -1 });
@@ -185,7 +185,7 @@ let Message = {
 };
 
 
-let sendMessage = (type, targetId, message) => {
+let sendMessage = (conversationType, targetId, message) => {
   let bindUser = (_msg, next) => {
     bindSender(_msg);
   };
@@ -198,48 +198,44 @@ let sendMessage = (type, targetId, message) => {
 
   let messageMap = {
     text: (params) => {
-      params.messageType = 'RC:TxtMsg';
-      return params;
+      return new imInstance.TextMessage (params)
     },
     image: (params) => {
-      params.messageType = 'RC:ImgMsg';
-      return params;
+      return new imInstance.ImageMessage (params)
     },
     voice: (params) => {
-      params.messageType = 'RC:HQVCMsg';
-      return params;
+      return new imInstance.HQVoiceMessage (params)
     },
-    music: (params) => {
-      params.messageType = 'seal:music';
-      return params;
-    },
+    // music: (params) => {
+    //   params.messageType = 'seal:music';
+    //   return params;
+    // },
     file: (params) => {
-      params.messageType = 'RC:FileMsg';
-      return params;
+      return new imInstance.FileMessage (params)
     }
   };
 
   message.user = user;
-  let params = {
-    content: message
-  };
-  params = messageMap[message.type](params);
-  let conversation = imInstance.Conversation.get({
-    type: +type,
-    targetId
-  });
-  return conversation.send(params).then((message) => {
-    bindUser(message);
-    return message;
-  });
+  const params = messageMap[message.type](message);
+  const conversation = { conversationType: conversationType, targetId: targetId }
+  return imInstance.sendMessage(conversation, params).then(res => {
+    if(res.code === 0) {
+      let message = res.data
+      bindUser(message);
+      return message;
+    }
+  })
+  .catch (error =>{
+    console.log(error)
+  })
 };
 
-//params.type
+//params.conversationType
 //params.targetId
 //params.content  
 Message.sendText = (params) => {
-  let {type, targetId, content} = params;
-  return sendMessage(type, targetId, {
+  let {conversationType, targetId, content} = params;
+  return sendMessage(conversationType, targetId, {
     type: 'text',
     content
   })
@@ -250,8 +246,8 @@ Message.sendText = (params) => {
 //params.content 
 //params.iamgeUri 
 Message.sendImage = (params) => {
-  let { type, targetId, content, imageUri, extra } = params;
-  return sendMessage(type, targetId, {
+  let { conversationType, targetId, content, imageUri, extra } = params;
+  return sendMessage(conversationType, targetId, {
     type: 'image',
     content,
     imageUri,
@@ -266,8 +262,8 @@ Message.sendImage = (params) => {
 //params.type 
 //params.fileUrl 
 Message.sendFile = (params) => {
-  let {type, targetId, name, size, fileUrl} = params;
-  return sendMessage(type, targetId, {
+  let {conversationType, targetId, name, size, fileUrl} = params;
+  return sendMessage(conversationType, targetId, {
     type: 'file',
     name,
     size,
@@ -278,79 +274,81 @@ Message.sendFile = (params) => {
 //params.type
 //params.targetId
 Message.sendVoice = (params) => {
-  let { type, targetId, content} = params;
+  let { conversationType, targetId, content} = params;
   let data = utils.extend({ type: 'voice' }, content);
-  return sendMessage(type, targetId, data)
+  return sendMessage(conversationType, targetId, data)
 };
 
-let getMusic = () => {
-  let len = MusicList.length;
-  let index = Math.floor(Math.random() * len);
-  return MusicList[index];
-};
-Message.sendMusic = (params) => {
-  let { type, targetId } = params;
-  let content = utils.extend({ type: 'music' }, getMusic());
-  return sendMessage(type, targetId, content);
-};
+// let getMusic = () => {
+//   let len = MusicList.length;
+//   let index = Math.floor(Math.random() * len);
+//   return MusicList[index];
+// };
+// Message.sendMusic = (params) => {
+//   let { type, targetId } = params;
+//   let content = utils.extend({ type: 'music' }, getMusic());
+//   return sendMessage(type, targetId, content);
+// };
 
-// params.type 
-// params.targetId
-// params.position 0/1
 Message.getList = (params) => {
-  let {type, targetId, position, count} = params;
-  count = count || 5;
-  let timestamp = position;
-  let conversation = imInstance.Conversation.get({
-    type: +type,
-    targetId
-  });
-  return conversation.getMessages({
-    timestamp: timestamp,
-    count
-  }).then(({ list, hasMore }) => {
-    let messageList = list;
-    // let messageList = list.filter((message) => {
-    //   return message.messageType != 'RC:RcCmd';
-    // });
-    bindSender(messageList, position);
-    hasMore = !!hasMore;
-    return {
-      messageList,
-      hasMore
-    };
-  });
+  let {conversationType, targetId, position, count} = params;
+  count = count || 20;
+  const conversation = {
+      conversationType: conversationType,
+      targetId: targetId
+  }
+  const options = {
+    timestamp: position,
+    count: count,
+    order: 0
+  }
+  return imInstance.getHistoryMessages(conversation, options).then(res => {
+      if (res.code === 0) {
+          let messageList = res.data.list;
+          const hasMore = !!res.data.hasMore
+          bindSender(messageList, position);
+          console.log(messageList)
+          return {
+            messageList,
+            hasMore
+          };
+      } else {
+          console.log(res.code, res.msg)
+      }
+  })
 };
 
 Message.getChatRoomMessageList = (params) => {
-  let { type, targetId, position, count } = params;
-  count = count || 5;
-  let timestamp = position;
-  let chatRoom = imInstance.ChatRoom.get({
-    id: targetId
-  });
-  return chatRoom.getMessages({
+  let { targetId, position, count } = params;
+  count = count || 10;
+  const parmas = {
     timestamp: timestamp,
-    count
-  }).then(({ list, hasMore }) => {
-    let messageList = list;
-    // let messageList = list.filter((message) => {
-    //   return message.messageType != 'RC:RcCmd';
-    // });
-    bindSender(messageList, position);
-    hasMore = !!hasMore;
-    return {
-      messageList,
-      hasMore
-    };
-  });
+    count: count,
+    order: 0
+  }
+  return imInstance.getChatroomHistoryMessages(targetId, parmas).then(res => {
+      // 获取聊天室历史信息成功
+      if (res.code === 0){
+          let messageList = res.data.list;
+          let hasMore = !!res.data.hasMore;
+          bindSender(messageList, position);
+          return {
+            messageList,
+            hasMore
+          };
+      } else {
+          console.log(res.code, res.msg)
+      }
+  }).catch(error => {
+      console.log(error)
+  })
 };
 
 Message.create = (params) => {
-  let {name, type, targetId, content} = params;
+  let {name, conversationType, targetId, content} = params;
   let message = {
     messageType: name,
-    type,
+    conversationType,
     targetId: targetId,
     senderUserId: currentUser.id,
     content: content,
@@ -375,17 +373,18 @@ let Conversation = {
 };
 
 Conversation.getList = () => {
-  return imInstance.Conversation.getList().then((list) => {
-    conversationList = imInstance.Conversation.merge({
-      conversationList,
-      updatedConversationList: list
-    });
+  return imInstance.getConversationList().then((res) => {
+    if (res.code === 0) {
+      conversationList = res.data
+    } else {
+      console.log(res.code, res.msg)
+    }
     bindUserInfo(conversationList);
     return conversationList;
   });
 };
 
-let bindUserInfo = (list) => {
+let bindUserInfo = (list, updateList) => {
   let unknowUser = {
     name: '火星人',
     avatar: 'http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-user-unkown.png'
@@ -439,38 +438,131 @@ let bindUserInfo = (list) => {
     return content;
   };
   list.forEach((conversation, index) => {
-    const { latestMessage, unreadMessageCount, type, targetId } = conversation;
-    const { sentTime } = latestMessage;
+    if(updateList&&updateList.length){
+      const res =  updateList.filter(up => up.conversation.targetId === conversation.targetId && up.conversation.conversationType === conversation.conversationType)
+      if(res.length) {
+        update = res[0].updatedItems
+        for (const key in update) {
+            const el = update[key];
+            conversation[key] = el.val
+        }
+      }
+    } 
+    const { latestMessage, unreadMessageCount, conversationType, targetId } = conversation;
+    const { sentTime } = latestMessage; 
     conversation._sentTime = utils.getTime(sentTime);
     conversation.unReadCount = unreadMessageCount;
     conversation.content = formatMsg(latestMessage);
-    let _type = type > 3 ? 10 : type;
+    let _type = conversationType > 3 ? 10 : conversationType;
     infoMap[_type](conversation);
-    conversation.target.name = targetId + ' (' + type + ')';
+    conversation.target.name = targetId + ' (' + conversationType + ')';
     list[index] = conversation;
   });
+  const splitConversationListByIsTop = (conversationList) => {
+    const topConversationList = []
+    const unToppedConversationList = []
+    conversationList.forEach((conversation) => {
+      const { hasMentioned, mentionedInfo } = conversation
+      conversation.hasMentioned = hasMentioned
+      conversation.mentionedInfo = mentionedInfo
+      const isTop = conversation.isTop || false
+      if (isTop) {
+        topConversationList.push(conversation)
+      } else {
+        unToppedConversationList.push(conversation)
+      }
+    })
+    return {
+      topConversationList: topConversationList || [],
+      unToppedConversationList: unToppedConversationList || []
+    }
+  }
+  const quickSort = (arr, event) => {
+    const sort = (array, left, right, event) => {
+      event = event || ((a, b) => {
+        return a <= b
+      })
+      if (left < right) {
+        const x = array[right]
+        let i = left - 1
+        let temp
+        for (let j = left; j <= right; j++) {
+          if (event(array[j], x)) {
+            i++
+            temp = array[i]
+            array[i] = array[j]
+            array[j] = temp
+          }
+        }
+        sort(array, left, i - 1, event)
+        sort(array, i + 1, right, event)
+      }
+      return array
+    }
+    return sort(arr, 0, arr.length - 1, event)
+  }
+  const _sortListBySentTime = (convers) => {
+    return quickSort(convers, (before, after) => {
+      before = before || {}
+      after = after || {}
+      const beforeLatestMessage = before.latestMessage || {}
+      const afterLatestMessage = after.latestMessage || {}
+      const beforeLatestSentTime = beforeLatestMessage.sentTime || 0
+      const afterLatestSentTime = afterLatestMessage.sentTime || 0
+      return afterLatestSentTime <= beforeLatestSentTime
+    })
+  }
+  const sortConList = (conversationList) => {
+    if (!conversationList) {
+      return []
+    }
+    const splitConversationList = splitConversationListByIsTop(conversationList)
+    const topConversationList = _sortListBySentTime(splitConversationList.topConversationList)
+    const unToppedConversationList = _sortListBySentTime(splitConversationList.unToppedConversationList)
+    topConversationList.push.apply(topConversationList, unToppedConversationList)
+    return topConversationList
+  }
+  conversationList = sortConList(list)
+  console.log(conversationList)
 };
 
 Conversation.clearUnreadCount = (conversation) => {
-  let { type, targetId } = conversation;
-  conversation.type = +conversation.type;
-  imInstance.Conversation.get(conversation).read();
+  let { conversationType, targetId } = conversation;
+  //清除会话未读数   
+  imInstance.clearMessagesUnreadStatus({ conversationType, targetId }).then(res => {
+    if (res.code === 0) {
+      console.log(res.code, res.data)
+    } else {
+      console.log(res.code, res.msg)
+    }
+  }).catch(error => {
+    console.log(error)
+  }) 
 };
 Conversation.watch = (watcher) => {
-  imInstance.watch({
-    conversation: function (event) {
-      const { updatedConversationList } = event;
-      conversationList = imInstance.Conversation.merge({
-        conversationList,
-        updatedConversationList
-      });
-      bindUserInfo(conversationList);
-      watcher(conversationList);
-    }
-  });
+  const Events = imInstance.Events
+  imInstance.addEventListener(Events.CONVERSATION, function (event) {
+    console.log('CONVERSATION', event)
+    const updateList = event.conversationList
+    bindUserInfo(conversationList, updateList);
+    watcher(conversationList);
+  })
 };
-Conversation.setStatus = (conversation, options) => {
-  return imInstance.Conversation.get(conversation).setStatus(options);
+Conversation.setConversationToTop = (conversation, topStatus) => {
+  const conversationType = conversation.conversationType
+  const targetId = conversation.targetId
+  return imInstance.setConversationToTop({
+      conversationType,
+      targetId,
+  }, topStatus)
+}
+Conversation.setConversationNotificationStatus = (conversation, notificationStatus) => {
+  const conversationType = conversation.conversationType
+  const targetId = conversation.targetId
+  return imInstance.setConversationNotificationStatus({
+      conversationType,
+      targetId,
+  }, notificationStatus)
 }
 let Status = {
   watcher: new ObserverList()
@@ -479,26 +571,37 @@ Status.disconnect = () => {
   imInstance.disconnect();
 };
 Status.connect = (user) => {
-  imInstance.watch({
-    status: function ({ status }) {
-      Status.watcher.notify(status);
-    },
-    message: function ({ message  }) {
-      let { messageType } = message;
+  const Events = imInstance.Events
+  imInstance.addEventListener(Events.CONNECTING, () => {
+    console.log('正在链接...')
+  })
+  imInstance.addEventListener(Events.CONNECTED, () => {
+    console.log('连接成功')
+  })
+  imInstance.addEventListener(Events.DISCONNECT, () => {
+    console.log('连接中断，需要业务层进行重连处理')
+  })
+  imInstance.addEventListener(Events.SUSPEND, () => {
+    console.log('链接中断，SDK 会尝试重连，业务层无需关心')
+  })
+  imInstance.addEventListener(Events.MESSAGES, (data) => {
+    console.log(data)
+    data.messages.forEach((msg, index) => {
+      let { messageType } = msg;
       let messageCtrol = {
         otherMessage: () => {
-          Message._push(message);
+          Message._push(msg);
         }
       };
       let messageHandler = messageCtrol[messageType] || messageCtrol.otherMessage;
       messageHandler();
-    }
-  });
+    });
+  })
   user.token = config.token;
   return User.getToken(user).then((user) => {
-    return imInstance.connect(user).then((result) => {
-      currentUser.id = result.id;
-      return result;
+    return imInstance.connect(user.token).then((result) => {
+      currentUser.id = result.data.userId;
+      return result.data;
     }).catch((error) => {
       console.log(error);
     });
@@ -572,7 +675,7 @@ File.upload = (fileInfo, uploadType) => {
   let fileType = uploadType || RongIMLib.FILE_TYPE.FILE;
   let fileName = fileInfo.name || '';
   return imInstance.getFileToken(fileType, fileName).then(result => {
-    let { token, bosToken, bosDate, bos, path } = result;
+    let { token, bosToken, bosDate, bos, path } = result.data;
     let bosHeaders = {
       'authorization': bosToken,
       'x-bce-date': bosDate,
@@ -598,12 +701,12 @@ const modules = {
   Friend,
   Status,
   File,
-  ConnectionStatus: RongIMLib.CONNECTION_STATUS,
-  CONNECTION_STATUS: RongIMLib.CONNECTION_STATUS,
+  ConnectionStatus: RongIMLib.ConnectionStatus,
 };
 
 module.exports = (_config) => {
   utils.extend(config, _config);
-  imInstance = RongIMLib.init(config);
+  RongIMLib.init(config);
+  imInstance = RongIMLib
   return modules;
 };

@@ -1,7 +1,7 @@
 const utils = require('../utils/utils');
 const ChatroomId = 'OIBbeKlkx';
 const {globalData} = getApp();
-const { Service: { Status, Conversation, User, CONNECTION_STATUS}} = globalData;
+const { Service: { Status, Conversation, User, ConnectionStatus}} = globalData;
 
 
 
@@ -16,7 +16,7 @@ const watchConversation = (context) => {
 const watchStatus = () => {
  Status.watch((status) => {
    switch(status) {
-     case CONNECTION_STATUS.CONNECTED:
+     case ConnectionStatus.CONNECTED:
        wx.hideLoading();
        wx.showToast({
          title: '链接成功',
@@ -24,12 +24,12 @@ const watchStatus = () => {
          duration: 1000
        });
        break;
-     case CONNECTION_STATUS.NETWORK_UNAVAILABLE:
+     case ConnectionStatus.NETWORK_UNAVAILABLE:
        wx.showLoading({
          title: '重连中 ...',
        });
        break;
-     case CONNECTION_STATUS.KICKED_OFFLINE_BY_OTHER_CLIENT:
+     case ConnectionStatus.KICKED_OFFLINE_BY_OTHER_CLIENT:
        wx.showModal({
          title: '提示',
          content: '当前用户已在其他端登录'
@@ -51,6 +51,7 @@ const connect = (context) => {
       hasUserAuth:true
     });
   }).catch((error) => {
+    console.log(error)
     wx.showToast({
       title: error.msg || 'getUserInfo error',
       icon: 'none',
@@ -72,17 +73,17 @@ Page({
   },
   gotoChat: function(event){
     let { currentTarget: { dataset: { item } } } = event;
-    let { type, targetId, target } = item;
+    let { conversationType, targetId, target } = item;
     console.log("event",event)
     let isSame = (conversation, another) => {
-      let isSaveType = (conversation.type == another.type);
+      let isSaveType = (conversation.conversationType == another.conversationType);
       let isSaveTarget = (conversation.targetId == another.targetId);
       return (isSaveType && isSaveTarget);
     };
 
-    let url = './chat?type={type}&targetId={targetId}&title={title}';
+    let url = './chat?conversationType={conversationType}&targetId={targetId}&title={title}';
     url = utils.tplEngine(url, {
-      type,
+      conversationType,
       targetId,
       title: target.name
     });

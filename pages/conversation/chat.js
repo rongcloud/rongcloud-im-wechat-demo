@@ -67,7 +67,7 @@ const formatEmojis = () => {
 
 const getMessageList = (context, params) => {
   let {position} = params;
-  let event = params.type == 4 ? Message.getChatRoomMessageList : Message.getList;
+  let event = params.conversationType == 4 ? Message.getChatRoomMessageList : Message.getList;
   return event(params).then((result) => {
     let messages = result.messageList;
     let hasMore = result.hasMore;
@@ -147,13 +147,13 @@ const getImageUrls = (context) => {
 };
 
 const onLoad = (context, query) => {
-  let { title, type, targetId } = query;
+  let { title, conversationType, targetId } = query;
   wx.setNavigationBarTitle({
     title
   });
   context.setData({
     adapterHeight: adapterHeight,
-    type,
+    conversationType,
     targetId
   });
   let keyboardHeight = 0;
@@ -161,21 +161,21 @@ const onLoad = (context, query) => {
 
   let position = 0;
   let count = 15;
-  getMessageList(context, { type, targetId, position, count });
+  getMessageList(context, { conversationType, targetId, position, count });
 
   Message.watch((message) => {
     if (message.isOffLineMessage) {
       return;
     }
-    if (message.type == type && message.targetId === targetId) {
+    if (message.conversationType == conversationType && message.targetId === targetId) {
       let { messageList } = context.data;
       messageList.push(message);
       context.setData({
         messageList,
-        toView: message.uId
+        toView: message.messageUId
       });
       Conversation.clearUnreadCount({
-        type, targetId
+        conversationType, targetId
       });
     }
   });
@@ -246,19 +246,19 @@ const stopRecording = (context) => {
     }, 2).then(file => {
       console.log(file)
       let content = {
-        remoteUrl: file.downloadUrl,
+        remoteUrl: file.data.downloadUrl,
         duration: Math.ceil(duration / 1000)
       };
-      let { type, targetId, messageList } = context.data;
+      let { conversationType, targetId, messageList } = context.data;
       Message.sendVoice({
-        type,
+        conversationType,
         targetId,
         content
       }).then(message => {
         messageList.push(message);
         context.setData({
           messageList,
-          toView: message.uId
+          toView: message.messageUId
         });
       });
     });
@@ -291,7 +291,7 @@ const selectEmoji = (context, event) => {
 };
 
 const sendText = (context) => {
-  let { content, type, targetId, messageList } = context.data;
+  let { content, conversationType, targetId, messageList } = context.data;
   context.setData({
     content: '',
     isShowEmojiSent: false
@@ -300,20 +300,20 @@ const sendText = (context) => {
     return;
   }
   Message.sendText({
-    type,
+    conversationType,
     targetId,
     content
   }).then(message => {
     messageList.push(message);
     context.setData({
       messageList,
-      toView: message.uId
+      toView: message.messageUId
     });
   });
 };
 
 const getMoreMessages = (context) => {
-  let { type, targetId, hasMore, messageList } = context.data;
+  let { conversationType, targetId, hasMore, messageList } = context.data;
   messageList = messageList || [];
   let firstMessage = messageList[0] || {};
   let position = firstMessage.sentTime || 0;
@@ -322,7 +322,7 @@ const getMoreMessages = (context) => {
     context.setData({
       isAllowScroll: false
     });
-    getMessageList(context, { type, targetId, position, count });
+    getMessageList(context, { conversationType, targetId, position, count });
   }
 };
 
@@ -339,7 +339,7 @@ const sendImage =  (context) => {
         src: tempFilePath,
         success: (res) => {
           let extra = utils.compress(res);
-          let { type, targetId, messageList } = context.data;
+          let { conversationType, targetId, messageList } = context.data;
 
           let name = 'RC:ImgMsg';
           let content = {
@@ -347,7 +347,7 @@ const sendImage =  (context) => {
             extra
           };
           let message = Message.create({
-            type,
+            conversationType,
             targetId,
             name,
             content
@@ -356,17 +356,17 @@ const sendImage =  (context) => {
           messageList.push(message);
           context.setData({
             messageList,
-            toView: message.uId
+            toView: message.messageUId
           });
 
           File.upload({
             path: tempFilePath,
             name: 'image.png'
           }, 1, tempFiles[0]).then(result => {
-            let { downloadUrl: imageUri } = result;
+            let { downloadUrl: imageUri } = result.data;
             console.log('image url:', imageUri)
             Message.sendImage({
-              type,
+              conversationType,
               targetId,
               imageUri,
               extra,
@@ -381,7 +381,7 @@ const sendImage =  (context) => {
 };
 
 const sendFile = (context) => {
-  let { type, targetId, messageList } = context.data;
+  let { conversationType, targetId, messageList } = context.data;
 
   wx.chooseMessageFile({
     count: 1,
@@ -390,7 +390,7 @@ const sendFile = (context) => {
       let { tempFiles } = res;
       let { name, size, type: fileType} = tempFiles[0];
       File.upload(tempFiles[0], 4).then(result => {
-        const { downloadUrl: fileUrl } = result;
+        const { downloadUrl: fileUrl } = result.data;
         console.log(fileUrl)
         let content = {
           name,
@@ -399,7 +399,7 @@ const sendFile = (context) => {
           fileUrl
         };
         let message = Message.create({
-          type: 4,
+          conversationType,
           targetId,
           name: 'RC:FileMsg',
           content
@@ -407,10 +407,10 @@ const sendFile = (context) => {
         messageList.push(message);
         context.setData({
           messageList,
-          toView: message.uId
+          toView: message.messageUId
         });
         Message.sendFile({
-          type,
+          conversationType,
           targetId,
           name,
           size,
@@ -421,19 +421,19 @@ const sendFile = (context) => {
   })
 }
 
-const sendMusic = (context) => {
-  let { content, type, targetId, messageList } = context.data;
-  Message.sendMusic({
-    type,
-    targetId
-  }).then(message => {
-    messageList.push(message);
-    context.setData({
-      messageList,
-      toView: message.uId
-    });
-  });
-};
+// const sendMusic = (context) => {
+//   let { content, type, targetId, messageList } = context.data;
+//   Message.sendMusic({
+//     type,
+//     targetId
+//   }).then(message => {
+//     messageList.push(message);
+//     context.setData({
+//       messageList,
+//       toView: message.uId
+//     });
+//   });
+// };
 
 const playVoice = (context, event) => {
   let voiceComponent = event.detail;
