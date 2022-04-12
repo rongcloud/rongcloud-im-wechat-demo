@@ -11,7 +11,7 @@
   max-width: 300rpx;
   min-width: 40rpx;
 }
-
+/* 语音消息图片地址失效了 */
 .rong-icon-sender{
   background-image: url('https://rongcloud-image.cn.ronghub.com/FsqrJPkmthsvyNtYlFMG09rYm2fE?e=2147483647&token=livk5rb3__JZjCtEiMxXpQ8QscLxbNLehwhHySnX:EF4bKsuCC6Uknv2m-8lxfzTVRiI=');
   float:right;

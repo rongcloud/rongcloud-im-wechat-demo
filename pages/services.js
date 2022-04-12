@@ -383,8 +383,86 @@ Conversation.getList = () => {
     return conversationList;
   });
 };
-
-let bindUserInfo = (list, updateList) => {
+const splitConversationListByIsTop = (conversationList) => {
+  const topConversationList = []
+  const unToppedConversationList = []
+  conversationList.forEach((conversation) => {
+    const { hasMentioned, mentionedInfo } = conversation
+    conversation.hasMentioned = hasMentioned
+    conversation.mentionedInfo = mentionedInfo
+    const isTop = conversation.isTop || false
+    if (isTop) {
+      topConversationList.push(conversation)
+    } else {
+      unToppedConversationList.push(conversation)
+    }
+  })
+  return {
+    topConversationList: topConversationList || [],
+    unToppedConversationList: unToppedConversationList || []
+  }
+}
+const quickSort = (arr, event) => {
+  const sort = (array, left, right, event) => {
+    event = event || ((a, b) => {
+      return a <= b
+    })
+    if (left < right) {
+      const x = array[right]
+      let i = left - 1
+      let temp
+      for (let j = left; j <= right; j++) {
+        if (event(array[j], x)) {
+          i++
+          temp = array[i]
+          array[i] = array[j]
+          array[j] = temp
+        }
+      }
+      sort(array, left, i - 1, event)
+      sort(array, i + 1, right, event)
+    }
+    return array
+  }
+  return sort(arr, 0, arr.length - 1, event)
+}
+const _sortListBySentTime = (convers) => {
+  return quickSort(convers, (before, after) => {
+    before = before || {}
+    after = after || {}
+    const beforeLatestMessage = before.latestMessage || {}
+    const afterLatestMessage = after.latestMessage || {}
+    const beforeLatestSentTime = beforeLatestMessage.sentTime || 0
+    const afterLatestSentTime = afterLatestMessage.sentTime || 0
+    return afterLatestSentTime <= beforeLatestSentTime
+  })
+}
+const sortConList = (conversationList) => {
+  if (!conversationList) {
+    return []
+  }
+  const splitConversationList = splitConversationListByIsTop(conversationList)
+  const topConversationList = _sortListBySentTime(splitConversationList.topConversationList)
+  const unToppedConversationList = _sortListBySentTime(splitConversationList.unToppedConversationList)
+  topConversationList.push.apply(topConversationList, unToppedConversationList)
+  return topConversationList
+}
+let updateConversationList  = ( updateList, conversationList ) => {
+  updateList.forEach((list, index) =>{
+    const con = conversationList.filter(con => list.conversation.targetId === con.targetId && list.conversation.conversationType === con.conversationType )
+    if(con.length) {
+      const update = list.updatedItems
+        for (const key in update) {
+            const el = update[key];
+            con[0][key] = el.val
+        }
+    }else {
+      conversationList.push(list.conversation)
+    }
+  })
+  conversationList = sortConList (conversationList)
+}
+let bindUserInfo = (list) => {
   let unknowUser = {
     name: '火星人',
     avatar: 'http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-user-unkown.png'
@@ -438,16 +516,6 @@ let bindUserInfo = (list, updateList) => {
     return content;
   };
   list.forEach((conversation, index) => {
-    if(updateList&&updateList.length){
-      const res =  updateList.filter(up => up.conversation.targetId === conversation.targetId && up.conversation.conversationType === conversation.conversationType)
-      if(res.length) {
-        update = res[0].updatedItems
-        for (const key in update) {
-            const el = update[key];
-            conversation[key] = el.val
-        }
-      }
-    } 
     const { latestMessage, unreadMessageCount, conversationType, targetId } = conversation;
     const { sentTime } = latestMessage; 
     conversation._sentTime = utils.getTime(sentTime);
@@ -458,78 +526,12 @@ let bindUserInfo = (list, updateList) => {
     conversation.target.name = targetId + ' (' + conversationType + ')';
     list[index] = conversation;
   });
-  const splitConversationListByIsTop = (conversationList) => {
-    const topConversationList = []
-    const unToppedConversationList = []
-    conversationList.forEach((conversation) => {
-      const { hasMentioned, mentionedInfo } = conversation
-      conversation.hasMentioned = hasMentioned
-      conversation.mentionedInfo = mentionedInfo
-      const isTop = conversation.isTop || false
-      if (isTop) {
-        topConversationList.push(conversation)
-      } else {
-        unToppedConversationList.push(conversation)
-      }
-    })
-    return {
-      topConversationList: topConversationList || [],
-      unToppedConversationList: unToppedConversationList || []
-    }
-  }
-  const quickSort = (arr, event) => {
-    const sort = (array, left, right, event) => {
-      event = event || ((a, b) => {
-        return a <= b
-      })
-      if (left < right) {
-        const x = array[right]
-        let i = left - 1
-        let temp
-        for (let j = left; j <= right; j++) {
-          if (event(array[j], x)) {
-            i++
-            temp = array[i]
-            array[i] = array[j]
-            array[j] = temp
-          }
-        }
-        sort(array, left, i - 1, event)
-        sort(array, i + 1, right, event)
-      }
-      return array
-    }
-    return sort(arr, 0, arr.length - 1, event)
-  }
-  const _sortListBySentTime = (convers) => {
-    return quickSort(convers, (before, after) => {
-      before = before || {}
-      after = after || {}
-      const beforeLatestMessage = before.latestMessage || {}
-      const afterLatestMessage = after.latestMessage || {}
-      const beforeLatestSentTime = beforeLatestMessage.sentTime || 0
-      const afterLatestSentTime = afterLatestMessage.sentTime || 0
-      return afterLatestSentTime <= beforeLatestSentTime
-    })
-  }
-  const sortConList = (conversationList) => {
-    if (!conversationList) {
-      return []
-    }
-    const splitConversationList = splitConversationListByIsTop(conversationList)
-    const topConversationList = _sortListBySentTime(splitConversationList.topConversationList)
-    const unToppedConversationList = _sortListBySentTime(splitConversationList.unToppedConversationList)
-    topConversationList.push.apply(topConversationList, unToppedConversationList)
-    return topConversationList
-  }
-  conversationList = sortConList(list)
-  console.log(conversationList)
 };
 
 Conversation.clearUnreadCount = (conversation) => {
   let { conversationType, targetId } = conversation;
   //清除会话未读数   
-  imInstance.clearMessagesUnreadStatus({ conversationType, targetId }).then(res => {
+  return imInstance.clearMessagesUnreadStatus({ conversationType, targetId }).then(res => {
     if (res.code === 0) {
       conversationList.forEach((item, index) => {
         if(item.conversationType === conversationType && item.targetId === targetId){
@@ -537,7 +539,7 @@ Conversation.clearUnreadCount = (conversation) => {
           item.unReadCount = 0
         }
       })
-      console.log('clearMessagesUnreadStatus', conversationList)
+      return conversationList
     } else {
       console.log(res.code, res.msg)
     }
@@ -550,7 +552,8 @@ Conversation.watch = (watcher) => {
   imInstance.addEventListener(Events.CONVERSATION, function (event) {
     console.log('CONVERSATION', event)
     const updateList = event.conversationList
-    bindUserInfo(conversationList, updateList);
+    updateConversationList(updateList, conversationList)
+    bindUserInfo(conversationList);
     watcher(conversationList);
   })
 };

@@ -175,9 +175,11 @@ const onLoad = (context, query) => {
         messageList,
         toView: message.messageUId
       });
-      Conversation.clearUnreadCount({
+       Conversation.clearUnreadCount({
         conversationType, targetId
-      });
+      }).then (conversationList=>{
+        context.setData({conversationList});
+      })
     }
   });
 };
