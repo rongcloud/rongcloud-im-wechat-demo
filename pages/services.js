@@ -5,6 +5,7 @@ let imInstance = null;
 let currentUser = null;
 
 let conversationList = [];
+let SealMusicMessage = null;
 
 let config = {
   appkey: '',
@@ -14,13 +15,13 @@ let config = {
 };
 
 
-// let registerMessages = () => {
-//   let messageName = "MusicMessage"; 
-//   let objectName = "seal:music";
-//   let mesasgeTag = new RongIMLib.MessageTag(true, true); 
-//   let prototypes = ["url", "name", "author", "poster"]; 
-//   RongIMClient.registerMessageType(messageName, objectName, mesasgeTag, prototypes);
-// };
+let registerMessages = () => {
+  let messageType = "seal:music"; //消息类型
+  let isPersited = true; //是否存储
+  let isCounted = true;//是否计数
+  let isStatusMessage = false;//是否是状态消息。状态消息不存储、不计数，接收方在线时才能收到
+  SealMusicMessage = imInstance.registerMessageType(messageType, isPersited, isCounted, isStatusMessage);
+};
 
 let ErrorInfo = {
   4: {
@@ -206,10 +207,11 @@ let sendMessage = (conversationType, targetId, message) => {
     voice: (params) => {
       return new imInstance.HQVoiceMessage (params)
     },
-    // music: (params) => {
-    //   params.messageType = 'seal:music';
-    //   return params;
-    // },
+    music: (params) => {
+      return new SealMusicMessage(params)
+      // params.messageType = 'seal:music';
+      // return params;
+    },
     file: (params) => {
       return new imInstance.FileMessage (params)
     }
@@ -279,16 +281,16 @@ Message.sendVoice = (params) => {
   return sendMessage(conversationType, targetId, data)
 };
 
-// let getMusic = () => {
-//   let len = MusicList.length;
-//   let index = Math.floor(Math.random() * len);
-//   return MusicList[index];
-// };
-// Message.sendMusic = (params) => {
-//   let { type, targetId } = params;
-//   let content = utils.extend({ type: 'music' }, getMusic());
-//   return sendMessage(type, targetId, content);
-// };
+let getMusic = () => {
+  let len = MusicList.length;
+  let index = Math.floor(Math.random() * len);
+  return MusicList[index];
+};
+Message.sendMusic = (params) => {
+  let { type, targetId } = params;
+  let content = utils.extend({ type: 'music' }, getMusic());
+  return sendMessage(type, targetId, content);
+};
 
 Message.getList = (params) => {
   let {conversationType, targetId, position, count} = params;
@@ -714,5 +716,6 @@ module.exports = (_config) => {
   utils.extend(config, _config);
   RongIMLib.init(config);
   imInstance = RongIMLib
+  registerMessages()
   return modules;
 };

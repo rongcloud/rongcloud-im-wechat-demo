@@ -424,19 +424,19 @@ const sendFile = (context) => {
   })
 }
 
-// const sendMusic = (context) => {
-//   let { content, type, targetId, messageList } = context.data;
-//   Message.sendMusic({
-//     type,
-//     targetId
-//   }).then(message => {
-//     messageList.push(message);
-//     context.setData({
-//       messageList,
-//       toView: message.uId
-//     });
-//   });
-// };
+const sendMusic = (context) => {
+  let { content, type, targetId, messageList } = context.data;
+  Message.sendMusic({
+    type,
+    targetId
+  }).then(message => {
+    messageList.push(message);
+    context.setData({
+      messageList,
+      toView: message.uId
+    });
+  });
+};
 
 const playVoice = (context, event) => {
   let voiceComponent = event.detail;
