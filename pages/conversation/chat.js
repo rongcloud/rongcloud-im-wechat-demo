@@ -169,6 +169,7 @@ const onLoad = (context, query) => {
     }
     if (message.conversationType == conversationType && message.targetId === targetId) {
       let { messageList } = context.data;
+      const  conversationType = message.conversationType
       messageList.push(message);
       context.setData({
         messageList,

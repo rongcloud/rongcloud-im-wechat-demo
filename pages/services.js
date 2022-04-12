@@ -531,7 +531,13 @@ Conversation.clearUnreadCount = (conversation) => {
   //清除会话未读数   
   imInstance.clearMessagesUnreadStatus({ conversationType, targetId }).then(res => {
     if (res.code === 0) {
-      console.log(res.code, res.data)
+      conversationList.forEach((item, index) => {
+        if(item.conversationType === conversationType && item.targetId === targetId){
+          item.unreadMessageCount = 0
+          item.unReadCount = 0
+        }
+      })
+      console.log('clearMessagesUnreadStatus', conversationList)
     } else {
       console.log(res.code, res.msg)
     }
