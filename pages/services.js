@@ -307,7 +307,6 @@ Message.getList = (params) => {
           let messageList = res.data.list;
           const hasMore = !!res.data.hasMore
           bindSender(messageList, position);
-          console.log(messageList)
           return {
             messageList,
             hasMore
@@ -548,14 +547,7 @@ Conversation.clearUnreadCount = (conversation) => {
   }) 
 };
 Conversation.watch = (watcher) => {
-  const Events = imInstance.Events
-  imInstance.addEventListener(Events.CONVERSATION, function (event) {
-    console.log('CONVERSATION', event)
-    const updateList = event.conversationList
-    updateConversationList(updateList, conversationList)
-    bindUserInfo(conversationList);
-    watcher(conversationList);
-  })
+  Conversation.watcher.add(watcher)
 };
 Conversation.setConversationToTop = (conversation, topStatus) => {
   const conversationType = conversation.conversationType
@@ -594,7 +586,6 @@ Status.connect = (user) => {
     console.log('链接中断，SDK 会尝试重连，业务层无需关心')
   })
   imInstance.addEventListener(Events.MESSAGES, (data) => {
-    console.log(data)
     data.messages.forEach((msg, index) => {
       let { messageType } = msg;
       let messageCtrol = {
@@ -605,6 +596,12 @@ Status.connect = (user) => {
       let messageHandler = messageCtrol[messageType] || messageCtrol.otherMessage;
       messageHandler();
     });
+  })
+  imInstance.addEventListener(Events.CONVERSATION, function (event) {
+    const updateList = event.conversationList
+    updateConversationList(updateList, conversationList)
+    bindUserInfo(conversationList);
+    Conversation.watcher.notify(conversationList)
   })
   user.token = config.token;
   return User.getToken(user).then((user) => {

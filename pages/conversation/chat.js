@@ -148,6 +148,7 @@ const getImageUrls = (context) => {
 
 const onLoad = (context, query) => {
   let { title, conversationType, targetId } = query;
+  if(typeof conversationType === 'string')  conversationType = Number(conversationType)
   wx.setNavigationBarTitle({
     title
   });
@@ -169,7 +170,6 @@ const onLoad = (context, query) => {
     }
     if (message.conversationType == conversationType && message.targetId === targetId) {
       let { messageList } = context.data;
-      const  conversationType = message.conversationType
       messageList.push(message);
       context.setData({
         messageList,
@@ -178,7 +178,7 @@ const onLoad = (context, query) => {
        Conversation.clearUnreadCount({
         conversationType, targetId
       }).then (conversationList=>{
-        context.setData({conversationList});
+        Conversation.watcher.notify(conversationList)
       })
     }
   });
