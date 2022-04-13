@@ -452,7 +452,7 @@ Conversation.getList = () => {
   });
 };
 
-let updateConversationList  = ( updateList, conversationList ) => {
+let updateConversationList  = ( updateList ) => {
   updateList.forEach((list, index) =>{
     const con = conversationList.filter(con => list.conversation.targetId === con.targetId && list.conversation.conversationType === con.conversationType )
     if(con.length) {
@@ -547,7 +547,6 @@ Conversation.clearUnreadCount = (conversation) => {
           item.unReadCount = 0
         }
       })
-      conversationList = sortConList (conversationList)
       return conversationList
     } else {
       console.log(res.code, res.msg)
@@ -609,7 +608,7 @@ Status.connect = (user) => {
   })
   imInstance.addEventListener(Events.CONVERSATION, function (event) {
     const updateList = event.conversationList
-    updateConversationList(updateList, conversationList)
+    updateConversationList(updateList)
   })
   user.token = config.token;
   return User.getToken(user).then((user) => {
