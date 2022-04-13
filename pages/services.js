@@ -369,21 +369,6 @@ Message.unwatch = () => {
   Message.watcher.remove();
 };
 
-let Conversation = {
-  watcher: new ObserverList()
-};
-
-Conversation.getList = () => {
-  return imInstance.getConversationList().then((res) => {
-    if (res.code === 0) {
-      conversationList = res.data
-    } else {
-      console.log(res.code, res.msg)
-    }
-    bindUserInfo(conversationList);
-    return conversationList;
-  });
-};
 const splitConversationListByIsTop = (conversationList) => {
   const topConversationList = []
   const unToppedConversationList = []
@@ -448,6 +433,25 @@ const sortConList = (conversationList) => {
   topConversationList.push.apply(topConversationList, unToppedConversationList)
   return topConversationList
 }
+
+let Conversation = {
+  watcher: new ObserverList()
+};
+
+Conversation.getList = () => {
+  return imInstance.getConversationList().then((res) => {
+    if (res.code === 0) {
+      conversationList = res.data
+    } else {
+      console.log(res.code, res.msg)
+    }
+    //会话列表重新排序
+    conversationList = sortConList (conversationList)
+    bindUserInfo(conversationList);
+    return conversationList;
+  });
+};
+
 let updateConversationList  = ( updateList, conversationList ) => {
   updateList.forEach((list, index) =>{
     const con = conversationList.filter(con => list.conversation.targetId === con.targetId && list.conversation.conversationType === con.conversationType )
@@ -462,6 +466,9 @@ let updateConversationList  = ( updateList, conversationList ) => {
     }
   })
   conversationList = sortConList (conversationList)
+  console.log('updateConversationList ->',conversationList)
+  bindUserInfo(conversationList);
+  Conversation.watcher.notify(conversationList);
 }
 let bindUserInfo = (list) => {
   let unknowUser = {
@@ -540,6 +547,7 @@ Conversation.clearUnreadCount = (conversation) => {
           item.unReadCount = 0
         }
       })
+      conversationList = sortConList (conversationList)
       return conversationList
     } else {
       console.log(res.code, res.msg)
@@ -602,8 +610,6 @@ Status.connect = (user) => {
   imInstance.addEventListener(Events.CONVERSATION, function (event) {
     const updateList = event.conversationList
     updateConversationList(updateList, conversationList)
-    bindUserInfo(conversationList);
-    Conversation.watcher.notify(conversationList)
   })
   user.token = config.token;
   return User.getToken(user).then((user) => {
