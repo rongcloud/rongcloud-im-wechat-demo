@@ -2,7 +2,7 @@
 
 ### 工程构建
 
-1. 安装依赖包 `@rongcloud/imlib-v4`: `npm install`
+1. 安装依赖包 `@rongcloud/engine@latest @rongcloud/imlib-next@latest`: `npm install`
 2. 通过微信小程序开发者工具菜单，使用 `工具 - 构建 Npm` 以生成 `miniprogram_npm` 包
 3. 需详情信息中取消 **增强编译** 选项，避免对 @rongcloud/imlib-v4 做二次编译而出错
 
@@ -37,10 +37,6 @@ websdk-miniprogram
 
 ### 示例结构介绍
 
-![](https://rongcloud-image.cn.ronghub.com/FjsorhPYJmGuwKI9lxUJFe-c9u-Y?e=2147483647&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:krY3XWM3tXb5I7X7e6GB2oRBQfI=)
-
->图解
-
 示例结构分两层 `Services` 、`UI`, 前者做数据转换，后者只做数据渲染及响应的业务事件
 
 ### 功能清单
@@ -68,7 +64,7 @@ websdk-miniprogram
 
 融云内置 ImageMessage 包含原图 `imageUri` 、缩略图 `content` 两个属性
 
-目前在小程序中无法直接获取 Base64 编码图片，可将原图上传到应用服务器进行转码，缩略图必须小于 `30KB`
+目前在小程序中已实现获取缩略图的 API，具体参考 getThumbnail 的调用
 
 >语音消息
 
