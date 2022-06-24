@@ -53,5 +53,5 @@
     </block>
   </swiper>
 </view>
-
+<canvas id="myCanvas" type="2d" style="width: 300px; height: 150px;position: fixed;top:-100%;left: -100%;" />
 <view class='rong-adapter-box' style='height: {{adapterHeight}}px;'></view>

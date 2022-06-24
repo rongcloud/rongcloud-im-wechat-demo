@@ -368,7 +368,7 @@ const sendImage =  (context) => {
           }, 1, tempFiles[0]).then(result => {
             let { downloadUrl: imageUri } = result.data;
             console.log('image url:', imageUri)
-            getThumbnail(tempFilePath, extra).then( imgBase64 =>{
+            getThumbnail(tempFilePath, extra, {}, (imgBase64)=>{
               Message.sendImage({
                 conversationType,
                 targetId,
@@ -377,6 +377,8 @@ const sendImage =  (context) => {
                 content: imgBase64
               }).then(message => {
               });
+            }, (error) =>{
+              console.error(error)
             })
           });
         }
