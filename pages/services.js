@@ -209,8 +209,6 @@ let sendMessage = (conversationType, targetId, message) => {
     },
     music: (params) => {
       return new SealMusicMessage(params)
-      // params.messageType = 'seal:music';
-      // return params;
     },
     file: (params) => {
       return new imInstance.FileMessage (params)

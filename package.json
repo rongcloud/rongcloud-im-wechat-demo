@@ -1,6 +1,6 @@
 {
   "name": "miniprogram-app",
-  "version": "4.3.1",
+  "version": "5.4.1",
   "description": "### 目录说明",
   "main": "app.js",
   "scripts": {
@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@rongcloud/imlib-next": "^5.2.2"
+    "@rongcloud/engine": "^5.4.1",
+    "@rongcloud/imlib-next": "^5.4.1"
   }
 }

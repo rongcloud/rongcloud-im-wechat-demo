@@ -61,7 +61,6 @@ const connect = (context) => {
 };
 
 Page({
-
   onLoad () {
     connect(this);
   },

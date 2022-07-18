@@ -399,7 +399,7 @@ const sendFile = (context) => {
       File.upload(tempFiles[0], 4).then(result => {
         const { downloadUrl: fileUrl } = result.data;
         console.log(fileUrl)
-        let content = {
+        let content = { 
           name,
           size,
           type: fileType,
