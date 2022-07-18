@@ -1,0 +1,14 @@
+{
+  "name": "miniprogram-app",
+  "version": "",
+  "description": "### 目录说明",
+  "main": "app.js",
+  "repository": {
+    "type": "git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+   
+  }
+}
