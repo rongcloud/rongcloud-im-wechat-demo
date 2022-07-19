@@ -2,9 +2,12 @@
 
 ### 工程构建
 
-1. 安装依赖包 `@rongcloud/engine@latest @rongcloud/imlib-next@latest`: `npm install`
+1. 安装 IMLib 依赖包
+```bash
+  npm install
+```
 2. 通过微信小程序开发者工具菜单，使用 `工具 - 构建 Npm` 以生成 `miniprogram_npm` 包
-3. 需详情信息中取消 **增强编译** 选项，避免对 @rongcloud/imlib-v4 做二次编译而出错
+
 
 ### 目录说明
 
@@ -52,21 +55,70 @@ websdk-miniprogram
 | 语音消息		     | 	`services.js`、`voice.wxml`	     | `Message.sendVoice`
 | 音乐消息 (自定义) | 	`services.js`、`music.wxml`	     | `Message.sendMusic`
  
-### 特殊说明
+ <br/>
 
->用户 Token
+### 关于AppKey、Token
 
-示例中用户 Token 为 Mock 数据，仅做演示使用，集成开发需要动态获取用户 Token ，
+**快速体验**
 
-开发者需要在自己应用服务器使用 [Server SDK](http://www.rongcloud.cn/docs/server_sdk_api/index.html) 向融云 IM Server 获取用户 Token
+1.申请 Appkey
 
->图片消息
+在开始之前，请先前往开发者后台[注册开发者账户](https://developer.rongcloud.cn/signup)。注册后，开发者后台将自动为你创建一个应用，默认为开发环境应用，使用国内数据中心。请获取该应用的 App Key，在本教程中使用。
+
+2.获取 Token
+
+应用客户端在使用融云即时通讯功能前必须连接融云服务器，连接时必须传入 Token 参数。Token 是与用户 ID 对应的身份验证令牌，是应用客户端用户在融云的唯一身份标识。
+
+- 访问开发者后台「北极星」开发者工具箱的 [IM Server API 调试]页面。
+
+- 在 用户 标签下，找到 用户服务 > 获取 Token 接口。
+
+- 根据页面提示，填写 userId，并提交。
+
+在以下示例中，我们将获取到 userId 为 1 的用户的 Token。
+
+![image](https://doc.rongcloud.cn/docs/_res/views/im/Web/5.X/assets/noui/getToken.png)
+
+提交后，可在左侧结果中取得 Token 字符串。
+
+
+3.测试收发消息
+
+对融云来说，只要提供对方的 userId，融云就可支持跟对方发起聊天。例如，A 需要 发送消息给 B，只需要将 B 的 userId 告知融云服务即可发送消息。
+
+为了快速体验和测试 SDK，我们从融云开发者后台向当前登录的用户发送一条文本消息，模拟单聊会话。
+
+- 登录融云开发者后台，在页面顶部点击 服务管理。
+
+- 页面左侧找到 IM 服务，依次点击 API 调用 > 消息服务 > 发送单聊消息。
+
+以下模拟了从 UserId 为 user2 的用户向 UserId 为 user1 的用户发送一条文本消息。
+
+![image](https://doc.rongcloud.cn/docs/_res/views/im/Web/5.X/assets/ui/mock-send-message.png)
+
+
+然后在项目根目录的 `config.js` 中填入 APPKey 和 Token，此时项目连接 IM 成功后就可以看到有一条 user2 发送的会话消息了。
+
+
+更多详情请参考[融云开发文档](https://doc.rongcloud.cn/im/Web/5.X/noui/quick_integration)。
+
+
+**真实开发场景**
+
+在实际业务运行过程中，应用客户端需要通过应用的服务端向融云服务端申请取得 Token，具体方法可参考 [Server API 获取 Token](https://doc.rongcloud.cn/imserver/server/v1/user/register)。
+
+<br/>
+
+### 功能说明
+**图片消息**
 
 融云内置 ImageMessage 包含原图 `imageUri` 、缩略图 `content` 两个属性
 
 目前在小程序中已实现获取缩略图的 API，具体参考 getThumbnail 的调用
 
->语音消息
+<br/>
+
+**语音消息**
 
 融云内置 VoiceMessage 类型音频格式为 Base64 格式 AMR ，因此示例中音频无法直接和其他端互通 (Android、iOS)，但可间接支持播放:
 
@@ -74,9 +126,11 @@ websdk-miniprogram
 
 2、可通过示例语音消息中的 URL 播放远程音频文件
 
->上传模块说明
+<br/>
 
-**注意：IM 下 getFileToken、 getFileUrl 必须在连接成功后调用**
+**上传模块说明**
+
+注意：IM 下 getFileToken、 getFileUrl 必须在连接成功后调用
 
 融云小程序提供两种上传服务，上传七牛云，若上传七牛云失败降级上传到百度 BOS
 1、上传使用小程序 SDK 的 `getFileToken` 方法获取上传认证信息， 使用 `getFileUrl` 获取上传成功后的可访问地址
