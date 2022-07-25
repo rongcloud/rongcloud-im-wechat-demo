@@ -241,7 +241,7 @@ Message.sendText = (params) => {
   })
 };
 
-//params.type
+//params.conversationType
 //params.targetId
 //params.content 
 //params.iamgeUri 
@@ -255,7 +255,7 @@ Message.sendImage = (params) => {
   })
 };
 
-//params.type
+//params.conversationType
 //params.targetId
 //params.name 
 //params.size 
@@ -271,7 +271,7 @@ Message.sendFile = (params) => {
   })
 }
 
-//params.type
+//params.conversationType
 //params.targetId
 Message.sendVoice = (params) => {
   let { conversationType, targetId, content} = params;
@@ -285,9 +285,9 @@ let getMusic = () => {
   return MusicList[index];
 };
 Message.sendMusic = (params) => {
-  let { type, targetId } = params;
-  let content = utils.extend({ type: 'music' }, getMusic());
-  return sendMessage(type, targetId, content);
+  let { conversationType, targetId } = params;
+  let content = utils.extend({ type: "music" }, getMusic());
+  return sendMessage(conversationType, targetId, content);
 };
 
 Message.getList = (params) => {
@@ -629,14 +629,12 @@ let File = {};
 const uploadBos = (url, fileInfo, header) => {
   return new Promise((resolve, reject) => {
     const fileData = wx.getFileSystemManager().readFileSync(fileInfo.path);
-    // console.log(url, fileData);
     wx.request({
       url: url,
       header: header,
       method: 'POST',
       data: fileData,
       success: function(res) {
-        // console.log(res);
         let data = {
           downloadUrl: url, //上传成功的 url 即为下载 url
           isBosRes: true // 判断是否是百度返回
@@ -680,8 +678,6 @@ const wxUpload = (fileInfo, token, bosHeaders, bosUrl) => {
   });
 };
 
-
-
 File.upload = (fileInfo, uploadType) => {
   let fileType = uploadType || RongIMLib.FILE_TYPE.FILE;
   let fileName = fileInfo.name || '';
@@ -692,7 +688,7 @@ File.upload = (fileInfo, uploadType) => {
       'x-bce-date': bosDate,
       'Content-Type': 'multipart/form-data',
     }
-    let bosUrl = bos + path;
+    let bosUrl = `https://${bos}${path}`;
     return wxUpload(fileInfo, token, bosHeaders, bosUrl)
   }).then(res => {
     let qiniuHash, qiniuName;

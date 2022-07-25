@@ -15,7 +15,7 @@ const getToView = (context) => {
   let { messageList } = context.data;
   let index = messageList.length - 1;
   let message = messageList[index] || {};
-  return message.uId || '';
+  return message.messageUId || '';
 };
 
 const setKeyboardPos = (context, keyboardHeight, adapterHeight) => {
@@ -79,7 +79,7 @@ const getMessageList = (context, params) => {
     if(params.position == 0){
       let index = messageList.length - 1;
       let message = messageList[index] || {};
-      toView = message.uId || '';
+      toView = message.messageUId || "";
     }
     let isFirst = (position == 0);
     if (!hasMore && !isFirst){
@@ -381,6 +381,9 @@ const sendImage =  (context) => {
               console.error(error)
             })
           });
+        },
+        fail: (err) => {
+          console.log('wx.getImageInfo', err)
         }
       })
     }
@@ -429,15 +432,15 @@ const sendFile = (context) => {
 }
 
 const sendMusic = (context) => {
-  let { content, type, targetId, messageList } = context.data;
+  let { content, conversationType, targetId, messageList } = context.data;
   Message.sendMusic({
-    type,
-    targetId
-  }).then(message => {
+    conversationType,
+    targetId,
+  }).then((message) => {
     messageList.push(message);
     context.setData({
       messageList,
-      toView: message.uId
+      toView: message.messageUId,
     });
   });
 };

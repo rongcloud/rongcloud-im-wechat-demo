@@ -205,13 +205,13 @@ const upload = (fileInfo, uploadType) => {
      * bos 百度上传域名
      * path 百度上传路径
     */
-    let { token, bosToken, bosDate, bos, path } = result;
+    let { token, bosToken, bosDate, bos, path } = result.data;
     let bosHeaders = {
       'authorization': bosToken,
       'x-bce-date': bosDate,
       'Content-Type': 'multipart/form-data',
     }
-    const bosUploadUrl = bos + path;
+    const bosUploadUrl = `https://${bos}${path}`;
     return uploadQiNiu(fileInfo, token, bosHeaders, bosUploadUrl);
   }).then(res => {
     let qiniuHash, qiniuName;

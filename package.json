@@ -1,20 +1,15 @@
 {
-  "name": "miniprogram-app",
-  "version": "5.4.1",
-  "description": "### 目录说明",
-  "main": "app.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "github_demo": "node scripts/createDemo.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://gitlab2.rongcloud.net/websdk-team/miniprogram-app.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@rongcloud/engine": "^5.4.1",
-    "@rongcloud/imlib-next": "^5.4.1"
-  }
+	"name": "miniprogram-app",
+	"version": "5.4.1",
+	"description": "### 目录说明",
+	"main": "app.js",
+	"repository": {
+		"type": "git"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@rongcloud/engine": "^5.4.1",
+		"@rongcloud/imlib-next": "^5.4.1"
+	}
 }
