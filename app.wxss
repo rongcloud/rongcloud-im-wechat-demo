@@ -1,0 +1,10 @@
+page {
+  background-color: #F4F8FC;
+}
+
+.rong-icon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background-size: cover;
+}

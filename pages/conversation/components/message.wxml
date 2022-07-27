@@ -1,0 +1,25 @@
+ <view class='rong-message'>
+      <view class="rong-message-avatar-{{message.direction}}">
+        <view class="rong-message-name">{{message.sender.name}}</view>
+        <image class='rong-avatar rong-message-avatar' src='{{message.sender.avatar}}'></image>
+      </view>
+     
+      <view wx:if = '{{message.name == "RC:ImgMsg"}}' class='rong-message-content rong-message-content-image-{{message.direction}}'>
+        <ImageMessage message='{{message}}' bindonpreviewimage='onPreviewImage'></ImageMessage>
+      </view>
+
+      <view wx:else class='rong-message-content rong-message-content-{{message.direction}}'>
+        <TextMessage wx:if =  '{{message.name == "RC:TxtMsg"}}'   message='{{message}}'></TextMessage>
+        <VoiceMessage wx:elif = '{{message.name == "RC:HQVCMsg"}}'  message='{{message}}' bindonplay='onPlayVoice'></VoiceMessage> 
+        <VoiceMessage wx:elif='{{message.name == "RC:VcMsg"}}' message='{{message}}' bindonplay='onPlayVoice'></VoiceMessage>
+        <MusicMessage wx:elif = '{{message.name == "seal:music"}}'  message='{{message}}' bindonplaymusic='onPlayMusic' bindonstopmusic='onMusicStop'></MusicMessage> 
+        <FileMessage wx:elif = '{{message.name == "RC:FileMsg"}}' message='{{message}}'></FileMessage>
+        <view wx:else>{{message.messageType}}</view>
+      </view>
+
+
+
+      <view class='rong-clearfix'></view>
+    </view>
+
+    

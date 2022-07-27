@@ -1,0 +1,57 @@
+<view class='rong-chat' style='bottom: {{bottom}}px;'>
+  <scroll-view class='rong-messages' bindtouchstart='hideKeyboard' scroll-y  bindscrolltoupper='getMoreMessages' scroll-into-view='U-{{toView}}' scroll-with-animation='{{true}}' >
+    <Loading style='visibility:{{!isAllowScroll ? "visible" : "hidden"}}'></Loading>
+    <WithoutMessage wx:if='{{!hasMore}}' id='message-notify-without'></WithoutMessage>
+    <Message wx:for="{{messageList}}" wx:key='{{message.messageUID}}' wx:for-item="message" message='{{message}}' id='U-{{message.uId}}' bindonplay='onPlayVoice' bindonplaymusic='onPlayMusic' bindonmusicstop='onMusicStop' bindonpreviewimage='onPreviewImage'>
+    </Message>
+  </scroll-view>
+
+  <view wx:if='{{isRecording}}' class='rong-voice-recording'></view>
+
+  <view class='rong-editor'>
+    <view wx:if='{{!isShowKeyboard}}' class='rong-icon rong-editor-btn rong-editor-btn-voice' bindtap='showKeyboard'></view>
+
+    <input wx:if='{{!isShowKeyboard}}' class='rong-editor-input' adjust-position='{{false}}' bindinput='onInput' bindfocus='onFocus' value='{{content}}' confirm-type='send' confirm-hold='{{true}}' bindconfirm='sendText' maxlength='-1'></input>
+    <view wx:if='{{isShowKeyboard}}' class='rong-icon rong-editor-btn rong-editor-btn-keyboard' bindtap='showVoice'></view>
+
+    <view wx:if='{{isShowKeyboard}}' class='rong-editor-input rong-editor-record' bindtouchstart='startRecording' bindtouchend='stopRecording'>按住 说话</view>
+
+    <view wx:if='{{ !isShowEmojiSent }}' class='rong-icon rong-editor-btn rong-editor-btn-more' bindtap='showMore'></view>
+    <view wx:if='{{isShowEmojiSent}}' class='rong-editor-btn rong-editor-btn-emojisent' bindtap='sendText'>发送</view>
+    <view class='rong-icon rong-editor-btn rong-editor-btn-emoji' bindtap='showEmojis'></view>
+  </view>
+</view>
+
+<view class='rong-editor-emojis' style='display:{{display.emoji}};'>
+  <swiper indicator-dots="{{true}}" class='rong-emojis-swiper'>
+    <block wx:for="{{emojis}}" wx:key='group' wx:for-item='group'>
+      <swiper-item>
+        <span class='rong-editor-emoji' wx:for="{{group}}" wx:key='emoji' bindtap='selectEmoji' data-emoji='{{item.emoji}}'>
+          {{item.emoji}}
+        </span>
+      </swiper-item>
+    </block>
+  </swiper>
+</view>
+
+<view class='rong-editor-more' style='display:{{display.more}};'>
+  <swiper indicator-dots="{{true}}" class='rong-modules-swiper'>
+    <block>
+      <swiper-item>
+        <view class='rong-editor-modules'>
+          <view class='rong-editor-module rong-editor-module-image' bindtap='sendImage'></view>
+        </view>
+
+        <view class='rong-editor-modules'>
+          <view class='rong-editor-module rong-editor-module-music' bindtap='sendMusic'></view>
+        </view>
+
+        <view class='rong-editor-modules'>
+          <view class='rong-editor-module rong-editor-module-file' bindtap='sendFile'></view>
+        </view>
+      </swiper-item>
+    </block>
+  </swiper>
+</view>
+<canvas id="myCanvas" type="2d" style="width: 300px; height: 150px;position: fixed;top:-100%;left: -100%;" />
+<view class='rong-adapter-box' style='height: {{adapterHeight}}px;'></view>

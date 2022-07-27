@@ -1,0 +1,162 @@
+.rong-chat{
+  position: absolute;
+  width: 100%;
+  top: 0;
+  bottom: 0;
+}
+
+.rong-messages{
+  position: absolute;
+  top: 0;
+  bottom: 100rpx;
+}
+
+.rong-editor{
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 15rpx;
+  border-top: 1px solid #CCC;
+  background-color: #FFF;
+  box-sizing: border-box;
+}
+
+.rong-editor-input{
+  height: 58rpx;
+  border-bottom:1px solid #CCC;
+  display: inline-block;
+  margin-top: 6rpx;
+  position: absolute;
+  left: 90rpx;
+  right: 194rpx;
+}
+
+.rong-editor-input:focus{
+  border-bottom: 1px solid red;
+}
+
+.rong-editor-btn{
+  margin-right: 20rpx;
+  margin-top: 4rpx;
+}
+.rong-editor-btn-voice{
+  background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-talk.png");
+  float: left;
+}
+
+.rong-editor-btn-emoji{
+   background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-emoji-new.png");
+   float: right;
+}
+
+.rong-editor-btn-more{
+   background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-plus.png"); 
+  float: right;
+}
+
+.rong-editor-btn-emojisent{
+  float: right; 
+  font-size:15px;
+  background: #1BA3FC;
+  border-radius: 6rpx;
+  color: #FFF;
+  margin-top: 8rpx;
+  margin-right: 20rpx;
+  padding: 6rpx 2rpx;
+}
+
+.rong-editor-btn-keyboard{
+  background-image: url("http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-keyboard.png");
+  float: left;
+}
+
+.rong-editor-record{
+  border: 1px solid #CCC;
+  border-radius: 5rpx;
+  text-align: center;
+  color: #8E969F;
+  box-sizing: border-box;
+  line-height: 55rpx;
+}
+
+/* 模块  */
+.rong-voice-recording{
+  position: absolute;
+  top: 35%;
+  left: 38%;
+  background-color: #333;
+  background-size: contain;
+  height: 200rpx;
+  width: 200rpx;
+  opacity: 0.8;
+  border-radius: 10rpx;
+  padding: 10rpx;
+  background-image: url("http://oojs2ztoq.bkt.clouddn.com/voice%20%281%29.png");
+}
+
+.rong-editor-emojis,.rong-editor-more{
+  background-color: #FFF;
+  height: 210px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+}
+
+.rong-editor-emoji{
+  width:60rpx;
+  height:60rpx;
+  display:inline-block;
+  text-align:center;
+  margin:7px;
+  font-size:30px;
+}
+
+.rong-emojis-swiper, .rong-modules-swiper{
+  height: 185px;
+}
+
+.rong-adapter-box{
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background:#FFF;
+}
+
+.rong-editor-modules{
+  height: 60px;
+  width: 60px;
+  border: 1px solid #d2d2d4;
+  border-radius: 15px;
+  background-color: #fff;
+  padding: 10px 14px 10px 9px;
+  box-sizing: border-box;
+  margin: 20px;
+  float: left;
+  position: relative;
+}
+
+.rong-editor-module{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 35px;
+  width: 35px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+
+}
+.rong-editor-module-image{
+  background-image: url('http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-image.png');
+}
+
+.rong-editor-module-music{
+  background-image: url('http://7xogjk.com1.z0.glb.clouddn.com/rc-mini-music.png');
+  height: 35px;
+}
+
+.rong-editor-module-file{
+  background-image: url('http://gz.bcebos.com/v1/rongcloud-image/1__RC-2020-6-8_801_1591602970942118ba250-962e-466a-ae75-016c23462b45.png');
+}

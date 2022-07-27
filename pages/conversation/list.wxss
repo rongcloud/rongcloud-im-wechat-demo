@@ -1,0 +1,20 @@
+.rong-conversations{
+  color: #8E969F;
+  font-size: 13px;
+}
+
+.rong-authorization-tip{
+  position:absolute;
+  top:30%;
+  left:20%;
+  width:80%;
+  color: #108EE9;
+}
+.rong-authorization-btn{
+  background-color:#108EE9;
+  color:#FFF;
+  position:absolute;
+  top:40%;
+  left:12%;
+  width:80%;
+}

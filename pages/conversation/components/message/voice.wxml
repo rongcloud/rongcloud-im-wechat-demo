@@ -1,0 +1,7 @@
+<view class='rong-message-voice'>
+   <image wx:if = '{{isPlaying}}' class='rong-playing rong-playing-{{message.direction}}' src='../../images/{{message.direction}}.gif'></image> 
+  <view class='rong-audio' id='V-{{message.messageUId}}' bindtap='onTab'></view>
+  <view class='rong-icon rong-icon-{{message.direction}}' style='width:{{message.content.duration * 10}}px;visibility:{{!isPlaying ? "visible": "hidden"}}'></view>
+  
+  <view class='rong-time-{{message.direction}}'>{{message.content.duration}}"</view>
+</view>

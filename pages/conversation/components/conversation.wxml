@@ -1,0 +1,13 @@
+<view class='rong-conversation'>
+      <image class=' rong-avatar rong-conversation-avatar ' src='{{conversation.target.avatar}} '></image>
+    <view class='rong-conversation-title '>{{conversation.target.name}}</view>
+    <view class='rong-conversation-message '>
+      <view class='rong-conversation-messagecontent '>
+        {{conversation.content}}
+      </view>
+    </view>
+    <view class='rong-conversation-senttime '>{{conversation._sentTime}}</view>
+    <view wx:if='{{conversation.unReadCount> 0}}' class='rong-conversation-unreadcount'>{{conversation.unReadCount}}</view>
+    <view class="isTop" hover-class="isTopHover" catch:tap="setTop">{{conversation.isTop? '取消置顶':'置顶'}}</view>
+    <view class="isDisturb" catch:tap="setDisturb">{{conversation.notificationStatus == 1? '关闭免打扰':'开启免打扰'}}</view>
+</view>
