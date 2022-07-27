@@ -18,6 +18,7 @@ websdk-miniprogram
 │   │   ├── components 组件列表
 │   │   │   ├── message.wxml 消息（父级组件）
 │   │   │   ├── message 消息组件（子级组件）
+│   │   │   │   ├── file.wxml 文件（内置消息）
 │   │   │   │   ├── text.wxml 文本（内置消息）
 │   │   │   │   ├── image.wxml 图片（内置消息）
 │   │   │   │   ├── voice.wxml 语音（内置消息）
@@ -27,7 +28,7 @@ websdk-miniprogram
 │   │   ├── chat.wxml 聊天界面
 │   │   └── list.wxml 会话列表
 │   ├── lib 依赖库
-│   │   ├── RongIMLib.miniprogram-1.0.4.js 融云小程序 SDK
+│   │   ├── getThumbnail.js 生成缩略图工具函数
 │   │   └── RongIMEmoji.js 融云表情库
 │   ├── utils 工具类
 │   │   ├── underscore-1.8.3.js
@@ -35,7 +36,7 @@ websdk-miniprogram
 │   ├── mock.js 假数据，用作演示
 │   └── services.js 服务层，用做数据转换、收发消息
 ├── app.js 小程序人口
-└── config.js 配置项
+└── config.js 配置项 (配置 AppKey, Token)
 ```
 
 ### 示例结构介绍
@@ -49,11 +50,12 @@ websdk-miniprogram
 | 功能	  		     | 项目文件                         | Services 相关方法      
 | :---------------|---------------------------------|------------------
 | 获取会话列表      | `services.js`、`list.wxml`	   | `Conversation.getList`    
-| 获取历史消息      | `services.js`、`chat.wxml`、`components/message/*.wxml`| `Message.getList`     
+| 获取历史消息      | `services.js`、`chat.wxml`、`components/message/*.wxml`| `Message.getList`    
 | 文本消息		     | 	`services.js`、`text.wxml`	     | `Message.sendText`
 | 图片消息		     | 	`services.js`、`image.wxml`	     | `Message.sendImage`
 | 语音消息		     | 	`services.js`、`voice.wxml`	     | `Message.sendVoice`
 | 音乐消息 (自定义) | 	`services.js`、`music.wxml`	     | `Message.sendMusic`
+| 文件消息		     | 	`services.js`、`file.wxml`	     | `Message.sendFile`
  
  <br/>
 
