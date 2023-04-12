@@ -20,7 +20,7 @@ let registerMessages = () => {
   let isPersited = true; //是否存储
   let isCounted = true;//是否计数
   let isStatusMessage = false;//是否是状态消息。状态消息不存储、不计数，接收方在线时才能收到
-  SealMusicMessage = imInstance.registerMessageType(messageType, isPersited, isCounted, isStatusMessage);
+  SealMusicMessage = imInstance.registerMessageType(messageType, isPersited, isCounted, [], isStatusMessage);
 };
 
 let ErrorInfo = {
