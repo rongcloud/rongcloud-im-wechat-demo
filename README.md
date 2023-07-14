@@ -63,11 +63,15 @@ websdk-miniprogram
 
 **快速体验**
 
-1.申请 Appkey
+1. 申请 Appkey
 
 在开始之前，请先前往开发者后台[注册开发者账户](https://developer.rongcloud.cn/signup)。注册后，开发者后台将自动为你创建一个应用，默认为开发环境应用，使用国内数据中心。请获取该应用的 App Key，在本教程中使用。
 
-2.获取 Token
+2. 开通单群聊云存储服务
+
+Web 端不具备持久化的数据存储能力，无法在本地持久化存储历史消息记录与会话列表，因此需要从融云服务端获取数据。从远端获取单群聊历史消息要求您已在开发者后台 [IM 服务管理](https://developer.rongcloud.cn/advance/index)页面为当前使用的 App Key 开启**单群聊消息云端存储**服务。
+
+3. 获取 Token
 
 应用客户端在使用融云即时通讯功能前必须连接融云服务器，连接时必须传入 Token 参数。Token 是与用户 ID 对应的身份验证令牌，是应用客户端用户在融云的唯一身份标识。
 
@@ -84,7 +88,7 @@ websdk-miniprogram
 提交后，可在左侧结果中取得 Token 字符串。
 
 
-3.测试收发消息
+4. 测试收发消息
 
 对融云来说，只要提供对方的 userId，融云就可支持跟对方发起聊天。例如，A 需要 发送消息给 B，只需要将 B 的 userId 告知融云服务即可发送消息。
 
@@ -239,9 +243,10 @@ const upload = (fileInfo, uploadType) => {
 
 `后台切换至前台`: 在 app.js `onShow` 事件中调用 `RongIMClient.connect` 即可
 
+
 > 常见问题
 
-1、提示 `其他设备登录` (状态码为 `6` ) 排查思路
+1. 提示 `其他设备登录` (状态码为 `6` ) 排查思路
 
 ```
 (1) 排查 Token 是否存在多设备同时使用,例如 `模拟器`、`真机预览` 使用的是相同的 `Token`
@@ -249,7 +254,7 @@ const upload = (fileInfo, uploadType) => {
 (2) 排查项目是否引入多次 `小程序 SDK`, 项目内只允许引入一次，多页使用可用 `globalData` 共享
 ```
 
-2、频繁提示 `重连`、`连接断开` 排查思路
+2. 频繁提示 `重连`、`连接断开` 排查思路
 
 排查 `小程序全局 request 请求超时时间` 必须大于 <span style="color: red;">40000 毫秒</span> 
 
@@ -267,7 +272,7 @@ const upload = (fileInfo, uploadType) => {
 ```
 
 
-3、\_ConnectionStatusListener.onChanged is not a function
+3. \_ConnectionStatusListener.onChanged is not a function
 
 ```
 连接状态: 其他设备登录请误调用连接、重连方法
